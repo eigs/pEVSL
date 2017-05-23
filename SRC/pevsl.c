@@ -11,12 +11,16 @@ pevsl_Stat pevsl_stat;
  * @brief Initialize pEVSL  
  *
  * */
-int pEVSL_Start(int argc, char **argv) {
+int pEVSL_Start() {
 
   /* make sure these are zeroed out */
   memset(&pevsl_stat, 0, sizeof(pevsl_Stat));
   memset(&pevsl_data, 0, sizeof(pevsl_Data));
 
+  /* use MPI rank as rand seed */
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  srand(rank);
   return 0;
 }
 
@@ -48,12 +52,32 @@ int pEVSL_Finish() {
 int pEVSL_SetAParcsr(pevsl_Parcsr *A) {
   pevsl_data.N = A->ncol_global;
   pevsl_data.n = A->ncol_local;
-  pevsl_data.nfirst = A->first_col;
+  //pevsl_data.nfirst = A->first_col;
   if (!pevsl_data.Amv) {
     PEVSL_CALLOC(pevsl_data.Amv, 1, pevsl_Matvec);
   }
   pevsl_data.Amv->func = pEVSL_ParcsrMatvec;
   pevsl_data.Amv->data = (void *) A;
+  
+  return 0;
+}
+
+/**
+ * @brief Set the user-input matvec routine and the associated data for A.
+ * Save them in evsldata
+ * @warning Once this matvec func is set, matrix A will be ignored even it
+ * is provided
+ * */
+
+int pEVSL_SetAMatvec(int N, int n, MVFunc func, void *data) {
+  pevsl_data.N = N;
+  pevsl_data.n = n;
+  //  pevsl_data.nfirst = ;
+  if (!pevsl_data.Amv) {
+    PEVSL_CALLOC(pevsl_data.Amv, 1, pevsl_Matvec);
+  }
+  pevsl_data.Amv->func = func;
+  pevsl_data.Amv->data = data;
   
   return 0;
 }

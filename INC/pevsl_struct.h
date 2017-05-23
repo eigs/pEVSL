@@ -126,7 +126,7 @@ typedef struct _pevsl_parvec {
     MPI_Comm comm;
     int n_global;
     int n_local;
-    int n_first;
+    //int n_first;
     double *data;
 } pevsl_Parvec;
 
@@ -205,7 +205,8 @@ typedef void (*SolFuncR)(pevsl_Parvec *b, pevsl_Parvec *x, void *data);
 /**
  * @brief matvec function prototype 
  */
-typedef void (*MVFunc)(pevsl_Parvec *x, pevsl_Parvec *y, void *data);
+//typedef void (*MVFunc)(pevsl_Parvec *x, pevsl_Parvec *y, void *data);
+typedef void (*MVFunc)(double *x, double *y, void *data);
 
 /*!
  * @brief user-provided Mat-Vec function and data for y = A * x or y = B * x
@@ -242,7 +243,7 @@ typedef struct _pevsl_LtSol {
 typedef struct _pevsl_Data {
   int N;                    /**< global size of matrix A and B */
   int n;                    /**< local size of matrix A and B */
-  int nfirst;               /**< the first local row and column */
+  //int nfirst;               /**< the first local row and column */
   int ifGenEv;              /**< if it is a generalized eigenvalue problem */
   pevsl_Matvec *Amv;        /**< external matvec routine and the associated data for A */
   pevsl_Matvec *Bmv;        /**< external matvec routine and the associated data for B */

@@ -6,6 +6,7 @@
 #define PEVSL_PROTOS_H
 
 #include <mpi.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -74,7 +75,7 @@ void ZGESV(int *n, int *nrow, complex double * A, int* m, int* ipiv,
 /* cheblanNr.c */
 int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
                     pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvec **Wo, 
-                    double **reso, pevsl_Comm *comm, FILE *fstats);
+                    double **reso, MPI_Comm comm, FILE *fstats);
 
 /* comm.c */
 int pEVSL_CommCreate(pevsl_Comm *comm, MPI_Comm comm_global, int ngroups);
@@ -90,6 +91,10 @@ void pEVSL_FreePol(pevsl_Polparams *pol);
 
 int pEVSL_ChebAv(pevsl_Polparams *pol, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_Parvec *w);
 
+/* lantrbnd.c */
+int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
+                      int bndtype, double *lammin, double *lammax, MPI_Comm comm, FILE *fstats);
+                      
 /* miscla.c */
 int SymmTridEig(double *eigVal, double *eigVec, int n, const double *diag, const double *sdiag);
 
@@ -110,7 +115,8 @@ int pEVSL_ParcsrSetup(pevsl_Csr *Ai, pevsl_Parcsr *A);
 void pEVSL_ParcsrFree(pevsl_Parcsr *A);
 
 /* parcsrmv.c */
-void pEVSL_ParcsrMatvec(pevsl_Parvec *x, pevsl_Parvec *y, void *data);
+//void pEVSL_ParcsrMatvec(pevsl_Parvec *x, pevsl_Parvec *y, void *data);
+void pEVSL_ParcsrMatvec(double *x, double *y, void *data);
 
 /* parvec.c */
 void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm, pevsl_Parvec *x);
@@ -180,11 +186,11 @@ void sort_double(int n, double *v, int *ind);
 /*------------------- inline functions */
 
 /** 
- * @brief printf, only for group_rank == 0
+ * @brief printf, only for rank == 0
  * 
  * */
-static inline void pEVSL_Printf0(pevsl_Comm *comm, FILE *fp, const char *format, ...) {
-  if (comm->group_rank) {
+static inline void pEVSL_Printf0(int rank, FILE *fp, const char *format, ...) {
+  if (rank) {
     return;
   }
   va_list args;
@@ -193,20 +199,6 @@ static inline void pEVSL_Printf0(pevsl_Comm *comm, FILE *fp, const char *format,
   va_end(args);
 }
 
-
-/** 
- * @brief printf, only for global_rank == 0
- * 
- * */
-static inline void pEVSL_Printf00(pevsl_Comm *comm, FILE *fp, const char *format, ...) {
-  if (comm->global_rank) {
-    return;
-  }
-  va_list args;
-  va_start(args, format);
-  vfprintf(fp, format, args);
-  va_end(args);
-}
 
 /** 
  * @brief Perform matrix-vector product y = A * x
@@ -214,7 +206,15 @@ static inline void pEVSL_Printf00(pevsl_Comm *comm, FILE *fp, const char *format
  * */
 static inline void pEVSL_MatvecA(pevsl_Parvec *x, pevsl_Parvec *y) {
   PEVSL_CHKERR(!pevsl_data.Amv);
-  pevsl_data.Amv->func(x, y, pevsl_data.Amv->data);
+     
+  PEVSL_CHKERR(pevsl_data.N != x->n_global);
+  PEVSL_CHKERR(pevsl_data.n != x->n_local);
+  //PEVSL_CHKERR(A->first_col != x->n_first);
+  PEVSL_CHKERR(pevsl_data.N != y->n_global);
+  PEVSL_CHKERR(pevsl_data.n != y->n_local);
+  //PEVSL_CHKERR(A->first_row != y->n_first);
+
+  pevsl_data.Amv->func(x->data, y->data, pevsl_data.Amv->data);
 }
 
 
@@ -225,7 +225,15 @@ static inline void pEVSL_MatvecA(pevsl_Parvec *x, pevsl_Parvec *y) {
 
 static inline void pEVSL_MatvecB(pevsl_Parvec *x, pevsl_Parvec *y) {
   PEVSL_CHKERR(!pevsl_data.Bmv);
-  pevsl_data.Bmv->func(x, y, pevsl_data.Bmv->data);
+  
+  PEVSL_CHKERR(pevsl_data.N != x->n_global);
+  PEVSL_CHKERR(pevsl_data.n != x->n_local);
+  //PEVSL_CHKERR( != x->n_first);
+  PEVSL_CHKERR(pevsl_data.N != y->n_global);
+  PEVSL_CHKERR(pevsl_data.n != y->n_local);
+  //PEVSL_CHKERR( != y->n_first);
+
+  pevsl_data.Bmv->func(x->data, y->data, pevsl_data.Bmv->data);
 }
 
 /**

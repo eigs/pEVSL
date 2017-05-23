@@ -52,8 +52,8 @@ int main(int argc, char *argv[]) {
   nz = 16;
   a  = 0.4;
   b  = 0.5;
-  nslices = 2;
-  ngroups = 2;
+  nslices = 1;
+  ngroups = 1;
   /*-----------------------------------------------------------------------
    *-------------------- reset some default values from command line  
    *                     user input from command line */
@@ -114,6 +114,11 @@ int main(int argc, char *argv[]) {
   pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, A.comm, &vinit);
   pEVSL_ParvecRand(&vinit);
 
+  //double ll, mm;
+  //pEVSL_LanTrbounds(50, 200, 1e-10, &vinit, 1, &ll, &mm, comm.comm_group, NULL);
+  //printf("lmin = %.15e, lmax = %.15e\n", ll, mm);
+  //exit(0);
+
   /*------------------- For each slice call ChebLanr */
   for (sl=comm.group_id; sl<nslices; sl+=comm.ngroups) {
     int nev2, *ind, nev_ex;
@@ -145,7 +150,7 @@ int main(int argc, char *argv[]) {
       fprintf(fstats, " polynomial deg %d, bar %e gam %e\n", pol.deg, pol.bar, pol.gam);
     }
     //-------------------- then call ChenLanNr    
-    ierr = pEVSL_ChebLanNr(xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, &comm, fstats);
+    ierr = pEVSL_ChebLanNr(xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, comm.comm_group, fstats);
     if (ierr) {
       printf("ChebLanNr error %d\n", ierr);
       return 1;
@@ -160,8 +165,9 @@ int main(int argc, char *argv[]) {
       /* compute exact eigenvalues */
       ExactEigLap3(nx, ny, nz, ai, bi, &nev_ex, &lam_ex);
       fprintf(fstats, " number of eigenvalues: %d, found: %d\n", nev_ex, nev2);
-      fprintf(stdout, " number of eigenvalues: %d, found: %d\n", nev_ex, nev2);
-
+      if (fstats != stdout) {
+        fprintf(stdout, " number of eigenvalues: %d, found: %d\n", nev_ex, nev2);
+      } 
       /* print eigenvalues */
       fprintf(fstats, "                                   Eigenvalues in [a, b]\n");
       fprintf(fstats, "     Computed [%d]       ||Res||              Exact [%d]", nev2, nev_ex);

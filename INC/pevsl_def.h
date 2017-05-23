@@ -27,6 +27,7 @@
 }
 
 
+/* memory management, alloc and free */
 
 #define PEVSL_MALLOC(base, nmem, type) {\
   (base) = (type *)malloc((nmem)*sizeof(type)); \
@@ -74,7 +75,7 @@
 
 /*! Fortran interface naming convention
  */
-#define EVSLFORT(name) name ## _f90_
+#define PEVSL_FORT(name) name ## _f90_
 
 /*! max number of Gram–Schmidt process in orthogonalization
  */

@@ -4,7 +4,7 @@ void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm, pevs
   x->comm = comm;
   x->n_global = nglobal;
   x->n_local = nlocal;
-  x->n_first = nfirst;
+  //x->n_first = nfirst;
   PEVSL_MALLOC(x->data, nlocal, double);
 }
 
@@ -13,7 +13,7 @@ void pEVSL_ParvecDupl(pevsl_Parvec *x, pevsl_Parvec *y) {
     y->comm = x->comm;
     y->n_global = x->n_global;
     y->n_local = x->n_local;
-    y->n_first = x->n_first;    
+    //y->n_first = x->n_first;    
     PEVSL_MALLOC(y->data, y->n_local, double);
 }
 
@@ -24,18 +24,24 @@ void pEVSL_ParvecFree(pevsl_Parvec *x) {
 void pEVSL_ParvecRand(pevsl_Parvec *x) {
   int i;
   double t = ((double) RAND_MAX) / 2.0;
+  /*
   for (i=0; i<x->n_global; i++) {
     double z = (rand() - t) / t;
     if (i >= x->n_first && i < x->n_first + x->n_local) {
       x->data[i-x->n_first] = z;
     }
   }
+  */
+  for (i=0; i<x->n_local; i++) {
+    double z = (rand() - t) / t;
+    x->data[i] = z;
+  }
 }
 
 void pEVSL_ParvecDot(pevsl_Parvec *x, pevsl_Parvec *y, double *t) {
     PEVSL_CHKERR(x->n_global != y->n_global);
     PEVSL_CHKERR(x->n_local != y->n_local);
-    PEVSL_CHKERR(x->n_first != y->n_first);
+    //PEVSL_CHKERR(x->n_first != y->n_first);
     double tlocal = 0.0;
     int i;
     for (i=0; i<x->n_local; i++) {
@@ -54,7 +60,7 @@ void pEVSL_ParvecNrm2(pevsl_Parvec *x, double *t) {
 void pEVSL_ParvecCopy(pevsl_Parvec *x, pevsl_Parvec *y) {
     PEVSL_CHKERR(x->n_global != y->n_global);
     PEVSL_CHKERR(x->n_local != y->n_local);
-    PEVSL_CHKERR(x->n_first != y->n_first);
+    //PEVSL_CHKERR(x->n_first != y->n_first);
     int i;
     for (i=0; i<x->n_local; i++) {
         y->data[i] = x->data[i];
@@ -94,7 +100,7 @@ void pEVSL_ParvecSetScalar(pevsl_Parvec *x, double t) {
 void pEVSL_ParvecAxpy(double a, pevsl_Parvec *x, pevsl_Parvec *y) {
     PEVSL_CHKERR(x->n_global != y->n_global);
     PEVSL_CHKERR(x->n_local != y->n_local);
-    PEVSL_CHKERR(x->n_first != y->n_first);
+    //PEVSL_CHKERR(x->n_first != y->n_first);
     int i;
     for (i=0; i<x->n_local; i++) {
         y->data[i] += a * x->data[i];
@@ -104,8 +110,8 @@ void pEVSL_ParvecAxpy(double a, pevsl_Parvec *x, pevsl_Parvec *y) {
 
 int pEVSL_ParvecSameSize(pevsl_Parvec *x, pevsl_Parvec *y) {
     if (x->n_global != y->n_global ||
-        x->n_local != y->n_local ||
-        x->n_first != y->n_first) {
+        x->n_local != y->n_local) /*||
+        x->n_first != y->n_first)*/ {
         return 0;
     }
     return 1;
@@ -146,6 +152,7 @@ int pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn, pevsl_Comm *comm) {
     return 0;
 }
 
+/*
 int pEVSL_ParvecRead(pevsl_Parvec *x, const char* fn) {
     char str[PEVSL_MAX_LINE];
     int k;
@@ -164,4 +171,4 @@ int pEVSL_ParvecRead(pevsl_Parvec *x, const char* fn) {
 
     return 0;
 }
-
+*/

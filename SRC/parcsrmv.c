@@ -1,6 +1,6 @@
 #include "pevsl_protos.h"
 
-void pEVSL_ParcsrMatvecCommBegin(pevsl_Parcsr *A, pevsl_Parvec *x) {
+void pEVSL_ParcsrMatvecCommBegin(pevsl_Parcsr *A, double *x) {
     int i;
 
     for (i=0; i<A->comm_handle->num_proc_recv_from; i++) {
@@ -16,8 +16,8 @@ void pEVSL_ParcsrMatvecCommBegin(pevsl_Parcsr *A, pevsl_Parvec *x) {
     int nelmts_send = A->comm_handle->send_elmts_ptr[np_send];
     for (i=0; i<nelmts_send; i++) {
         int k = A->comm_handle->send_elmts_ids[i];
-        PEVSL_CHKERR(k < 0 || k > x->n_local);
-        A->comm_handle->send_buf[i] = x->data[k];
+        PEVSL_CHKERR(k < 0 || k > A->ncol_local);
+        A->comm_handle->send_buf[i] = x[k];
     }
 
     for (i=0; i<A->comm_handle->num_proc_send_to; i++) {
@@ -40,22 +40,15 @@ void pEVSL_ParcsrMatvecCommEnd(pevsl_Parcsr *A) {
     PEVSL_CHKERR(err != MPI_SUCCESS);
 }
 
-void pEVSL_ParcsrMatvec(pevsl_Parvec *x, pevsl_Parvec *y, void *data) {
+void pEVSL_ParcsrMatvec(double *x, double *y, void *data) {
     pevsl_Parcsr *A = (pevsl_Parcsr *) data;
-    PEVSL_CHKERR(A->ncol_global != x->n_global);
-    PEVSL_CHKERR(A->ncol_local != x->n_local);
-    PEVSL_CHKERR(A->first_col != x->n_first);
- 
-    PEVSL_CHKERR(A->nrow_global != y->n_global);
-    PEVSL_CHKERR(A->nrow_local != y->n_local);
-    PEVSL_CHKERR(A->first_row != y->n_first);
-
+     
     pEVSL_ParcsrMatvecCommBegin(A, x);
     // overlapping computations with communications
-    pEVSL_Matvec(A->diag, x->data, y->data);
+    pEVSL_Matvec(A->diag, x, y);
     pEVSL_ParcsrMatvecCommEnd(A);
     if (A->offd->ncols > 0) {
-        pEVSL_MatvecGen(1.0, A->offd, A->comm_handle->recv_buf, 1.0, y->data);
+        pEVSL_MatvecGen(1.0, A->offd, A->comm_handle->recv_buf, 1.0, y);
     }
 }
 

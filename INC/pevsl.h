@@ -10,12 +10,13 @@
 
 #include "pevsl_protos.h"
 
-int pEVSL_Start(int argc, char **argv);
+int pEVSL_Start();
 
 int pEVSL_Finish();
 
 int pEVSL_SetAParcsr(pevsl_Parcsr *A);
 
+int pEVSL_SetAMatvec(int N, int n, MVFunc func, void *data);
 
 #endif
 
