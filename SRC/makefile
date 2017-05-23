@@ -1,0 +1,32 @@
+.SUFFIXES : .f .c .o
+
+include ../makefile.in
+
+# Compilers
+AR = ar rv
+RANLIB = ranlib
+
+# Common flags
+FLAGS = -DUNIX -O3 -g -Wall $(NO_DEBUG) $(TIMING)
+
+INCLUDES = -I../INC 
+
+# Object files
+OBJS = cheblanNr.o chebpol.o comm.o pevsl.o miscla.o parcsr.o parcsrmv.o parvec.o spmat.o utils.o \
+       vector.o
+       
+LIB = ../libpevsl.a
+
+# Rules
+default: $(LIB)
+
+%.f : %.o
+	$(FORT) $(FLAGS) $(INCLUDES) -o $@ -c $<
+%.o : %.c
+	$(CC)   $(FLAGS) $(INCLUDES) -o $@ -c $<
+$(LIB): $(OBJS)
+	$(AR) $@ $(OBJS)
+	$(RANLIB) $@
+
+clean:
+	rm -f $(OBJS) $(LIB)

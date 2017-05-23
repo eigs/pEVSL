@@ -1,0 +1,23 @@
+# Compilers
+CC = mpicc
+LINK = $(CC)
+
+##OBJ_TIME = mactime.o
+OBJ_TIME = timing.o 
+
+# ar 
+AR = ar rv
+RANLIB = ranlib
+
+LIB0 = -lgfortran -lrt -lm
+LIBLAPACK = -llapack -lblas
+
+#MPI_DIR=/usr/apps/mpich2/default
+##LIBLAPACK = -L../../../lapack-3.4.2 -llapack 
+##LIBBLAS = -L../../../lapack-3.4.2 -lblas
+##LIBLAPACK = -L/project/scicom/scicom00/SOFT/lib/Linux64 -llapack 
+##LIBBLAS = -L/project/scicom/scicom00/SOFT/lib/Linux64 -lrefblas
+##--> for mac-os  
+##LIBLAPACK = 
+##LIBBLAS =
+
