@@ -114,6 +114,9 @@ int pEVSL_ParcsrSetup(pevsl_Csr *Ai, pevsl_Parcsr *A);
 
 void pEVSL_ParcsrFree(pevsl_Parcsr *A);
 
+int pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int cooidx, pevsl_Coo *coo, 
+                            pevsl_Csr *csr);
+
 /* parcsrmv.c */
 //void pEVSL_ParcsrMatvec(pevsl_Parvec *x, pevsl_Parvec *y, void *data);
 void pEVSL_ParcsrMatvec(double *x, double *y, void *data);
@@ -151,14 +154,19 @@ void pEVSL_CsrResize(int nrow, int ncol, int nnz, pevsl_Csr *csr);
 
 void pEVSL_FreeCsr(pevsl_Csr *csr);
 
+void pEVSL_CooResize(int nrow, int ncol, int nnz, pevsl_Coo *coo);
+
 void pEVSL_FreeCoo(pevsl_Coo *coo);
 
 int pEVSL_CooToCsr(int cooidx, pevsl_Coo *coo, pevsl_Csr *csr);
+
+int pEVSL_CsrToCoo(pevsl_Csr *csr, int cooidx, pevsl_Coo *coo);
 
 int pEVSL_MatvecGen(double alp, pevsl_Csr *A, double *x, double bet, double *y);
 
 int pEVSL_Matvec(pevsl_Csr *A, double *x, double *y);
 
+void pEVSL_SortRow(pevsl_Csr *A);
 
 /* utils.c */
 void pEVSL_SortInt(int *x, int n);

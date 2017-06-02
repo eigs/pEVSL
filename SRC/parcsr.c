@@ -1,6 +1,5 @@
 #include "pevsl_protos.h"
 
-/* Constructor */
 int pEVSL_ParcsrCreate(int nrow, int ncol, int *row_starts, int *col_starts, pevsl_Parcsr *A, MPI_Comm comm) {
     int r1, r2, c1, c2, comm_size, comm_rank;
     MPI_Comm_size(comm, &comm_size);
@@ -262,5 +261,55 @@ void pEVSL_ParcsrFree(pevsl_Parcsr *A) {
     pEVSL_FreeCsr(A->offd);
     PEVSL_FREE(A->offd);
     PEVSL_FREE(A->col_map_offd);
+}
+
+int pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int cooidx, pevsl_Coo *coo, 
+                            pevsl_Csr *csr) {
+  pevsl_Csr *Ad = A->diag;
+  pevsl_Csr *Ao = A->offd;
+  int local_nnz = PEVSL_CSRNNZ(Ad) + PEVSL_CSRNNZ(Ao);
+  int i, j, k=0, nrow, ncol, fcol;
+  /* local csr matrix : slice of rows */
+  pevsl_Csr csr_local;
+  nrow = A->nrow_local;
+  ncol = A->ncol_global;
+  fcol = A->first_col;
+  pEVSL_CsrResize(nrow, ncol, local_nnz, &csr_local);
+  csr_local.ia[0] = 0;
+  /* for each row i */
+  for (i=0; i<nrow; i++) {
+    /* diag block */
+    for (j=Ad->ia[i]; j<Ad->ia[i+1]; j++) {
+      /* adjust to global idx */
+      csr_local.ja[k] = Ad->ja[j] + fcol;
+      csr_local.a[k] = Ad->a[j];
+      k++;
+    }
+    /* off-diag block */
+    for (j=Ao->ia[i]; j<Ao->ia[i+1]; j++) {
+      /* adjust to global idx */
+      csr_local.ja[k] = A->col_map_offd[Ao->ja[j]];
+      csr_local.a[k] = Ao->a[j];
+      k++;
+    }
+    /* row ptr */
+    csr_local.ia[i+1] = k;
+  }
+  PEVSL_CHKERR(k != local_nnz);
+
+  /* sort row */
+  pEVSL_SortRow(&csr_local);
+  /* coo */
+  if (coo) {
+    pEVSL_CsrToCoo(&csr_local, cooidx, coo);
+  }
+  /* csr */
+  if (csr) {
+    *csr = csr_local;
+  } else {
+    pEVSL_FreeCsr(&csr_local);
+  }
+
+  return 0;
 }
 

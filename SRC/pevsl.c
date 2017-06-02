@@ -17,15 +17,16 @@ int pEVSL_Start() {
   memset(&pevsl_stat, 0, sizeof(pevsl_Stat));
   memset(&pevsl_data, 0, sizeof(pevsl_Data));
 
-  /* use MPI rank as rand seed */
+  /* use MPI_COMM_WORLD rank as rand seed */
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   srand(rank);
+
   return 0;
 }
 
 /**
- * @brief Finish pEVSL.
+ * @brief Finish pEVSL
  *
  * */
 int pEVSL_Finish() {
@@ -68,7 +69,6 @@ int pEVSL_SetAParcsr(pevsl_Parcsr *A) {
  * @warning Once this matvec func is set, matrix A will be ignored even it
  * is provided
  * */
-
 int pEVSL_SetAMatvec(int N, int n, MVFunc func, void *data) {
   pevsl_data.N = N;
   pevsl_data.n = n;

@@ -25,6 +25,7 @@ typedef struct _pevsl_csrMat {
   double  *a;
 } pevsl_Csr;
 
+#define PEVSL_CSRNNZ(A) A->ia[A->nrows]
 
 /*! 
  * @brief pEVSL communicator
@@ -113,7 +114,8 @@ typedef struct _pevsl_parcsr {
     /* off-diagonal part of Ai (external) : A(my_row_range, ~my_col_range) */
     pevsl_Csr *offd;
 
-    /* NOTE: columns are *local* indices. Use col_map_offd for mapping them back to global indices */
+    /* global idx of the columns of offd, of size 'offd->ncols'
+     * NOTE: columns are *local* indices. Use col_map_offd for mapping them back to global indices */
     int *col_map_offd;
 
 } pevsl_Parcsr;
