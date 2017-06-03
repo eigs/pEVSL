@@ -6,6 +6,8 @@
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
+  
+#define ICNTL(I) icntl[(I)-1] /* macro s.t. indices match documentation */
 
 int lapgen(int nx, int ny, int nz, int m1, int m2, pevsl_Coo *coo, pevsl_Csr *csr);
 int ParcsrLaplace(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_col_starts_in, MPI_Comm comm);
@@ -31,7 +33,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- pEVSL communicator, which contains all the communicators */
   pevsl_Comm comm;
   pevsl_Coo coo_local;
-  pevsl_Parvec vinit;
+  pevsl_Parvec rhs;
   pevsl_Polparams pol;
   FILE *fstats = NULL;
   /*--------------------- Initialize MPI */
@@ -78,8 +80,6 @@ int main(int argc, char *argv[]) {
   // [Important]: the last arg is the MPI_Comm that this matrix will reside on
   // so A is defined on each group
   ParcsrLaplace(&A, nx, ny, nz, NULL, comm.comm_group);
-  /*------------------- local coo matrix (1-based indices) */
-  pEVSL_ParcsrGetLocalMat(&A, 1, &coo_local, NULL);
   /*-------------------- MUMPS */
   DMUMPS_STRUC_C solver;
   solver.comm_fortran = (MUMPS_INT) MPI_Comm_c2f(comm.comm_group);
@@ -87,14 +87,29 @@ int main(int argc, char *argv[]) {
   solver.sym = 1; /* SPD */
   solver.job = -1; /* initialization */
   dmumps_c(&solver);
-  #define ICNTL(I) icntl[(I)-1] /* macro s.t. indices match documentation */
+  /*------------------- local coo matrix (1-based indices) */
+  pEVSL_ParcsrGetLocalMat(&A, 1, &coo_local, NULL);
   solver.ICNTL(18) = 3; /* distributed matrix */
-  solver.ICNTL(21) = 1; /* distributed solution */
   //solver.ICNTL(28) = 2; /* parallel ordering */
   //solver.ICNTL(29) = 2; /* parmetis */
+  solver.n = n;
+  //solver.nnz = pEVSL_ParcsrNnz(&A);
+  solver.nnz_loc = pEVSL_ParcsrLocalNnz(&A);
+  solver.irn_loc = coo_local.ir;
+  solver.jcn_loc = coo_local.jc;
+  solver.A_loc = coo_local.vv;
+  solver.job = 4;
+  dmumps_c(&solver);
   /*------------------- Create parallel vector: random rhs guess */
-  pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, A.comm, &vinit);
-  pEVSL_ParvecRand(&vinit);
+  //solver.ICNTL(20) = 0; /* dense rhs */
+  //solver.ICNTL(21) = 0; /* centralized solution */
+  pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, A.comm, &rhs);
+  pEVSL_ParvecRand(&rhs);
+  /*------------------- gather rhs to root */
+  double *rhs_global = (double *) malloc(n*sizeof(double));
+  if (comm.group_rank == 0) {
+  }
+  
 
   if (fstats) fclose(fstats);
   pEVSL_FreeCoo(&coo_local);

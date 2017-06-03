@@ -313,3 +313,21 @@ int pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int cooidx, pevsl_Coo *coo,
   return 0;
 }
 
+int pEVSL_ParcsrNnz(pevsl_Parcsr *A) {
+  int nnz_global, nnz_local;
+  pevsl_Csr *Ad = A->diag;
+  pevsl_Csr *Ao = A->offd;
+  int nnz_local = PEVSL_CSRNNZ(Ad) + PEVSL_CSRNNZ(Ao);
+  MPI_Allreduce(&nnz_local, &nnz_global, 1, MPI_INT, MPI_SUM, A->comm);
+  
+  return nnz_global;
+}
+
+int pEVSL_ParcsrLocalNnz(pevsl_Parcsr *A) {
+  pevsl_Csr *Ad = A->diag;
+  pevsl_Csr *Ao = A->offd;
+  int nnz_local = PEVSL_CSRNNZ(Ad) + PEVSL_CSRNNZ(Ao);
+  
+  return nnz_local;
+}
+
