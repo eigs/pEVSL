@@ -46,7 +46,7 @@
  * ------------------------------------------------------------ */
 int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
                     pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvec **Wo, 
-                    double **reso, MPI_Comm comm, FILE *fstats) {
+                    double **reso, FILE *fstats) {
   /*-------------------- for stats */
   double tr0, tr1;
   double *y, flami; 
@@ -60,7 +60,9 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   //char cN = 'N';   
   //int one = 1;
   //double done=1.0,dzero=0.0;
-  /*-------------------- MPI rank in comm */
+  /* MPI communicator */
+  MPI_Comm comm = vinit->comm;
+  /*-------------------- rank in comm */
   MPI_Comm_rank(comm, &rank);
   /*-------------------- Ntest = when to start testing convergence */
   int Ntest = 30; 
@@ -86,19 +88,19 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   double bb = intv[1];
   int deg = pol->deg;
   if (do_print) {
-    pEVSL_Printf0(rank, fstats, " ** Cheb Poly of deg = %d, gam = %.15e, bar: %.15e\n", 
+    pEVSL_fprintf0(rank, fstats, " ** Cheb Poly of deg = %d, gam = %.15e, bar: %.15e\n", 
                   deg, gamB, bar);
   }
   /*-------------------- gamB must be within [-1, 1] */
   if (gamB > 1.0 || gamB < -1.0) {
-    pEVSL_Printf0(rank, stdout, "gamB error %.15e\n", gamB);
+    pEVSL_fprintf0(rank, stdout, "gamB error %.15e\n", gamB);
     return -1;
   }
   /*-----------------------------------------------------------------------* 
    * *Non-restarted* Lanczos iteration 
    *-----------------------------------------------------------------------*/
   if (do_print) {
-    pEVSL_Printf0(rank, fstats, " ** Cheb-LanNr \n");
+    pEVSL_fprintf0(rank, fstats, " ** Cheb-LanNr \n");
   }
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
   pevsl_Parvec *V, *Rvec, *Z;
@@ -175,7 +177,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   /*--------------------  Lanczos recurrence coefficients */
   double alpha, beta=0.0;
   int count = 0;
-  // ---------------- main Lanczos loop 
+  // ---------------- main Lanczos loop
   for (k=0; k<maxit; k++) {
     /*-------------------- quick reference to Z(:,k-1) when k>0*/
     zold = k > 0 ? Z+k-1 : NULL;
@@ -207,7 +209,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
       /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
       MGS_DGKS2(k+1, NGS_MAX, Z, V, znew);
       /* vnew = B \ znew */
-      pevsl_data.Bsol->func(znew, vnew, pevsl_data.Bsol->data);
+      pEVSL_SolveB(znew, vnew);
       /*-------------------- beta = (vnew, znew)^{1/2} */
       pEVSL_ParvecDot(vnew, znew, &beta);
       beta = sqrt(beta);
@@ -221,7 +223,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     /*-------------------- lucky breakdown test */
     if (beta*nwn < orthTol*wn) {
       if (do_print) {
-        pEVSL_Printf0(rank, fstats, "it %4d: Lucky breakdown, beta = %.15e\n", k, beta);
+        pEVSL_fprintf0(rank, fstats, "it %4d: Lucky breakdown, beta = %.15e\n", k, beta);
       }
 #if FILTER_VINIT
       /*------------------ generate a new init vector */
@@ -291,8 +293,8 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     }
 
     if (do_print) {
-      pEVSL_Printf0(rank, fstats, "k %4d:   nMV %8d, nconv %4d  tr1 %21.15e\n",
-                    k, nmv, nconv,tr1);
+      pEVSL_fprintf0(rank, fstats, "k %4d:   nMV %8d, nconv %4d  tr1 %21.15e\n",
+                     k, nmv, nconv,tr1);
     }
     /* -------------------- simple test because all eigenvalues
                             are between gamB and ~1. */
@@ -327,7 +329,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     */
     /*-------------------- compute Ritz vectors */
     u = &Rvec[nev];
-    pEVSL_ParvecSetScalar(u, 0.0);
+    pEVSL_ParvecSetZero(u);
     for (j=0; j<kdim; j++) {
       pEVSL_ParvecAxpy(y[j], V+j, u);
     }

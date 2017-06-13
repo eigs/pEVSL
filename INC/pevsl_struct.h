@@ -25,6 +25,9 @@ typedef struct _pevsl_csrMat {
   double  *a;
 } pevsl_Csr;
 
+/*!
+ * @brief macro to obtain number of nonzeros of a CSR matrix 
+ */
 #define PEVSL_CSRNNZ(A) A->ia[A->nrows]
 
 /*! 
@@ -51,21 +54,21 @@ typedef struct _pevsl_Comm {
  * 
  */ 
 typedef struct _commHandle {
-    int num_proc_send_to; /**< num of procs to send data to */
-    int *proc_send_to;    /**< ranks of these procs */
-    int *send_elmts_ids;  /**< local ids of all sending data */
-    int *send_elmts_ptr;  /**< starting ptr of each piece of sending data, size of num_proc_send_to+1 */
+  int num_proc_send_to; /**< num of procs to send data to */
+  int *proc_send_to;    /**< ranks of these procs */
+  int *send_elmts_ids;  /**< local ids of all sending data */
+  int *send_elmts_ptr;  /**< starting ptr of each piece of sending data, size of num_proc_send_to+1 */
 
-    int num_proc_recv_from; /**< num of procs to receive data from */
-    int *proc_recv_from;    /**< ranks of these procs */
-    int *recv_elmts_ptr;    /**< starting ptr of each piece of data reiceived [from each proc], size of num_proc_recv_from+1 */
+  int num_proc_recv_from; /**< num of procs to receive data from */
+  int *proc_recv_from;    /**< ranks of these procs */
+  int *recv_elmts_ptr;    /**< starting ptr of each piece of data reiceived [from each proc], size of num_proc_recv_from+1 */
 
-    double *send_buf;
-    double *recv_buf;
-    MPI_Request *send_requests;
-    MPI_Status *send_status;
-    MPI_Request *recv_requests;
-    MPI_Status *recv_status;
+  double *send_buf;
+  double *recv_buf;
+  MPI_Request *send_requests;
+  MPI_Status *send_status;
+  MPI_Request *recv_requests;
+  MPI_Status *recv_status;
 } commHandle;
 
 
@@ -74,49 +77,49 @@ typedef struct _commHandle {
  * 
  */ 
 typedef struct _pevsl_parcsr {
-    MPI_Comm comm;          /**< mpi communicator that this matrix reside on */
+  /**< mpi communicator that this matrix resides on */
+  MPI_Comm comm;
+  //MPI_Comm comm_global;
+  //MPI_Comm comm_group;
 
-    MPI_Comm comm_global;
-    MPI_Comm comm_group;
+  /* handle communications involved in parCSR matvec */
+  commHandle *comm_handle;
 
-    /* handle communications involved in parCSR matvec */
-    commHandle *comm_handle;
+  int nrow_global;
+  int ncol_global;
+  int nrow_local;
+  int ncol_local;
 
-    int nrow_global;
-    int ncol_global;
-    int nrow_local;
-    int ncol_local;
+  /* np: num of processors in comm, e.g., a group */
+  /* array of length np+1, row_starts[i]: global index of the first row on proc i, row_starts[np] = nrow_global*/
+  int *row_starts;
+  /* array of length np+1, col_starts[i]: global index of the first column of the diag part on proc i, col_starts[np] = ncol_global */
+  int *col_starts;
 
-    /* np: num of processors in comm, e.g., a group */
-    /* array of length np+1, row_starts[i]: global index of the first row on proc i, row_starts[np] = nrow_global*/
-    int *row_starts;
-    /* array of length np+1, col_starts[i]: global index of the first column of the diag part on proc i, col_starts[np] = ncol_global */
-    int *col_starts;
+  /* my_first_row = row_starts[myrank],
+   * my_first_col = col_starts[myrank]
+   * my_row_range = [my_first_row : my_first_row + nrow_local-1]
+   * my_col_range = [my_first_col : my_first_col + ncol_local-1]
+   * 
+   * For square matrix: row_range and col_range are often set to be the same
+   * We reserve these for rectangular matrices (may not be useful EVSL though)
+   *
+   * NOTE: if row_starts or col_starts == NULL, it means that the default 1D partitioning is used
+   * Using routine evsl_Part1d can easily decide all the info regarding the partitioning
+   */
 
-    /* my_first_row = row_starts[myrank],
-     * my_first_col = col_starts[myrank]
-     * my_row_range = [my_first_row : my_first_row + nrow_local-1]
-     * my_col_range = [my_first_col : my_first_col + ncol_local-1]
-     * 
-     * For square matrix: row_range and col_range are often set to be the same
-     * We reserve these for rectangular matrices (may not be useful EVSL though)
-     *
-     * NOTE: if row_starts or col_starts == NULL, it means that the default 1D partitioning is used
-     * Using routine evsl_Part1d can easily decide all the info regarding the partitioning
-     */
+  int first_row;
+  int first_col;
 
-    int first_row;
-    int first_col;
+  /* diagonal    part of Ai    (local) : A(my_row_range, my_col_range) */
+  pevsl_Csr *diag;
 
-    /* diagonal    part of Ai    (local) : A(my_row_range, my_col_range) */
-    pevsl_Csr *diag;
+  /* off-diagonal part of Ai (external) : A(my_row_range, ~my_col_range) */
+  pevsl_Csr *offd;
 
-    /* off-diagonal part of Ai (external) : A(my_row_range, ~my_col_range) */
-    pevsl_Csr *offd;
-
-    /* global idx of the columns of offd, of size 'offd->ncols'
-     * NOTE: columns are *local* indices. Use col_map_offd for mapping them back to global indices */
-    int *col_map_offd;
+  /* global idx of the columns of offd, of size 'offd->ncols'
+   * NOTE: columns are *local* indices. Use col_map_offd for mapping them back to global indices */
+  int *col_map_offd;
 
 } pevsl_Parcsr;
 
@@ -125,11 +128,11 @@ typedef struct _pevsl_parcsr {
  * 
  */ 
 typedef struct _pevsl_parvec {
-    MPI_Comm comm;
-    int n_global;
-    int n_local;
-    //int n_first;
-    double *data;
+  MPI_Comm comm;
+  int n_global;
+  int n_local;
+  //int n_first;
+  double *data;
 } pevsl_Parvec;
 
 
@@ -138,16 +141,16 @@ typedef struct _pevsl_parvec {
  *
  */
 typedef struct _pevsl_Stat {
-    // timing
-    double t_comm_create;
-    double t_matrix_create;
-    double t_slicer_create;
-    double t_slicer_apply;
-    double t_filteig_solve;
-    // memory
-    size_t alloced;
-    size_t alloced_total;
-    size_t alloced_max;
+  // timing
+  double t_comm_create;
+  double t_matrix_create;
+  double t_slicer_create;
+  double t_slicer_apply;
+  double t_filteig_solve;
+  // memory
+  size_t alloced;
+  size_t alloced_total;
+  size_t alloced_max;
 } pevsl_Stat;
 
 /* global variable: pevsl_stats */
@@ -181,10 +184,10 @@ typedef struct _pevsl_polparams {
   /** @name both input to and output from find_pol */
   /**@{*/
   int deg ;           /**< if deg == 0 before calling find_deg then
-                       the polynomial degree is  computed
-                       internally. Otherwise it is of degree deg.
-                       [and  thresh_ext and thresh_int are not used]
-                       default value=0, set by call to set_pol_def */
+                        the polynomial degree is  computed
+                        internally. Otherwise it is of degree deg.
+                        [and  thresh_ext and thresh_int are not used]
+                        default value=0, set by call to set_pol_def */
   /**@}*/
 } pevsl_Polparams;
 
@@ -200,9 +203,11 @@ typedef struct _pevsl_polparams {
 typedef void (*SolFuncC)(pevsl_Parvec *br, pevsl_Parvec *bz, pevsl_Parvec *xr, pevsl_Parvec *xz, void *data);
 
 /** 
- * @brief function prototype for applying the solve B x = b
+ * @brief function prototype for applying the solve B x = b 
+ * [the most general form]
  */
-typedef void (*SolFuncR)(pevsl_Parvec *b, pevsl_Parvec *x, void *data);
+//typedef void (*SolFuncR)(pevsl_Parvec *b, pevsl_Parvec *x, void *data);
+typedef void (*SolFuncR)(double *b, double *x, void *data);
 
 /**
  * @brief matvec function prototype 

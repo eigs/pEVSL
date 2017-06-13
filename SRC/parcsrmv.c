@@ -40,7 +40,8 @@ void pEVSL_ParcsrMatvecCommEnd(pevsl_Parcsr *A) {
     PEVSL_CHKERR(err != MPI_SUCCESS);
 }
 
-void pEVSL_ParcsrMatvec(double *x, double *y, void *data) {
+/* @brief The most general form of ParcsrMatvec */
+void pEVSL_ParcsrMatvec0(double *x, double *y, void *data) {
     pevsl_Parcsr *A = (pevsl_Parcsr *) data;
      
     pEVSL_ParcsrMatvecCommBegin(A, x);
@@ -50,5 +51,9 @@ void pEVSL_ParcsrMatvec(double *x, double *y, void *data) {
     if (A->offd->ncols > 0) {
         pEVSL_MatvecGen(1.0, A->offd, A->comm_handle->recv_buf, 1.0, y);
     }
+}
+
+void pEVSL_ParcsrMatvec(pevsl_Parcsr *A, pevsl_Parvec *x, pevsl_Parvec *y) {
+  pEVSL_ParcsrMatvec0(x->data, y->data, (void *) A);
 }
 

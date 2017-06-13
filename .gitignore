@@ -35,6 +35,7 @@
 *.i*86
 *.x86_64
 *.hex
+*.ex
 
 # Debug files
 *.dSYM/
@@ -42,11 +43,9 @@
 *.idb
 *.pdb
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+# Vi swp files
+*.swp
+*.swo
+
+# Output files
+*.out

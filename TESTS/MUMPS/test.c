@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- pEVSL communicator, which contains all the communicators */
   pevsl_Comm comm;
   pevsl_Coo coo_local;
-  pevsl_Parvec rhs;
+  pevsl_Parvec rhs, sol, res, x;
   pevsl_Polparams pol;
   FILE *fstats = NULL;
   /*--------------------- Initialize MPI */
@@ -48,10 +48,10 @@ int main(int argc, char *argv[]) {
   /*-------------------- matrix A: parallel csr format */    
   pevsl_Parcsr A;
   /*-------------------- default values */
-  nx = 16;
-  ny = 16;
-  nz = 16;
-  ngroups = 3;
+  nx = 4;
+  ny = 4;
+  nz = 1;
+  ngroups = 2;
   /*-----------------------------------------------------------------------
    *-------------------- reset some default values from command line  
    *                     user input from command line */
@@ -88,33 +88,104 @@ int main(int argc, char *argv[]) {
   solver.job = -1; /* initialization */
   dmumps_c(&solver);
   /*------------------- local coo matrix (1-based indices) */
-  pEVSL_ParcsrGetLocalMat(&A, 1, &coo_local, NULL);
+  pEVSL_ParcsrGetLocalMat(&A, 1, &coo_local, NULL, 'U');
+  /* adjust the row indices of COO to global indices */
+  for (i=0; i<coo_local.nnz; i++) {
+    /* NOTE: change row indices to global ones */
+    coo_local.ir[i] += A.first_row;
+    //printf("%d %d %f\n", coo_local.ir[i], coo_local.jc[i], coo_local.vv[i]);
+  }
+  solver.ICNTL(2) = -1; /* output suppressed */
+  solver.ICNTL(3) = -1; /* output suppressed */
   solver.ICNTL(18) = 3; /* distributed matrix */
   //solver.ICNTL(28) = 2; /* parallel ordering */
   //solver.ICNTL(29) = 2; /* parmetis */
   solver.n = n;
-  //solver.nnz = pEVSL_ParcsrNnz(&A);
-  solver.nnz_loc = pEVSL_ParcsrLocalNnz(&A);
+  solver.nnz_loc = coo_local.nnz;
   solver.irn_loc = coo_local.ir;
   solver.jcn_loc = coo_local.jc;
-  solver.A_loc = coo_local.vv;
+  solver.a_loc = coo_local.vv;
   solver.job = 4;
   dmumps_c(&solver);
   /*------------------- Create parallel vector: random rhs guess */
   //solver.ICNTL(20) = 0; /* dense rhs */
   //solver.ICNTL(21) = 0; /* centralized solution */
   pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, A.comm, &rhs);
+  pEVSL_ParvecDupl(&rhs, &x);
+  pEVSL_ParvecSetScalar(&x, 1.0);
+  //pEVSL_ParcsrMatvec(&A, &x, &rhs);
   pEVSL_ParvecRand(&rhs);
   /*------------------- gather rhs to root */
-  double *rhs_global = (double *) malloc(n*sizeof(double));
+  double *rhs_global = NULL;
+  int *ncols = NULL, *icols = NULL;
   if (comm.group_rank == 0) {
+    rhs_global = (double *) malloc(n*sizeof(double));
+    ncols = (int *) malloc(comm.group_size*sizeof(int));
+    icols = (int *) malloc(comm.group_size*sizeof(int));
+    for (i=0; i<comm.group_size; i++) {
+      int j1, j2;
+      pEVSL_Part1d(n, comm.group_size, &i, &j1, &j2, 1);
+      ncols[i] = j2-j1;
+      icols[i] = j1;
+    }
   }
+  MPI_Gatherv(rhs.data, rhs.n_local, MPI_DOUBLE, rhs_global,
+              ncols, icols, MPI_DOUBLE, 0, comm.comm_group);
+  /*
+  if (comm.group_rank == 0) {
+    for (i=0; i<n; i++) {
+      printf("%e\n", rhs_global[i]);
+    }
+  }
+  */
+  /*----------------- solve */
+  solver.rhs = rhs_global;
+  solver.job = 3;
+  dmumps_c(&solver);
+
+  if (solver.infog[0] != 0) {
+    printf(" (PROC %d) ERROR RETURN: \tINFOG(1)= %d\n\t\t\t\tINFOG(2)= %d\n",
+           0, solver.infog[0], solver.infog[1]);
+  }
+
+  /*
+  if (comm.group_rank == 0) {
+    for (i=0; i<n; i++) {
+      printf("%e\n", rhs_global[i]);
+    }
+  }
+  */
+  /*----------------- distribute the solution */
+  pEVSL_ParvecDupl(&rhs, &sol);
+  MPI_Scatterv(rhs_global, ncols, icols, MPI_DOUBLE, sol.data, sol.n_local,
+               MPI_DOUBLE, 0, comm.comm_group);
+
+  if (comm.group_rank == 0) {
+    free(rhs_global);
+    free(ncols);
+    free(icols);
+  }
+  /*----------------- check residual */
+  double nrm, nrmb;
+  pEVSL_ParvecNrm2(&rhs, &nrmb);
+  pEVSL_ParvecDupl(&rhs, &res);
+  pEVSL_ParcsrMatvec(&A, &sol, &res);
+  pEVSL_ParvecAxpy(-1.0, &rhs, &res);
+  pEVSL_ParvecNrm2(&res, &nrm);
   
+  printf("res norm = %e\n", nrm / nrmb); fflush(stdout);
+  
+  /*----------------- done */
+  solver.job = -2;
+  dmumps_c(&solver);
 
   if (fstats) fclose(fstats);
   pEVSL_FreeCoo(&coo_local);
   pEVSL_ParcsrFree(&A);
-  pEVSL_ParvecFree(&vinit);
+  pEVSL_ParvecFree(&rhs);
+  pEVSL_ParvecFree(&sol);
+  pEVSL_ParvecFree(&res);
+  pEVSL_ParvecFree(&x);
 
   pEVSL_CommFree(&comm);
 

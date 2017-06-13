@@ -1,0 +1,20 @@
+## MUMPS, PARMETIS, SCALAPACK dirs
+MUMPS_DIR = /home/ruipeng/workspace/MUMPS_5.1.1
+METIS_DIR = /home/ruipeng/workspace/parmetis-4.0.3/build/Linux-x86_64
+SCALP_DIR = /home/ruipeng/workspace/scalapack-2.0.2
+
+## LIBS
+LIBMUMPS_COMMON = -L$(MUMPS_DIR)/lib -lmumps_common
+LIBDMUMPS       = -L$(MUMPS_DIR)/lib -ldmumps 
+LIBPORD         = -L$(MUMPS_DIR)/lib -lpord
+LIBPARMETIS     = -L$(METIS_DIR)/libparmetis -lparmetis 
+LIBMETIS        = -L$(METIS_DIR)/libmetis -lmetis
+LIBSCALAP       = -L$(SCALP_DIR) -lscalapack
+
+LIBEXT = $(LIBDMUMPS) $(LIBMUMPS_COMMON) $(LIBPARMETIS) \
+	 $(LIBMETIS) $(LIBPORD) $(LIBSCALAP)
+
+## INCLUDES
+MUMPS_INC = -I$(MUMPS_DIR)/include
+
+#LIBORDER  = $(LMETIS) $(LPORD)

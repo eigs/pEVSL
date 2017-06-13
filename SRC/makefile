@@ -6,14 +6,11 @@ include ../makefile.in
 AR = ar rv
 RANLIB = ranlib
 
-# Common flags
-FLAGS = -DUNIX -O3 -g -Wall $(NO_DEBUG) $(TIMING)
-
 INCLUDES = -I../INC 
 
 # Object files
-OBJS = cheblanNr.o chebpol.o comm.o lantrbnd.o pevsl.o miscla.o parcsr.o parcsrmv.o parvec.o spmat.o utils.o \
-       vector.o \
+OBJS = cheblanNr.o chebpol.o comm.o lantrbnd.o pevsl.o miscla.o parcsr.o \
+       parcsrmv.o parvec.o spmat.o utils.o vector.o \
        ../FORTRAN/pevsl_f90.o
        
 LIB = ../libpevsl.a

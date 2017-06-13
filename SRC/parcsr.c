@@ -263,39 +263,71 @@ void pEVSL_ParcsrFree(pevsl_Parcsr *A) {
     PEVSL_FREE(A->col_map_offd);
 }
 
+/* extract the local matrix from Parcsr
+ * local matrix of size m_local x N_global
+ * Row indices: LOCAL, Col indices: GLOBAL
+ * coo: local matrix in coo format  
+ * csr: local matrix in csr format
+ * stype: 'L' or 'l', only return the "global" lower triangular portion 
+ *        'U' or 'u', only return the "global" upper triangular portion 
+ *        others    ,      return the "entire" local matrix 
+ * */
 int pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int cooidx, pevsl_Coo *coo, 
-                            pevsl_Csr *csr) {
+                            pevsl_Csr *csr, char stype) {
+  /* upper case letter */
+  stype = toupper(stype);
+  if (stype != 'L' && stype != 'U') {
+    stype = 'A';
+  }
   pevsl_Csr *Ad = A->diag;
   pevsl_Csr *Ao = A->offd;
   int local_nnz = PEVSL_CSRNNZ(Ad) + PEVSL_CSRNNZ(Ao);
-  int i, j, k=0, nrow, ncol, fcol;
+  int i, j, k=0, nrow, ncol, fcol, frow;
   /* local csr matrix : slice of rows */
   pevsl_Csr csr_local;
   nrow = A->nrow_local;
   ncol = A->ncol_global;
+  frow = A->first_row;
   fcol = A->first_col;
   pEVSL_CsrResize(nrow, ncol, local_nnz, &csr_local);
   csr_local.ia[0] = 0;
   /* for each row i */
   for (i=0; i<nrow; i++) {
+    /* global row/col idx */
+    int g_row, g_col;
+    g_row = i + frow;
     /* diag block */
     for (j=Ad->ia[i]; j<Ad->ia[i+1]; j++) {
-      /* adjust to global idx */
-      csr_local.ja[k] = Ad->ja[j] + fcol;
-      csr_local.a[k] = Ad->a[j];
-      k++;
+      /* global col idx */
+      g_col = Ad->ja[j] + fcol;
+      if ((stype == 'L' && g_row >= g_col) ||
+          (stype == 'U' && g_row <= g_col) ||
+          (stype == 'A'))
+      {
+        csr_local.ja[k] = g_col;
+        csr_local.a[k] = Ad->a[j];
+        k++;
+      }
     }
     /* off-diag block */
     for (j=Ao->ia[i]; j<Ao->ia[i+1]; j++) {
-      /* adjust to global idx */
-      csr_local.ja[k] = A->col_map_offd[Ao->ja[j]];
-      csr_local.a[k] = Ao->a[j];
-      k++;
+      /* global col idx */
+      g_col = A->col_map_offd[Ao->ja[j]];
+      if ((stype == 'L' && g_row >= g_col) ||
+          (stype == 'U' && g_row <= g_col) ||
+          (stype == 'A'))
+      {
+        csr_local.ja[k] = g_col;
+        csr_local.a[k] = Ao->a[j];
+        k++;
+      }
     }
     /* row ptr */
     csr_local.ia[i+1] = k;
   }
-  PEVSL_CHKERR(k != local_nnz);
+
+  PEVSL_CHKERR(k > local_nnz);
+  PEVSL_CHKERR(stype == 'A' && k != local_nnz);
 
   /* sort row */
   pEVSL_SortRow(&csr_local);
@@ -317,7 +349,7 @@ int pEVSL_ParcsrNnz(pevsl_Parcsr *A) {
   int nnz_global, nnz_local;
   pevsl_Csr *Ad = A->diag;
   pevsl_Csr *Ao = A->offd;
-  int nnz_local = PEVSL_CSRNNZ(Ad) + PEVSL_CSRNNZ(Ao);
+  nnz_local = PEVSL_CSRNNZ(Ad) + PEVSL_CSRNNZ(Ao);
   MPI_Allreduce(&nnz_local, &nnz_global, 1, MPI_INT, MPI_SUM, A->comm);
   
   return nnz_global;

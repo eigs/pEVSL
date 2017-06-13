@@ -127,7 +127,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
     /* ! add a test if dimension exceeds (m+1) 
      * (trlen + 1) + min_inner_step <= lanm + 1 */
     if (k+min_inner_step > lanm1) {
-      pEVSL_Printf0(rank, stderr, "Krylov dim too small for this problem. Try a larger dim\n");
+      pEVSL_fprintf0(rank, stderr, "Krylov dim too small for this problem. Try a larger dim\n");
       exit(1);
     }
     /*-------------------- thick restart special step */
@@ -164,7 +164,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
       wn += fabs(s[k1]);
       if (pevsl_data.ifGenEv) {
         /*-------------------- vnew = B \ znew */
-        pevsl_data.Bsol->func(znew, vnew, pevsl_data.Bsol->data);
+        pEVSL_SolveB(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         pEVSL_ParvecDot(vnew, znew, &beta);
         beta = sqrt(beta);
@@ -243,7 +243,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         MGS_DGKS2(k, NGS_MAX, Z, V, znew);
         /* vnew = B \ znew */
-        pevsl_data.Bsol->func(znew, vnew, pevsl_data.Bsol->data);
+        pEVSL_SolveB(znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         pEVSL_ParvecDot(vnew, znew, &beta);
         beta = sqrt(beta);
@@ -259,7 +259,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
       /*-------------------- lucky breakdown test */
       if (beta*nwn < orthTol*wn) {
         if (do_print) {
-          pEVSL_Printf0(rank, fstats, "it %4d: Lucky breakdown, beta = %.15e\n", it, beta);
+          pEVSL_fprintf0(rank, fstats, "it %4d: Lucky breakdown, beta = %.15e\n", it, beta);
         }
         /* generate a new init vector */
         pEVSL_ParvecRand(vnew);
@@ -320,20 +320,20 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
     /*---------------------- Compute two Ritz vectors: 
      *                       Rvec(:,1) = V(:,1:k) * EvecT(:,1) 
      *                       Rvec(:,end) = V(:,1:k) * EvecT(:,end) */
-    pEVSL_ParvecSetScalar(&Rvec[0], 0.0);
+    pEVSL_ParvecSetZero(&Rvec[0]);
     for (i=0; i<k; i++) {
       pEVSL_ParvecAxpy(EvecT[i], V+i, &Rvec[0]);
     }
-    pEVSL_ParvecSetScalar(&Rvec[1], 0.0);     
+    pEVSL_ParvecSetZero(&Rvec[1]);     
     for (i=0; i<k; i++) {
       pEVSL_ParvecAxpy(EvecT[(k-1)*lanm1+i], V+i, &Rvec[1]);
     }      
     if (pevsl_data.ifGenEv) {
-      pEVSL_ParvecSetScalar(&BRvec[0], 0.0);
+      pEVSL_ParvecSetZero(&BRvec[0]);
       for (i=0; i<k; i++) {
         pEVSL_ParvecAxpy(EvecT[i], Z+i, &BRvec[0]);
       }
-      pEVSL_ParvecSetScalar(&BRvec[1], 0.0);     
+      pEVSL_ParvecSetZero(&BRvec[1]);     
       for (i=0; i<k; i++) {
         pEVSL_ParvecAxpy(EvecT[(k-1)*lanm1+i], Z+i, &BRvec[1]);
       }      
@@ -353,7 +353,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
 #if COMP_RES
 #else
     if (do_print) {
-      pEVSL_Printf0(rank, fstats,"it %4d, k %3d: ritz %.15e %.15e, t1,t2 %e %e, res %.15e %.15e\n", 
+      pEVSL_fprintf0(rank, fstats,"it %4d, k %3d: ritz %.15e %.15e, t1,t2 %e %e, res %.15e %.15e\n", 
                     it, k, Rval[0], Rval[1], t1, t2, fabs(s[0]), fabs(s[1]));
     }
 #endif

@@ -2,6 +2,9 @@
 CC = mpicc
 LINK = $(CC)
 
+# Common flags
+FLAGS = -DUNIX -O3 -g -Wall $(NO_DEBUG) $(TIMING)
+
 ##OBJ_TIME = mactime.o
 OBJ_TIME = timing.o 
 

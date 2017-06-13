@@ -2,6 +2,7 @@
 #include <mpi.h>
 #include "pevsl.h"
 #include "io.h"
+#include "pevsl_mumps.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -27,7 +28,7 @@ int main(int argc, char *argv[]) {
   int n, nx, ny, nz, i, j, npts, nslices, nvec, Mdeg, nev, 
       ngroups, mlan, ev_int, sl, flg, ierr, np, rank;
   /* find the eigenvalues of A in the interval [a,b] */
-  double a, b, lmax, lmin, ecount, tol, *sli, *mu;
+  double a, b, lmax, lmin, ecount, tol, *sli /*, *mu */;
   double xintv[4];
   double *xdos, *ydos;
   /*-------------------- pEVSL communicator, which contains all the communicators */
@@ -44,14 +45,16 @@ int main(int argc, char *argv[]) {
   /*-------------------- size and rank */
   MPI_Comm_size(MPI_COMM_WORLD, &np);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  /*-------------------- matrix A: parallel csr format */    
-  pevsl_Parcsr A;
+  /*-------------------- matrices A, B: parallel csr format */    
+  pevsl_Parcsr A, B;
+  /*-------------------- Bsol */
+  BSolDataMumps Bsol;
   /*-------------------- default values */
-  nx = 16;
-  ny = 16;
-  nz = 16;
-  a  = 0.4;
-  b  = 0.5;
+  nx = 8;
+  ny = 8;
+  nz = 8;
+  a  = 1.5;
+  b  = 2.5;
   nslices = 1;
   ngroups = 1;
   /*-----------------------------------------------------------------------
@@ -68,20 +71,11 @@ int main(int argc, char *argv[]) {
   flg = findarg("a", DOUBLE, &a, argc, argv);
   flg = findarg("b", DOUBLE, &b, argc, argv);
   flg = findarg("nslices", INT, &nslices, argc, argv);
-  /*-------------------- eigenvalue bounds set by hand */
-  lmin = 0.0;  
-  lmax = nz == 1 ? 8.0 : 12.0;
-  xintv[0] = a;
-  xintv[1] = b;
-  xintv[2] = lmin;
-  xintv[3] = lmax;
-  tol  = 1e-8;
-  n = nx * ny * nz;
-  /*-------------------- */
   /*-------------------- start pEVSL */
   pEVSL_Start(argc, argv);
   /*-------------------- Create communicators for groups, group leaders */
   pEVSL_CommCreate(&comm, MPI_COMM_WORLD, ngroups);
+
   /*-------------------- Group leader (group_rank == 0) creates output file */
   if (comm.group_rank == 0) {
     char fname[1024];
@@ -90,11 +84,19 @@ int main(int argc, char *argv[]) {
       printf(" failed in opening output file in OUT/\n");
       fstats = stdout;
     }
-    fprintf(fstats, " nx %d ny %d nz %d, nslices %d, a = %e b = %e\n", 
-            nx, ny, nz, nslices, a, b);
   }
+  /*-------------------- matrix size */
+  n = nx * ny * nz;
+  /*-------------------- stopping tol */
+  tol = 1e-8;
+  /*-------------------- output the problem settings */
+  pEVSL_fprintf0(comm.group_rank, fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
+  pEVSL_fprintf0(comm.group_rank,fstats, "Laplacian A : %d x %d x %d, n = %d\n", nx, ny, nz, n);
+  pEVSL_fprintf0(comm.group_rank,fstats, "Laplacian B : %d x %d, n = %d\n", nx*ny*nz, 1, n);
+  pEVSL_fprintf0(comm.group_rank,fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
+  /*-------------------- generate 1D/3D Laplacian Parcsr matrices */
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  //            Create Parcsr (Parallel CSR) matrix A
+  //            Create Parcsr (Parallel CSR) matrices A and B
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // each proc group has a separate copy of parallel CSR A
   // the 5th argument is the row and col partitionings of A, 
@@ -102,27 +104,39 @@ int main(int argc, char *argv[]) {
   // [Important]: the last arg is the MPI_Comm that this matrix will reside on
   // so A is defined on each group
   ParcsrLaplace(&A, nx, ny, nz, NULL, comm.comm_group);
-  
-  /*-------------------- set matrix A */
+  ParcsrLaplace(&B, nx*ny*nz, 1, 1, NULL, comm.comm_group);
+  /*-------------------- set the left-hand side matrix A */
   pEVSL_SetAParcsr(&A);
+  /*-------------------- set the left-hand side matrix A */
+  pEVSL_SetBParcsr(&B);
+  /*-------------------- use MUMPS as the solver for B */
+  SetupBSolMumps(&B, &Bsol);
+  /*-------------------- set the solver for B */
+  pEVSL_SetBSol(BSolMumps, (void *) &Bsol);
+  /*-------------------- for generalized eigenvalue problem */
+  pEVSL_SetGenEig();
+  /*-------------------- step 0: get eigenvalue bounds */
+  /*-------------------- random initial guess */
+  pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, comm.comm_group, &vinit);
+  pEVSL_ParvecRand(&vinit);
+  /*-------------------- bounds by TR-Lanczos */
+  ierr = pEVSL_LanTrbounds(50, 200, 1e-8, &vinit, 1, &lmin, &lmax, comm.comm_group, fstats);
+  pEVSL_fprintf0(comm.group_rank, fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n",
+                 lmin, lmax);
+  /*-------------------- interval and eig bounds */
+  xintv[0] = a;
+  xintv[1] = b;
+  xintv[2] = lmin;
+  xintv[3] = lmax;
   /*-------------------- call DOS */
-  mu = (double *) malloc((Mdeg+1)*sizeof(double));
+  //mu = (double *) malloc((Mdeg+1)*sizeof(double));
   sli = (double *) malloc((nslices+1)*sizeof(double));
   /*------------------- trivial */
   linspace(a, b, nslices+1, sli);      
-  /*------------------- Create parallel vector: random initial guess */
-  pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, A.comm, &vinit);
-  pEVSL_ParvecRand(&vinit);
-
-  //double ll, mm;
-  //pEVSL_LanTrbounds(50, 200, 1e-10, &vinit, 1, &ll, &mm, comm.comm_group, NULL);
-  //printf("lmin = %.15e, lmax = %.15e\n", ll, mm);
-  //exit(0);
-
-  /*------------------- For each slice call ChebLanr */
+  /*------------------- each group pick one slice and call ChebLanNr */
   for (sl=comm.group_id; sl<nslices; sl+=comm.ngroups) {
-    int nev2, *ind, nev_ex;
-    double *lam, *res, *lam_ex, ai, bi;
+    int nev2, *ind;
+    double *lam, *res, ai, bi;
     pevsl_Parvec *Y;
     /*-------------------- */
     ai = sli[sl];
@@ -162,38 +176,20 @@ int main(int argc, char *argv[]) {
     sort_double(nev2, lam, ind);
     /* group leader checks the eigenvalues and print */
     if (comm.group_rank == 0) {
-      /* compute exact eigenvalues */
-      ExactEigLap3(nx, ny, nz, ai, bi, &nev_ex, &lam_ex);
-      fprintf(fstats, " number of eigenvalues: %d, found: %d\n", nev_ex, nev2);
+      fprintf(fstats, " number of eigenvalues found: %d\n", nev2);
       if (fstats != stdout) {
-        fprintf(stdout, " number of eigenvalues: %d, found: %d\n", nev_ex, nev2);
+        fprintf(stdout, " number of eigenvalues found: %d\n", nev2);
       } 
       /* print eigenvalues */
-      fprintf(fstats, "                                   Eigenvalues in [a, b]\n");
-      fprintf(fstats, "     Computed [%d]       ||Res||              Exact [%d]", nev2, nev_ex);
-      if (nev2 == nev_ex) {
-        fprintf(fstats, "                 Err");
-      }
-      fprintf(fstats, "\n");
-      for (i=0; i<max(nev2, nev_ex); i++) {
-        if (i < nev2) {
-          fprintf(fstats, "% .15e  %.1e", lam[i], res[ind[i]]);
-        } else {
-          fprintf(fstats, "                               ");
-        }
-        if (i < nev_ex) { 
-          fprintf(fstats, "        % .15e", lam_ex[i]);
-        }
-        if (nev2 == nev_ex) {
-          fprintf(fstats, "        % .1e", lam[i]-lam_ex[i]);
-        }
-        fprintf(fstats,"\n");
+      fprintf(fstats, "     Eigenvalues in [a, b]\n");
+      fprintf(fstats, "     Computed [%d]       ||Res||\n", nev2);
+      for (i=0; i<nev2; i++) {
+        fprintf(fstats, "% .15e  %.1e\n", lam[i], res[ind[i]]);
         if (i>50) {
           fprintf(fstats,"                        -- More not shown --\n");
           break;
-        } 
+        }
       }
-      free(lam_ex);
     }
     /*-------------------- free within this slice */
     if (lam) free(lam);
@@ -206,16 +202,18 @@ int main(int argc, char *argv[]) {
     free(Y);
   } /* for (sl=0 */
   
-  if (fstats) fclose(fstats);
   free(sli);
-  free(mu);
+  //free(mu);
+
+  if (fstats) {
+    fclose(fstats);
+  }
+  FreeBSolMumps(&Bsol);
   pEVSL_ParcsrFree(&A);
+  pEVSL_ParcsrFree(&B);
   pEVSL_ParvecFree(&vinit);
-
   pEVSL_CommFree(&comm);
-
   pEVSL_Finish();
-
   MPI_Finalize();
 
   return 0;

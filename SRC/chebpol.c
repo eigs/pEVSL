@@ -503,7 +503,7 @@ int pEVSL_ChebAv(pevsl_Polparams *pol, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_P
   pevsl_Parvec *tmp;
   /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
   pEVSL_ParvecCopy(v, vk);
-  pEVSL_ParvecSetScalar(vkm1, 0.0);
+  pEVSL_ParvecSetZero(vkm1);
   /*-------------------- special case: k == 0 */
   s = mu[0];
   pEVSL_ParvecCopy(vk, y);
@@ -516,7 +516,7 @@ int pEVSL_ChebAv(pevsl_Polparams *pol, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_P
     s = mu[k];
     if (pevsl_data.ifGenEv) {
       /*-------------------- Vkp1 = A*B\Vk - cc*Vk */    
-      pevsl_data.Bsol->func(vk, w2, pevsl_data.Bsol->data);
+      pEVSL_SolveB(vk, w2);
       pEVSL_MatvecA(w2, vkp1);
     } else {
       /*-------------------- Vkp1 = A*Vk - cc*Vk */    

@@ -133,7 +133,7 @@ void PEVSL_FORT(pevsl_cheblannr)(double *xintv, int *max_its, double *tol,
   pevsl_Polparams *pol = (pevsl_Polparams *) (*polf90);
   /* call ChebLanNr */ 
   ierr = pEVSL_ChebLanNr(xintv, *max_its, *tol, &vinit, pol, &nev2, &lam, 
-                         &Y, &res, comm, fstats);
+                         &Y, &res, fstats);
 
   if (ierr) {
     printf("ChebLanNr error %d\n", ierr);

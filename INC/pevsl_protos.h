@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
 #include <complex.h>
@@ -75,7 +76,7 @@ void ZGESV(int *n, int *nrow, complex double * A, int* m, int* ipiv,
 /* cheblanNr.c */
 int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
                     pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvec **Wo, 
-                    double **reso, MPI_Comm comm, FILE *fstats);
+                    double **reso, FILE *fstats);
 
 /* comm.c */
 int pEVSL_CommCreate(pevsl_Comm *comm, MPI_Comm comm_global, int ngroups);
@@ -115,11 +116,16 @@ int pEVSL_ParcsrSetup(pevsl_Csr *Ai, pevsl_Parcsr *A);
 void pEVSL_ParcsrFree(pevsl_Parcsr *A);
 
 int pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int cooidx, pevsl_Coo *coo, 
-                            pevsl_Csr *csr);
+                            pevsl_Csr *csr, char stype);
+
+int pEVSL_ParcsrNnz(pevsl_Parcsr *A);
+
+int pEVSL_ParcsrLocalNnz(pevsl_Parcsr *A);
 
 /* parcsrmv.c */
-//void pEVSL_ParcsrMatvec(pevsl_Parvec *x, pevsl_Parvec *y, void *data);
-void pEVSL_ParcsrMatvec(double *x, double *y, void *data);
+void pEVSL_ParcsrMatvec(pevsl_Parcsr *A, pevsl_Parvec *x, pevsl_Parvec *y);
+
+void pEVSL_ParcsrMatvec0(double *x, double *y, void *data);
 
 /* parvec.c */
 void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm, pevsl_Parvec *x);
@@ -140,9 +146,13 @@ void pEVSL_ParvecSum(pevsl_Parvec *x, double *t);
 
 void pEVSL_ParvecScal(pevsl_Parvec *x, double t);
 
+/*
 void pEVSL_ParvecAddScalar(pevsl_Parvec *x, double t);
 
 void pEVSL_ParvecSetScalar(pevsl_Parvec *x, double t);
+*/
+
+void pEVSL_ParvecSetZero(pevsl_Parvec *x);
 
 void pEVSL_ParvecAxpy(double a, pevsl_Parvec *x, pevsl_Parvec *y);
 
@@ -194,10 +204,10 @@ void sort_double(int n, double *v, int *ind);
 /*------------------- inline functions */
 
 /** 
- * @brief printf, only for rank == 0
+ * @brief fprintf, only for rank == 0
  * 
  * */
-static inline void pEVSL_Printf0(int rank, FILE *fp, const char *format, ...) {
+static inline void pEVSL_fprintf0(int rank, FILE *fp, const char *format, ...) {
   if (rank) {
     return;
   }
@@ -242,6 +252,23 @@ static inline void pEVSL_MatvecB(pevsl_Parvec *x, pevsl_Parvec *y) {
   //PEVSL_CHKERR( != y->n_first);
 
   pevsl_data.Bmv->func(x->data, y->data, pevsl_data.Bmv->data);
+}
+
+/**
+* @brief y = B \ x
+* This is the solve function for the matrix B in pevsl_Data
+*/
+static inline void pEVSL_SolveB(pevsl_Parvec *x, pevsl_Parvec *y) {
+  PEVSL_CHKERR(!pevsl_data.Bsol);
+ 
+  PEVSL_CHKERR(pevsl_data.N != x->n_global);
+  PEVSL_CHKERR(pevsl_data.n != x->n_local);
+  //PEVSL_CHKERR(A->first_col != x->n_first);
+  PEVSL_CHKERR(pevsl_data.N != y->n_global);
+  PEVSL_CHKERR(pevsl_data.n != y->n_local);
+  //PEVSL_CHKERR(A->first_row != y->n_first);
+
+  pevsl_data.Bsol->func(x->data, y->data, pevsl_data.Bsol->data);
 }
 
 /**
