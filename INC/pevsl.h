@@ -30,5 +30,8 @@ int pEVSL_SetGenEig();
 
 void pEVSL_StatsPrint(FILE *fstats, MPI_Comm comm);
 
+int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
+                    pevsl_Polparams *pol, int *nevOut, double **lamo, 
+                    pevsl_Parvec **Wo, double **reso, MPI_Comm comm, FILE *fstats);
 #endif
 

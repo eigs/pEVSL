@@ -46,7 +46,7 @@
  * ------------------------------------------------------------ */
 int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
                     pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvec **Wo, 
-                    double **reso, FILE *fstats) {
+                    double **reso, MPI_Comm comm, FILE *fstats) {
   /*-------------------- for stats */
   double tms = pEVSL_Wtime();
   double tr0, tr1;
@@ -62,7 +62,12 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   //int one = 1;
   //double done=1.0,dzero=0.0;
   /* MPI communicator */
-  MPI_Comm comm = vinit->comm;
+  /*
+  MPI_Comm_compare(comm, vinit->comm, &comp);
+  if (comp != MPI_IDENT) {
+    return 1;
+  }
+  */
   /*-------------------- rank in comm */
   MPI_Comm_rank(comm, &rank);
   /*-------------------- Ntest = when to start testing convergence */

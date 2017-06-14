@@ -5,10 +5,10 @@ include ../../EXTERNAL/makefile.in
 
 FLAGS = -DUNIX -O3 -g -Wall 
 
-INCLUDES = -I../../INC -I../../EXTERNAL $(MUMPS_INC)
+INCLUDES = -I../../INC -I../COMMON -I../../EXTERNAL $(MUMPS_INC)
 
 # Object files
-OBJS_PN  = LapPLanN.o io.o lapl.o ../../EXTERNAL/pevsl_mumps.o
+OBJS_PN  = LapPLanN.o ../COMMON/comm.o ../COMMON/io.o ../COMMON/lapl.o ../../EXTERNAL/pevsl_mumps.o
 
 LIB = -L../../ -lpevsl 
 

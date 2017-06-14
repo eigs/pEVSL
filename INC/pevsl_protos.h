@@ -73,16 +73,6 @@ void ZGESV(int *n, int *nrow, complex double * A, int* m, int* ipiv,
            complex double *rhs, int* k, int* INFO);
 
 
-/* cheblanNr.c */
-int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
-                    pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvec **Wo, 
-                    double **reso, FILE *fstats);
-
-/* comm.c */
-int pEVSL_CommCreate(pevsl_Comm *comm, MPI_Comm comm_global, int ngroups);
-
-void pEVSL_CommFree(pevsl_Comm *comm);
-
 /* chebpol.c */
 void pEVSL_SetPolDef(pevsl_Polparams *pol);
 

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <mpi.h>
 #include "pevsl.h"
-#include "io.h"
+#include "comm.h"
 #include "pevsl_mumps.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
   double a, b, lmax, lmin, /* ecount, */ tol, *sli /*, *mu */;
   double xintv[4];
   //double *xdos, *ydos;
-  /*-------------------- pEVSL communicator, which contains all the communicators */
-  pevsl_Comm comm;
+  /*-------------------- communicator struct, which contains all the communicators */
+  CommInfo comm;
   pevsl_Parvec vinit;
   pevsl_Polparams pol;
   FILE *fstats = NULL;
@@ -71,11 +71,12 @@ int main(int argc, char *argv[]) {
   flg = findarg("a", DOUBLE, &a, argc, argv);
   flg = findarg("b", DOUBLE, &b, argc, argv);
   flg = findarg("nslices", INT, &nslices, argc, argv);
-  /*-------------------- start pEVSL */
-  pEVSL_Start(argc, argv);
+  /*-------------------- matrix size */
+  n = nx * ny * nz;
+  /*-------------------- stopping tol */
+  tol = 1e-8;
   /*-------------------- Create communicators for groups, group leaders */
-  pEVSL_CommCreate(&comm, MPI_COMM_WORLD, ngroups);
-
+  CommInfoCreate(&comm, MPI_COMM_WORLD, ngroups);
   /*-------------------- Group leader (group_rank == 0) creates output file */
   if (comm.group_rank == 0) {
     char fname[1024];
@@ -85,10 +86,6 @@ int main(int argc, char *argv[]) {
       fstats = stdout;
     }
   }
-  /*-------------------- matrix size */
-  n = nx * ny * nz;
-  /*-------------------- stopping tol */
-  tol = 1e-8;
   /*-------------------- output the problem settings */
   pEVSL_fprintf0(comm.group_rank, fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
   pEVSL_fprintf0(comm.group_rank,fstats, "Laplacian A : %d x %d x %d, n = %d\n", nx, ny, nz, n);
@@ -105,6 +102,8 @@ int main(int argc, char *argv[]) {
   // so A is defined on each group
   ParcsrLaplace(&A, nx, ny, nz, NULL, comm.comm_group);
   ParcsrLaplace(&B, nx*ny*nz, 1, 1, NULL, comm.comm_group);
+  /*-------------------- start pEVSL */
+  pEVSL_Start(argc, argv);
   /*-------------------- set the left-hand side matrix A */
   pEVSL_SetAParcsr(&A);
   /*-------------------- set the left-hand side matrix A */
@@ -164,7 +163,8 @@ int main(int argc, char *argv[]) {
       fprintf(fstats, " polynomial deg %d, bar %e gam %e\n", pol.deg, pol.bar, pol.gam);
     }
     //-------------------- then call ChenLanNr
-    ierr = pEVSL_ChebLanNr(xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, fstats);
+    ierr = pEVSL_ChebLanNr(xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, 
+                           comm.comm_group, fstats);
     if (ierr) {
       printf("ChebLanNr error %d\n", ierr);
       return 1;
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
   pEVSL_ParcsrFree(&A);
   pEVSL_ParcsrFree(&B);
   pEVSL_ParvecFree(&vinit);
-  pEVSL_CommFree(&comm);
+  CommInfoFree(&comm);
   pEVSL_Finish();
   MPI_Finalize();
 

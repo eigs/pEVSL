@@ -31,25 +31,6 @@ typedef struct _pevsl_csrMat {
 #define PEVSL_CSRNNZ(A) A->ia[A->nrows]
 
 /*! 
- * @brief pEVSL communicator
- * 
- */ 
-typedef struct _pevsl_Comm {
-  MPI_Comm comm_global;       // global communicator (MPI_COMM_WORLD) 
-  MPI_Comm comm_group;        // communicator within each group
-  MPI_Comm comm_group_leader; // communicator with the rank-0's of all groups
-  // global info
-  int global_size;            // number of processors in comm_global
-  int global_rank;            // rank in comm_global
-  // group info
-  int ngroups;                // number of processor/sub-communicator groups
-  int group_id;               // group index
-  int group_size;             // number of processors in comm_group
-  int group_rank;             // rank in comm_group
-} pevsl_Comm;
-
-
-/*! 
  * @brief communication handle used in parallel matvec
  * 
  */ 

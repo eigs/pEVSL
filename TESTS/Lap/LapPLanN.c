@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include <mpi.h>
 #include "pevsl.h"
-#include "io.h"
+#include "comm.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
-
-int ParcsrLaplace(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_col_starts_in, MPI_Comm comm);
-int ExactEigLap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
 
 int main(int argc, char *argv[]) {
 /*------------------------------------------------------------
@@ -30,8 +27,8 @@ int main(int argc, char *argv[]) {
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
   double *xdos, *ydos;
-  /*-------------------- pEVSL communicator, which contains all the communicators */
-  pevsl_Comm comm;
+  /*-------------------- communicator struct, which contains all the communicators */
+  CommInfo comm;
   pevsl_Parvec vinit;
   pevsl_Polparams pol;
   FILE *fstats = NULL;
@@ -77,11 +74,8 @@ int main(int argc, char *argv[]) {
   xintv[3] = lmax;
   tol  = 1e-8;
   n = nx * ny * nz;
-  /*-------------------- */
-  /*-------------------- start pEVSL */
-  pEVSL_Start(argc, argv);
   /*-------------------- Create communicators for groups, group leaders */
-  pEVSL_CommCreate(&comm, MPI_COMM_WORLD, ngroups);
+  CommInfoCreate(&comm, MPI_COMM_WORLD, ngroups);
   /*-------------------- Group leader (group_rank == 0) creates output file */
   if (comm.group_rank == 0) {
     char fname[1024];
@@ -102,7 +96,8 @@ int main(int argc, char *argv[]) {
   // [Important]: the last arg is the MPI_Comm that this matrix will reside on
   // so A is defined on each group
   ParcsrLaplace(&A, nx, ny, nz, NULL, comm.comm_group);
-  
+  /*-------------------- start pEVSL */
+  pEVSL_Start(argc, argv);
   /*-------------------- set matrix A */
   pEVSL_SetAParcsr(&A);
   /*-------------------- call DOS */
@@ -111,7 +106,7 @@ int main(int argc, char *argv[]) {
   /*------------------- trivial */
   linspace(a, b, nslices+1, sli);      
   /*------------------- Create parallel vector: random initial guess */
-  pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, A.comm, &vinit);
+  pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, comm.comm_group, &vinit);
   pEVSL_ParvecRand(&vinit);
 
   //double ll, mm;
@@ -150,7 +145,8 @@ int main(int argc, char *argv[]) {
       fprintf(fstats, " polynomial deg %d, bar %e gam %e\n", pol.deg, pol.bar, pol.gam);
     }
     //-------------------- then call ChenLanNr    
-    ierr = pEVSL_ChebLanNr(xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, fstats);
+    ierr = pEVSL_ChebLanNr(xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, 
+                           comm.comm_group, fstats);
     if (ierr) {
       printf("ChebLanNr error %d\n", ierr);
       return 1;
@@ -164,9 +160,11 @@ int main(int argc, char *argv[]) {
     if (comm.group_rank == 0) {
       /* compute exact eigenvalues */
       ExactEigLap3(nx, ny, nz, ai, bi, &nev_ex, &lam_ex);
-      fprintf(fstats, " number of eigenvalues: %d, found: %d\n", nev_ex, nev2);
+      fprintf(fstats, " [Group %d]: number of eigenvalues: %d, found: %d\n", 
+              comm.group_id, nev_ex, nev2);
       if (fstats != stdout) {
-        fprintf(stdout, " number of eigenvalues: %d, found: %d\n", nev_ex, nev2);
+        fprintf(stdout, " [Group %d]: number of eigenvalues: %d, found: %d\n",
+                comm.group_id, nev_ex, nev2);
       } 
       /* print eigenvalues */
       fprintf(fstats, "                                   Eigenvalues in [a, b]\n");
@@ -212,7 +210,7 @@ int main(int argc, char *argv[]) {
   pEVSL_ParcsrFree(&A);
   pEVSL_ParvecFree(&vinit);
 
-  pEVSL_CommFree(&comm);
+  CommInfoFree(&comm);
 
   pEVSL_Finish();
 

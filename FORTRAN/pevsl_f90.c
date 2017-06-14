@@ -1,5 +1,12 @@
 #include "pevsl.h"
 
+/** global variables that hold results from EVSL
+ * evsl_copy_result_f90 will copy results from these vars and reset them
+ * */
+int pevsl_nev_computed=0, pevsl_n=0;
+double *pevsl_eigval_computed=NULL;
+pevsl_Parvec *pevsl_eigvec_computed=NULL;
+
 /** @brief Fortran interface for pEVSL_Start */
 void PEVSL_FORT(pevsl_start)() {
   pEVSL_Start();
@@ -11,13 +18,33 @@ void PEVSL_FORT(pevsl_finish)() {
 }
 
 /** @brief Fortran interface for pEVSL_SetAMatvec
- * @param[in] N : global size of A 
+ * @param[in] N : global size of A
  * @param[in] n : local size of A
  * @param[in] func : function pointer 
  * @param[in] data : associated data
  */
 void PEVSL_FORT(pevsl_setamv)(int *N, int *n, void *func, void *data) {
   pEVSL_SetAMatvec(*N, *n, (MVFunc) func, data);
+}
+
+/** @brief Fortran interface for pEVSL_SetAMatvec
+ * @param[in] N : global size of B
+ * @param[in] n : local size of B
+ * @param[in] func : function pointer 
+ * @param[in] data : associated data
+ */
+void PEVSL_FORT(pevsl_setbmv)(int *N, int *n, void *func, void *data) {
+  pEVSL_SetBMatvec(*N, *n, (MVFunc) func, data);
+}
+
+/** @brief Fortran interface for SetBsol */
+void PEVSL_FORT(pevsl_setbsol)(void *func, void *data) {
+  pEVSL_SetBSol((SolFuncR) func, data);
+}
+
+/** @brief Fortran interface for SetGenEig */
+void PEVSL_FORT(pevsl_set_geneig)() {
+  pEVSL_SetGenEig();
 }
 
 /*
@@ -53,11 +80,12 @@ void PEVSL_FORT(pevsl_parvecfree)(uintptr_t *xf90) {
   pEVSL_ParvecFree(x);
   PEVSL_FREE(x);
 }
-*/
 
 void PEVSL_FORT(pevsl_amv)(double *x, double *y) {
   pevsl_data.Amv->func(x, y, pevsl_data.Amv->data);
 }
+
+*/
 
 /** @brief Fortran interface for evsl_lanbounds 
  * @param[in] nstpes: number of steps
@@ -74,7 +102,7 @@ void PEVSL_FORT(pevsl_lanbounds)(int *nsteps, double *lmin, double *lmax, MPI_Fi
   pEVSL_ParvecCreate(N, n, 0, comm, &vinit);
   pEVSL_ParvecRand(&vinit);
   /*------------------- Lanczos Bounds */
-  pEVSL_LanTrbounds(50, *nsteps, 1e-10, &vinit, 1, lmin, lmax, comm, NULL);
+  pEVSL_LanTrbounds(50, *nsteps, 1e-8, &vinit, 1, lmin, lmax, comm, NULL);
     
   pEVSL_ParvecFree(&vinit);
 }
@@ -133,70 +161,50 @@ void PEVSL_FORT(pevsl_cheblannr)(double *xintv, int *max_its, double *tol,
   pevsl_Polparams *pol = (pevsl_Polparams *) (*polf90);
   /* call ChebLanNr */ 
   ierr = pEVSL_ChebLanNr(xintv, *max_its, *tol, &vinit, pol, &nev2, &lam, 
-                         &Y, &res, fstats);
+                         &Y, &res, comm, fstats);
 
   if (ierr) {
     printf("ChebLanNr error %d\n", ierr);
   }
 
   pEVSL_ParvecFree(&vinit);
+
   if (res) {
     free(res);
   }
   /* save pointers to the global variables */
-  //evsl_nev_computed = nev2;
-  //evsl_n = n;
-  //evsl_eigval_computed = lam;
-  //evsl_eigvec_computed = Y;
+  pevsl_nev_computed = nev2;
+  pevsl_n = n;
+  pevsl_eigval_computed = lam;
+  pevsl_eigvec_computed = Y;
 }
 
-#if 0
-void PEVSL_FORT(pevsl_test)(MPI_Fint *Fcomm) {
-  int N, n;
-  pevsl_Parvec x, y;
-  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
-  N = pevsl_data.N;
-  n = pevsl_data.n;
-  /*------------------- Create parallel vector: random initial guess */
-  pEVSL_ParvecCreate(N, n, 0, comm, &x);
-  pEVSL_ParvecRand(&x);
-  //pEVSL_ParvecSetScalar(&x, 3.14);
-  pEVSL_ParvecDupl(&x, &y);
-
-  pEVSL_MatvecA(&x, &y);
-  double t;  
-  pEVSL_ParvecNrm2(&y, &t);
-  
-  printf("t = %.15e\n", t);
-  
-  pEVSL_ParvecFree(&x);
-  pEVSL_ParvecFree(&y);
+/** @brief Get the number of last computed eigenvalues 
+ */
+void PEVSL_FORT(pevsl_get_nev)(int *nev) {
+  *nev = pevsl_nev_computed;
 }
 
-
-void PEVSL_FORT(pevsl_testc)(MPI_Comm comm) {
-  int N, n;
-  double t;  
-
-  pevsl_Parvec x;
-  N = pevsl_data.N;
-  n = pevsl_data.n;
-  /*------------------- Create parallel vector: random initial guess */
-  pEVSL_ParvecCreate(N, n, 0, comm, &x);
-  pEVSL_ParvecRand(&x);
-  pEVSL_ParvecNrm2(&x, &t);
-
-  //pEVSL_ParvecSetScalar(&x, 3.14);
-  //pEVSL_ParvecDupl(&x, &y);
-
-  //pEVSL_MatvecA(&x, &y);
-  //pEVSL_ParvecNrm2(&y, &t);
-  
-  printf("N = %d, n = %d, t = %.15e\n", N, n, t);
-  
-  pEVSL_ParvecFree(&x);
-  //pEVSL_ParvecFree(&y);
+/** @brief copy the computed eigenvalues and vectors
+ * @warning: after this call the internal saved results will be freed
+ */
+void PEVSL_FORT(pevsl_copy_result)(double *val, double *vec) {
+  int i;
+  /* copy eigenvalues */
+  memcpy(val, pevsl_eigval_computed, pevsl_nev_computed*sizeof(double));
+  /* copy eigenvectors */
+  for (i=0; i<pevsl_nev_computed; i++) {
+    memcpy(vec+i*pevsl_n, pevsl_eigvec_computed[i].data, pevsl_n*sizeof(double));
+  }
+  /* reset global variables */
+  pevsl_nev_computed = 0;
+  pevsl_n = 0;
+  free(pevsl_eigval_computed);
+  pevsl_eigval_computed = NULL;
+  for (i=0; i<pevsl_nev_computed; i++) {
+    pEVSL_ParvecFree(&pevsl_eigvec_computed[i]);
+  }
+  free(pevsl_eigvec_computed);
+  pevsl_eigvec_computed = NULL;
 }
-
-#endif
 

@@ -47,17 +47,18 @@
 }
 
 
-#define PEVSL_SEQ_BEGIN(MPI_COMM, __RANK) {\
-    int __comm_size, __comm_rank, __i;\
-    MPI_Barrier(MPI_COMM);\
-    MPI_Comm_size(MPI_COMM, &__comm_size);\
-    MPI_Comm_rank(MPI_COMM, &__comm_rank);\
-    for (__i=0; __i<__comm_size; __i++) {\
-        if (__i == __comm_rank && (__RANK < 0 || __comm_rank == __RANK)) {\
+#define PEVSL_SEQ_BEGIN(MPI_COMM, rank, size) { \
+    int size, rank, __i; \
+    MPI_Barrier(MPI_COMM); \
+    MPI_Comm_size(MPI_COMM, &size); \
+    MPI_Comm_rank(MPI_COMM, &rank); \
+    /* sequential loop */ \
+    for (__i=0; __i<size; __i++) { \
+        if (__i == rank) { \
 
 #define PEVSL_SEQ_END(MPI_COMM) \
         }\
-        MPI_Barrier(MPI_COMM);\
+        MPI_Barrier(MPI_COMM); \
     }\
 }
 

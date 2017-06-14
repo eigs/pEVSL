@@ -116,39 +116,38 @@ int pEVSL_ParvecSameSize(pevsl_Parvec *x, pevsl_Parvec *y) {
   return 1;
 }
 
-int pEVSL_PrintParvec(pevsl_Parvec *x, pevsl_Comm *comm) {
-  int j;
-  PEVSL_SEQ_BEGIN(comm->comm_global, -1) {
-    printf ("[%d,(%d %d)]\n", comm->global_rank, comm->group_id, comm->group_rank);
-    for (j=0; j<x->n_local; j++) {
-      printf("%.15e ", x->data[j]);
+/** @brief print Parvec on comm (squential in comm) 
+ *  @param fn: filename (if NULL, print it to stdout) */
+int pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn, MPI_Comm comm) {
+  /* if fn == NULL, print to stdout */
+  FILE *fp = fn ? NULL : stdout;
+  /* sequential loop with all ranks in comm */
+  PEVSL_SEQ_BEGIN(comm, rank, size)
+  {
+    /* if print to file, open it
+     * mode 'a' should work */
+    if (fn) {
+      fp = fopen(fn, "a");
     }
-    printf("\n\n");
-    fflush (stdout);
+    /* if fp != NULL */
+    if (fp) {
+      /* rank 0 writes the global size */
+      if (rank == 0) {
+        fprintf (fp, "%% %d\n", x->n_global);
+      }
+      /* write local data */
+      int j;
+      for (j=0; j<x->n_local; j++) {
+        fprintf(fp, "%.15e\n", x->data[j]);
+      }
+      if (fn) {
+        fclose(fp);
+      }
+    }
   }
-  PEVSL_SEQ_END(comm->comm_global)
-    return 0;
-}
+  PEVSL_SEQ_END(comm)
 
-int pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn, pevsl_Comm *comm) {
-  int j;
-  char fn2[1024];
-  FILE *fp;
-  sprintf(fn2, "%s_%d", fn, comm->group_id);
-  PEVSL_SEQ_BEGIN(comm->comm_group, -1) {
-    if (comm->group_rank == 0) {
-      fp = fopen(fn2, "w");
-      fprintf (fp, "%% %d\n", x->n_global);
-    } else {
-      fp = fopen(fn2, "a");
-    }
-    for (j=0; j<x->n_local; j++) {
-      fprintf(fp, "%.15e\n", x->data[j]);
-    }
-    fclose(fp);
-  }
-  PEVSL_SEQ_END(comm->comm_group)
-    return 0;
+  return 0;
 }
 
 /*

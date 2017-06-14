@@ -4,11 +4,10 @@ include ../../makefile.in
 
 FLAGS = -DUNIX -O3 -g -Wall 
 
-INCLUDES = -I../../INC 
+INCLUDES = -I../../INC -I../COMMON
 
 # Object files
-OBJS_PN  = LapPLanN.o io.o lapl.o
-OBJS_PN_MatFree = LapPLanN_MatFree.o io.o lapl.o
+OBJS_PN  = LapPLanN.o ../COMMON/comm.o ../COMMON/io.o ../COMMON/lapl.o
 
 LIB = -L../../ -lpevsl 
 
