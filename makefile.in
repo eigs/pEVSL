@@ -14,5 +14,5 @@ RANLIB = ranlib
 
 LIB0 = -lgfortran -lrt -lm
 #LIBLAPACK = -llapack -lblas
-LIBLAPACK = /home/ruipeng/workspace/OpenBLAS/libopenblas.a -lpthread
+LIBLAPACK = /home/li50/workspace/OpenBLAS/libopenblas.a -lpthread
 

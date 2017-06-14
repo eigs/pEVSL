@@ -141,13 +141,15 @@ typedef struct _pevsl_parvec {
  *
  */
 typedef struct _pevsl_Stat {
-  // timing
-  double t_comm_create;
-  double t_matrix_create;
-  double t_slicer_create;
-  double t_slicer_apply;
-  double t_filteig_solve;
-  // memory
+  /* timing [level-1 funcs] */
+  double t_commgen;
+  double t_eigbounds;
+  double t_solver;
+  /* timing [level-2 funcs] */
+  double t_mvA;
+  double t_mvB;
+  double t_solB;
+  /* memory */
   size_t alloced;
   size_t alloced_total;
   size_t alloced_max;

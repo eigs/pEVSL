@@ -48,6 +48,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
                     pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvec **Wo, 
                     double **reso, FILE *fstats) {
   /*-------------------- for stats */
+  double tms = pEVSL_Wtime();
   double tr0, tr1;
   double *y, flami; 
   int i, j, k, kdim=0, rank;
@@ -413,6 +414,9 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     }
     PEVSL_FREE(Z);
   }
+
+  double tme = pEVSL_Wtime();
+  pevsl_stat.t_solver += tme - tms;
 
   return 0;
 }

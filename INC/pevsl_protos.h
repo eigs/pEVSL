@@ -191,6 +191,7 @@ int pEVSL_BinarySearch(int *x, int n, int key);
 
 void pEVSL_Vecset(int n, double t, double *v);
 
+double pEVSL_Wtime();
 
 /* vector.c */
 void linspace(double a, double b, int num, double *arr);
@@ -232,7 +233,12 @@ static inline void pEVSL_MatvecA(pevsl_Parvec *x, pevsl_Parvec *y) {
   PEVSL_CHKERR(pevsl_data.n != y->n_local);
   //PEVSL_CHKERR(A->first_row != y->n_first);
 
+  double tms = pEVSL_Wtime();
+
   pevsl_data.Amv->func(x->data, y->data, pevsl_data.Amv->data);
+  
+  double tme = pEVSL_Wtime();
+  pevsl_stat.t_mvA += tme - tms;
 }
 
 
@@ -251,7 +257,12 @@ static inline void pEVSL_MatvecB(pevsl_Parvec *x, pevsl_Parvec *y) {
   PEVSL_CHKERR(pevsl_data.n != y->n_local);
   //PEVSL_CHKERR( != y->n_first);
 
+  double tms = pEVSL_Wtime();
+  
   pevsl_data.Bmv->func(x->data, y->data, pevsl_data.Bmv->data);
+  
+  double tme = pEVSL_Wtime();
+  pevsl_stat.t_mvB += tme - tms;
 }
 
 /**
@@ -268,7 +279,12 @@ static inline void pEVSL_SolveB(pevsl_Parvec *x, pevsl_Parvec *y) {
   PEVSL_CHKERR(pevsl_data.n != y->n_local);
   //PEVSL_CHKERR(A->first_row != y->n_first);
 
+  double tms = pEVSL_Wtime();
+  
   pevsl_data.Bsol->func(x->data, y->data, pevsl_data.Bsol->data);
+  
+  double tme = pEVSL_Wtime();
+  pevsl_stat.t_solB += tme - tms;
 }
 
 /**

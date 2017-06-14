@@ -4,9 +4,7 @@
 int pEVSL_CommCreate(pevsl_Comm *comm, MPI_Comm comm_global, int ngroups) {
 
     int err;
-    double t_s, t_e;
-
-    t_s = MPI_Wtime();
+    double tms = pEVSL_Wtime();
 
     MPI_Comm_size(comm_global, &comm->global_size);
     MPI_Comm_rank(comm_global, &comm->global_rank);
@@ -45,8 +43,8 @@ int pEVSL_CommCreate(pevsl_Comm *comm, MPI_Comm comm_global, int ngroups) {
         PEVSL_CHKERR(leader_rank != comm->group_id);
     }
 
-    t_e = MPI_Wtime();
-    pevsl_stat.t_comm_create = t_e - t_s;
+    double tme = pEVSL_Wtime();
+    pevsl_stat.t_commgen += tme - tms;
 
     return 0;
 }

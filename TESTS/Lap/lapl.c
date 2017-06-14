@@ -69,9 +69,6 @@ int lapgen(int nx, int ny, int nz, int m1, int m2, pevsl_Csr *csr) {
 }
 
 int ParcsrLaplace(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_col_starts_in, MPI_Comm comm) {
-    double t_s, t_e;
-    t_s = MPI_Wtime();
-
     int r1, r2;
     int nrow = nx * ny * nz;
     int *row_col_starts;
@@ -99,9 +96,6 @@ int ParcsrLaplace(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_col_starts_i
     pEVSL_ParcsrSetup(&csr_local, A);
 
     pEVSL_FreeCsr(&csr_local);
-
-    t_e = MPI_Wtime();
-    pevsl_stat.t_matrix_create = t_e - t_s;
 
     return 0;
 }

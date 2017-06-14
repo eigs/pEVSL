@@ -28,5 +28,7 @@ int pEVSL_SetStdEig();
 
 int pEVSL_SetGenEig();
 
+void pEVSL_StatsPrint(FILE *fstats, MPI_Comm comm);
+
 #endif
 

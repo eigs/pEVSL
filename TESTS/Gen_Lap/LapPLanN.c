@@ -25,12 +25,12 @@ int main(int argc, char *argv[]) {
   This uses:
   Non-restart Lanczos with polynomial filtering
 ------------------------------------------------------------*/
-  int n, nx, ny, nz, i, j, npts, nslices, nvec, Mdeg, nev, 
-      ngroups, mlan, ev_int, sl, flg, ierr, np, rank;
+  int n, nx, ny, nz, i, /*j,*/ nslices, /* npts, nvec, Mdeg, nev, */
+      ngroups, mlan, /* ev_int, */ sl, flg, ierr, np, rank;
   /* find the eigenvalues of A in the interval [a,b] */
-  double a, b, lmax, lmin, ecount, tol, *sli /*, *mu */;
+  double a, b, lmax, lmin, /* ecount, */ tol, *sli /*, *mu */;
   double xintv[4];
-  double *xdos, *ydos;
+  //double *xdos, *ydos;
   /*-------------------- pEVSL communicator, which contains all the communicators */
   pevsl_Comm comm;
   pevsl_Parvec vinit;
@@ -55,8 +55,8 @@ int main(int argc, char *argv[]) {
   nz = 8;
   a  = 1.5;
   b  = 2.5;
-  nslices = 1;
-  ngroups = 1;
+  nslices = 4;
+  ngroups = 2;
   /*-----------------------------------------------------------------------
    *-------------------- reset some default values from command line  
    *                     user input from command line */
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
       fprintf(fstats, " ======================================================\n");
       fprintf(fstats, " polynomial deg %d, bar %e gam %e\n", pol.deg, pol.bar, pol.gam);
     }
-    //-------------------- then call ChenLanNr    
+    //-------------------- then call ChenLanNr
     ierr = pEVSL_ChebLanNr(xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebLanNr error %d\n", ierr);
@@ -176,10 +176,12 @@ int main(int argc, char *argv[]) {
     sort_double(nev2, lam, ind);
     /* group leader checks the eigenvalues and print */
     if (comm.group_rank == 0) {
-      fprintf(fstats, " number of eigenvalues found: %d\n", nev2);
+      fprintf(fstats, " [Group %d]: number of eigenvalues found: %d\n", 
+              comm.group_id, nev2);
       if (fstats != stdout) {
-        fprintf(stdout, " number of eigenvalues found: %d\n", nev2);
-      } 
+        fprintf(stdout, " [Group %d]: number of eigenvalues found: %d\n",
+                comm.group_id, nev2);
+      }
       /* print eigenvalues */
       fprintf(fstats, "     Eigenvalues in [a, b]\n");
       fprintf(fstats, "     Computed [%d]       ||Res||\n", nev2);
@@ -205,6 +207,10 @@ int main(int argc, char *argv[]) {
   free(sli);
   //free(mu);
 
+  /*--------------------- print stats */
+  pEVSL_StatsPrint(fstats, comm.comm_group);
+
+  /*--------------------- done */
   if (fstats) {
     fclose(fstats);
   }

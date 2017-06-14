@@ -126,3 +126,7 @@ void pEVSL_Vecset(int n, double t, double *v) {
 }
 
 
+double pEVSL_Wtime() {
+  return MPI_Wtime();
+}
+

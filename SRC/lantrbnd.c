@@ -22,6 +22,7 @@
  **/
 int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
                       int bndtype, double *lammin, double *lammax, MPI_Comm comm, FILE *fstats) {
+  double tms = pEVSL_Wtime();
   double lmin=0.0, lmax=0.0, t, t1, t2;
   int do_print = 1, rank;
   /* handle case where fstats is NULL. Then no output. Needed for openMP. */
@@ -393,6 +394,9 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
     pEVSL_ParvecFree(&BRvec[1]);
   }
 
+  double tme = pEVSL_Wtime();
+  pevsl_stat.t_eigbounds += tme - tms;
+  
   return 0;
 }
 
