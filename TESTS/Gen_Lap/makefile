@@ -14,7 +14,12 @@ LIB = -L../../ -lpevsl
 
 ALLEXE = 
 
-LIB_EXT = $(LIBEXT) -fopenmp $(LIBLAPACK) $(LIB0) -lmpifort
+LIB_EXT = $(LIBEXT) -fopenmp $(LIBLAPACK) $(LIB0) -lmpifort 
+
+# intel Fortran lib
+ifeq ($(LINK),mpiicc)
+LIB_EXT += -lifcore
+endif
 
 # Rules
 default: LapPLanN.ex
