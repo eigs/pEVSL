@@ -1,4 +1,4 @@
-#include "pevsl_protos.h"
+#include "pevsl_int.h"
 
 #define COMP_RES 0
 /**

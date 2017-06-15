@@ -1,7 +1,5 @@
-#include "pevsl_def.h"
-#include "pevsl_struct.h"
+#include "pevsl_int.h"
 #include "pevsl_mumps.h"
-#include "pevsl_protos.h"
 
 /* MUMPS macro s.t. indices match documentation */
 #define ICNTL(I) icntl[(I)-1]
@@ -41,8 +39,8 @@ int SetupBSolMumps(pevsl_Parcsr *B, BSolDataMumps *data) {
   data->solver.ICNTL(2) = -1; /* output suppressed */
   data->solver.ICNTL(3) = -1; /* output suppressed */
   data->solver.ICNTL(18) = 3; /* distributed matrix */
-  //data->solver.ICNTL(28) = 2; /* parallel ordering */
-  //data->solver.ICNTL(29) = 2; /* parmetis */
+  data->solver.ICNTL(28) = 2; /* parallel ordering */
+  data->solver.ICNTL(29) = 2; /* parmetis */
   data->solver.n = nglobal;
   data->solver.nnz_loc = coo_local.nnz;
   data->solver.irn_loc = coo_local.ir;

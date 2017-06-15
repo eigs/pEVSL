@@ -3,7 +3,9 @@ CC = mpicc
 LINK = $(CC)
 
 # Common flags
-FLAGS = -DUNIX -O3 -g -Wall $(NO_DEBUG) $(TIMING)
+# Debug mode
+PEVSL_DEBUG = -DPEVSL_DEBUG
+FLAGS = -DUNIX -O3 -g -Wall $(PEVSL_DEBUG) $(TIMING)
 
 ##OBJ_TIME = mactime.o
 OBJ_TIME = timing.o 

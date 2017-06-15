@@ -1,4 +1,4 @@
-#include "pevsl_protos.h"
+#include "pevsl_int.h"
 
 void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm, pevsl_Parvec *x) {
   x->comm = comm;

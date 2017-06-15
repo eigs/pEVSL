@@ -87,10 +87,12 @@ int main(int argc, char *argv[]) {
     }
   }
   /*-------------------- output the problem settings */
-  pEVSL_fprintf0(comm.group_rank, fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
-  pEVSL_fprintf0(comm.group_rank,fstats, "Laplacian A : %d x %d x %d, n = %d\n", nx, ny, nz, n);
-  pEVSL_fprintf0(comm.group_rank,fstats, "Laplacian B : %d x %d, n = %d\n", nx*ny*nz, 1, n);
-  pEVSL_fprintf0(comm.group_rank,fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
+  if (!comm.group_rank) {
+    fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
+    fprintf(fstats, "Laplacian A : %d x %d x %d, n = %d\n", nx, ny, nz, n);
+    fprintf(fstats, "Laplacian B : %d x %d, n = %d\n", nx*ny*nz, 1, n);
+    fprintf(fstats, "Interval: [%20.15f, %20.15f]  -- %d slices \n", a, b, nslices);
+  }
   /*-------------------- generate 1D/3D Laplacian Parcsr matrices */
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //            Create Parcsr (Parallel CSR) matrices A and B
@@ -120,8 +122,9 @@ int main(int argc, char *argv[]) {
   pEVSL_ParvecRand(&vinit);
   /*-------------------- bounds by TR-Lanczos */
   ierr = pEVSL_LanTrbounds(50, 200, 1e-8, &vinit, 1, &lmin, &lmax, comm.comm_group, fstats);
-  pEVSL_fprintf0(comm.group_rank, fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n",
-                 lmin, lmax);
+  if (!comm.group_rank) {
+    fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n", lmin, lmax);
+  }
   /*-------------------- interval and eig bounds */
   xintv[0] = a;
   xintv[1] = b;

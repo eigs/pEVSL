@@ -1,4 +1,4 @@
-#include "pevsl_protos.h"
+#include "pevsl_int.h"
 
 int pEVSL_ParcsrCreate(int nrow, int ncol, int *row_starts, int *col_starts, pevsl_Parcsr *A, MPI_Comm comm) {
     int r1, r2, c1, c2, comm_size, comm_rank;

@@ -1,4 +1,4 @@
-#include "pevsl_protos.h"
+#include "pevsl_int.h"
 
 void pEVSL_ParcsrMatvecCommBegin(pevsl_Parcsr *A, double *x) {
     int i;

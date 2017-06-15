@@ -1,4 +1,4 @@
-#include "pevsl_protos.h"
+#include "pevsl_int.h"
 
 void pEVSL_StatsPrint(FILE *fstats, MPI_Comm comm) {
   pevsl_Stat *stats = &pevsl_stat;

@@ -2,8 +2,7 @@
 // Routines for computing eigenvalues of a symmetric tridiagonal matrix.
 // They are wrappers of the LAPACK routine DSTEV() or sstev_()
 //============================================================================
-
-#include "pevsl_protos.h"
+#include "pevsl_int.h"
 
 /**----------------------------------------------------------------------- 
  *  @brief compute all eigenvalues and eigenvectors of a symmetric tridiagonal

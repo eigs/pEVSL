@@ -1,4 +1,4 @@
-#include "pevsl_protos.h"
+#include "pevsl_int.h"
 
 void pEVSL_CsrResize(int nrow, int ncol, int nnz, pevsl_Csr *csr) {
   csr->nrows = nrow;

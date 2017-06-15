@@ -1,4 +1,4 @@
-#include "pevsl.h"
+#include "pevsl_int.h"
 
 /** global variables that hold results from EVSL
  * evsl_copy_result_f90 will copy results from these vars and reset them

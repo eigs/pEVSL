@@ -1,4 +1,4 @@
-#include "pevsl_protos.h"
+#include "pevsl_int.h"
 
 void linspace(double a, double b, int num, double *arr) {
   double h;
