@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- matrix A: parallel csr format */    
   pevsl_Parcsr A;
   /*-------------------- default values */
-  nx = 8*8*8;
+  nx = 20*20*20;
   ny = 1;
   nz = 1;
   ngroups = 1;
@@ -97,11 +97,11 @@ int main(int argc, char *argv[]) {
     coo_local.ir[i] += A.first_row;
     //printf("%d %d %f\n", coo_local.ir[i], coo_local.jc[i], coo_local.vv[i]);
   }
-  solver.ICNTL(2) = -1; /* output suppressed */
-  solver.ICNTL(3) = -1; /* output suppressed */
+  //solver.ICNTL(2) = -1; /* output suppressed */
+  //solver.ICNTL(3) = -1; /* output suppressed */
   solver.ICNTL(18) = 3; /* distributed matrix */
-  //solver.ICNTL(28) = 2; /* parallel ordering */
-  //solver.ICNTL(29) = 2; /* parmetis */
+  solver.ICNTL(28) = 2; /* parallel ordering */
+  solver.ICNTL(29) = 2; /* parmetis */
   solver.n = n;
   solver.nnz_loc = coo_local.nnz;
   solver.irn_loc = coo_local.ir;
@@ -175,7 +175,10 @@ int main(int argc, char *argv[]) {
   double nrm, nrmb;
   pEVSL_ParvecNrm2(&rhs, &nrmb);
   pEVSL_ParvecDupl(&rhs, &res);
+  tms = MPI_Wtime(); 
   pEVSL_ParcsrMatvec(&A, &sol, &res);
+  tme = MPI_Wtime();
+  printf("T-matvec %f\n", tme-tms);
   pEVSL_ParvecAxpy(-1.0, &rhs, &res);
   pEVSL_ParvecNrm2(&res, &nrm);
   
