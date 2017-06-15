@@ -163,6 +163,8 @@ void PEVSL_FORT(pevsl_cheblannr)(double *xintv, int *max_its, double *tol,
   N = pevsl_data.N;
   n = pevsl_data.n;
   nfirst = pevsl_data.nfirst;
+  /*-------------------- zero out stats */
+  pEVSL_StatsReset();
   /*------------------- Create parallel vector: random initial guess */
   pEVSL_ParvecCreate(N, n, nfirst, comm, &vinit);
   pEVSL_ParvecRand(&vinit);
@@ -175,8 +177,9 @@ void PEVSL_FORT(pevsl_cheblannr)(double *xintv, int *max_its, double *tol,
   if (ierr) {
     printf("ChebLanNr error %d\n", ierr);
   }
-
   pEVSL_ParvecFree(&vinit);
+  /*--------------------- print stats */
+  pEVSL_StatsPrint(fstats, comm);
 
   if (res) {
     free(res);

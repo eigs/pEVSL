@@ -94,6 +94,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   double bb = intv[1];
   int deg = pol->deg;
   if (do_print) {
+    pEVSL_fprintf0(rank, fstats, "intv:[%e, %e, %e, %e]\n", intv[0], intv[1], intv[2], intv[3]);
     pEVSL_fprintf0(rank, fstats, " ** Cheb Poly of deg = %d, gam = %.15e, bar: %.15e\n", 
                   deg, gamB, bar);
   }
