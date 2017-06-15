@@ -217,10 +217,10 @@ static inline void pEVSL_MatvecA(pevsl_Parvec *x, pevsl_Parvec *y) {
      
   PEVSL_CHKERR(pevsl_data.N != x->n_global);
   PEVSL_CHKERR(pevsl_data.n != x->n_local);
-  //PEVSL_CHKERR(A->first_col != x->n_first);
+  PEVSL_CHKERR(pevsl_data.nfirst != x->n_first);
   PEVSL_CHKERR(pevsl_data.N != y->n_global);
   PEVSL_CHKERR(pevsl_data.n != y->n_local);
-  //PEVSL_CHKERR(A->first_row != y->n_first);
+  PEVSL_CHKERR(pevsl_data.nfirst != y->n_first);
 
   double tms = pEVSL_Wtime();
 
@@ -242,10 +242,10 @@ static inline void pEVSL_MatvecB(pevsl_Parvec *x, pevsl_Parvec *y) {
   
   PEVSL_CHKERR(pevsl_data.N != x->n_global);
   PEVSL_CHKERR(pevsl_data.n != x->n_local);
-  //PEVSL_CHKERR( != x->n_first);
+  PEVSL_CHKERR(pevsl_data.nfirst != x->n_first);
   PEVSL_CHKERR(pevsl_data.N != y->n_global);
   PEVSL_CHKERR(pevsl_data.n != y->n_local);
-  //PEVSL_CHKERR( != y->n_first);
+  PEVSL_CHKERR(pevsl_data.nfirst != y->n_first);
 
   double tms = pEVSL_Wtime();
   
@@ -265,10 +265,10 @@ static inline void pEVSL_SolveB(pevsl_Parvec *x, pevsl_Parvec *y) {
  
   PEVSL_CHKERR(pevsl_data.N != x->n_global);
   PEVSL_CHKERR(pevsl_data.n != x->n_local);
-  //PEVSL_CHKERR(A->first_col != x->n_first);
+  PEVSL_CHKERR(pevsl_data.nfirst != x->n_first);
   PEVSL_CHKERR(pevsl_data.N != y->n_global);
   PEVSL_CHKERR(pevsl_data.n != y->n_local);
-  //PEVSL_CHKERR(A->first_row != y->n_first);
+  PEVSL_CHKERR(pevsl_data.nfirst != y->n_first);
 
   double tms = pEVSL_Wtime();
   

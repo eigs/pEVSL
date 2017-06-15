@@ -17,24 +17,30 @@ void PEVSL_FORT(pevsl_finish)() {
   pEVSL_Finish();
 }
 
-/** @brief Fortran interface for pEVSL_SetAMatvec
+/** @brief Fortran interface for pEVSL_SetProbSizes
  * @param[in] N : global size of A
  * @param[in] n : local size of A
- * @param[in] func : function pointer 
- * @param[in] data : associated data
+ * @param[in] nfirst : nfirst
+ * @warning set nfirst < 0, if do not want to specify
  */
-void PEVSL_FORT(pevsl_setamv)(int *N, int *n, void *func, void *data) {
-  pEVSL_SetAMatvec(*N, *n, (MVFunc) func, data);
+void PEVSL_FORT(pevsl_setprobsizes)(int *N, int *n, int *nfirst) {
+  pEVSL_SetProbSizes(*N, *n, *nfirst);
 }
 
 /** @brief Fortran interface for pEVSL_SetAMatvec
- * @param[in] N : global size of B
- * @param[in] n : local size of B
  * @param[in] func : function pointer 
  * @param[in] data : associated data
  */
-void PEVSL_FORT(pevsl_setbmv)(int *N, int *n, void *func, void *data) {
-  pEVSL_SetBMatvec(*N, *n, (MVFunc) func, data);
+void PEVSL_FORT(pevsl_setamv)(void *func, void *data) {
+  pEVSL_SetAMatvec((MVFunc) func, data);
+}
+
+/** @brief Fortran interface for pEVSL_SetAMatvec
+ * @param[in] func : function pointer 
+ * @param[in] data : associated data
+ */
+void PEVSL_FORT(pevsl_setbmv)(void *func, void *data) {
+  pEVSL_SetBMatvec((MVFunc) func, data);
 }
 
 /** @brief Fortran interface for SetBsol */
@@ -92,17 +98,19 @@ void PEVSL_FORT(pevsl_amv)(double *x, double *y) {
  * @param[out] lmin: lower bound
  * @param[out] lmax: upper bound
  * */
-void PEVSL_FORT(pevsl_lanbounds)(int *nsteps, double *lmin, double *lmax, MPI_Fint *Fcomm) {
-  int N, n;
+void PEVSL_FORT(pevsl_lanbounds)(int *mlan, int *nsteps, double *lmin, 
+                                 double *lmax, MPI_Fint *Fcomm) {
+  int N, n, nfirst;
   pevsl_Parvec vinit;
   MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
   N = pevsl_data.N;
   n = pevsl_data.n;
+  nfirst = pevsl_data.nfirst;
   /*------------------- Create parallel vector: random initial guess */
-  pEVSL_ParvecCreate(N, n, 0, comm, &vinit);
+  pEVSL_ParvecCreate(N, n, nfirst, comm, &vinit);
   pEVSL_ParvecRand(&vinit);
   /*------------------- Lanczos Bounds */
-  pEVSL_LanTrbounds(50, *nsteps, 1e-8, &vinit, 1, lmin, lmax, comm, NULL);
+  pEVSL_LanTrbounds(*mlan, *nsteps, 1e-8, &vinit, 1, lmin, lmax, comm, NULL);
     
   pEVSL_ParvecFree(&vinit);
 }

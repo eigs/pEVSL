@@ -1,4 +1,4 @@
-#include "pevsl_protos.h"
+#include "pevsl.h"
 
 /** \brief global variable of pEVSL
  *
@@ -12,15 +12,26 @@ pevsl_Stat pevsl_stat;
  *
  * */
 int pEVSL_Start() {
+  /* Initialize pevsl_data */
+  pevsl_data.N       = PEVSL_NOT_DEFINED;
+  pevsl_data.n       = PEVSL_NOT_DEFINED;
+  pevsl_data.nfirst  = PEVSL_NOT_DEFINED;
+  pevsl_data.ifGenEv = 0;
+  pevsl_data.Amv     = NULL;
+  pevsl_data.Bmv     = NULL;
+  pevsl_data.Bsol    = NULL;
+  pevsl_data.LTsol   = NULL;
 
-  /* make sure these are zeroed out */
-  memset(&pevsl_stat, 0, sizeof(pevsl_Stat));
-  memset(&pevsl_data, 0, sizeof(pevsl_Data));
-
-  /* use MPI_COMM_WORLD rank as rand seed */
+#ifndef PEVSL_DEBUG
+  /* in the non-debug mode, use MPI_COMM_WORLD rank as rand seed
+   * for parallel random vectors */
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   srand(rank);
+#endif
+
+  /* rest stats */
+  pEVSL_StatsReset();
 
   return 0;
 }
@@ -47,13 +58,17 @@ int pEVSL_Finish() {
 }
 
 /** 
- * @brief Set the matrix A
+ * @brief Set the matrix A as Parcsr
  * 
  * */
 int pEVSL_SetAParcsr(pevsl_Parcsr *A) {
+  /* set N */
   pevsl_data.N = A->ncol_global;
+  /* set n */
   pevsl_data.n = A->ncol_local;
-  //pevsl_data.nfirst = A->first_col;
+  /* set nfirst */
+  pevsl_data.nfirst = A->first_col;
+  /* set A matvec */
   if (!pevsl_data.Amv) {
     PEVSL_CALLOC(pevsl_data.Amv, 1, pevsl_Matvec);
   }
@@ -64,13 +79,17 @@ int pEVSL_SetAParcsr(pevsl_Parcsr *A) {
 }
 
 /**
- * @brief Set the B matrix.
+ * @brief Set the B matrix as Parcsr
  * 
  * */
 int pEVSL_SetBParcsr(pevsl_Parcsr *B) {
+  /* set N */
   pevsl_data.N = B->ncol_global;
+  /* set n */
   pevsl_data.n = B->ncol_local;
-  //pevsl_data.nfirst = B->first_col;
+  /* set nfirst */
+  pevsl_data.nfirst = B->first_col;
+  /* set B matvec */
   if (!pevsl_data.Bmv) {
     PEVSL_CALLOC(pevsl_data.Bmv, 1, pevsl_Matvec);
   }
@@ -80,16 +99,27 @@ int pEVSL_SetBParcsr(pevsl_Parcsr *B) {
   return 0;
 }
 
+/**
+ * @brief Set problem sizes
+ * @param N global size
+ * @param n local size
+ * @param nfirst first row/col
+ * @warning if nfirst < 0, nfirst = PEVSL_NOT_DEFINED
+ * */
+int pEVSL_SetProbSizes(int N, int n, int nfirst) {
+  pevsl_data.N = N;
+  pevsl_data.n = n;
+  nfirst = nfirst < 0 ? PEVSL_NOT_DEFINED : nfirst;
+  pevsl_data.nfirst = nfirst;
 
+  return 0;
+}
 
 /**
  * @brief Set the user-input matvec routine and the associated data for A.
  * Save them in pevsl_data
  * */
-int pEVSL_SetAMatvec(int N, int n, MVFunc func, void *data) {
-  pevsl_data.N = N;
-  pevsl_data.n = n;
-  //  pevsl_data.nfirst = ;
+int pEVSL_SetAMatvec(MVFunc func, void *data) {
   if (!pevsl_data.Amv) {
     PEVSL_CALLOC(pevsl_data.Amv, 1, pevsl_Matvec);
   }
@@ -104,10 +134,7 @@ int pEVSL_SetAMatvec(int N, int n, MVFunc func, void *data) {
  * @brief Set the user-input matvec routine and the associated data for B.
  * Save them in pevsl_data
  * */
-int pEVSL_SetBMatvec(int N, int n, MVFunc func, void *data) {
-  pevsl_data.N = N;
-  pevsl_data.n = n;
-  //  pevsl_data.nfirst = ;
+int pEVSL_SetBMatvec(MVFunc func, void *data) {
   if (!pevsl_data.Bmv) {
     PEVSL_CALLOC(pevsl_data.Bmv, 1, pevsl_Matvec);
   }

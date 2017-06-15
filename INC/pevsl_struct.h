@@ -112,7 +112,7 @@ typedef struct _pevsl_parvec {
   MPI_Comm comm;
   int n_global;
   int n_local;
-  //int n_first;
+  int n_first;
   double *data;
 } pevsl_Parvec;
 
@@ -234,9 +234,20 @@ typedef struct _pevsl_LtSol {
  *
  */
 typedef struct _pevsl_Data {
+  /** We keep some useful information in this struct
+   *  N is the global size of the problem, i.e, size of A (or B)
+   *  n is the local size, number of rows owned by this MPI rank.
+   *  If the matrix is assumed to be partitioned into blocks of consecutive rows,
+   *  nfirst is the first row owned.
+   *  NOTE that currently Parcsr matrix is always assumed to have such partitioning. 
+   *  More general partitionings are NOT yet supported
+   *  BUT, we leave the option to not have such consecutive row partitioning. 
+   *  The users can implement their own Amv, Bmv, Bsol routines with arbitrary partitionings,
+   *  and only set N and n but leave nfirst as PEVSL_NOT_DEFINED
+   */
   int N;                    /**< global size of matrix A and B */
   int n;                    /**< local size of matrix A and B */
-  //int nfirst;               /**< the first local row and column */
+  int nfirst;               /**< the first local row and column */
   int ifGenEv;              /**< if it is a generalized eigenvalue problem */
   pevsl_Matvec *Amv;        /**< external matvec routine and the associated data for A */
   pevsl_Matvec *Bmv;        /**< external matvec routine and the associated data for B */

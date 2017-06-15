@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <mpi.h>
 
+#define PEVSL_NOT_DEFINED -2
 #define PEVSL_NOT_IMPLEMENT 11
 #define PEVSL_MAX_LINE 2048
 

@@ -138,7 +138,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
                          nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
   /*-------------------- nmv counts  matvecs */
-  int nmv = 0;
+  //int nmv = 0;
   /*-------------------- u  is just a pointer. wk == work space */
   pevsl_Parvec *wk, *w2, *vrand = NULL, *u;
   int wk_size = pevsl_data.ifGenEv ? 4 : 3;
@@ -299,8 +299,8 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     }
 
     if (do_print) {
-      pEVSL_fprintf0(rank, fstats, "k %4d:   nMV %8d, nconv %4d  tr1 %21.15e\n",
-                     k, nmv, nconv,tr1);
+      pEVSL_fprintf0(rank, fstats, "k %4d:   nconv %4d  tr1 %21.15e\n",
+                     k, nconv,tr1);
     }
     /* -------------------- simple test because all eigenvalues
                             are between gamB and ~1. */
