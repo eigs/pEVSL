@@ -153,7 +153,7 @@ void PEVSL_FORT(pevsl_freepol)(uintptr_t *polf90) {
  */
 void PEVSL_FORT(pevsl_cheblannr)(double *xintv, int *max_its, double *tol, 
                                  MPI_Fint *Fcomm, uintptr_t *polf90) {
-  int N, n, nev2, ierr;
+  int N, n, nfirst, nev2, ierr;
   double *lam, *res;
   pevsl_Parvec *Y;
   FILE *fstats = stdout;
@@ -162,8 +162,9 @@ void PEVSL_FORT(pevsl_cheblannr)(double *xintv, int *max_its, double *tol,
   MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
   N = pevsl_data.N;
   n = pevsl_data.n;
+  nfirst = pevsl_data.nfirst;
   /*------------------- Create parallel vector: random initial guess */
-  pEVSL_ParvecCreate(N, n, 0, comm, &vinit);
+  pEVSL_ParvecCreate(N, n, nfirst, comm, &vinit);
   pEVSL_ParvecRand(&vinit);
   /* cast pointer of pol*/
   pevsl_Polparams *pol = (pevsl_Polparams *) (*polf90);
