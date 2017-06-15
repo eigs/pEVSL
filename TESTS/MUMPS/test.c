@@ -3,6 +3,7 @@
 #include "pevsl.h"
 #include "io.h"
 #include "dmumps_c.h"
+#include "comm.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -29,9 +30,10 @@ int main(int argc, char *argv[]) {
 ------------------------------------------------------------*/
   int n, nx, ny, nz, i, j, npts, nslices, nvec, Mdeg, nev, 
       ngroups, mlan, ev_int, sl, flg, ierr, np, rank;
+  double tme, tms;
   /* find the eigenvalues of A in the interval [a,b] */
   /*-------------------- pEVSL communicator, which contains all the communicators */
-  pevsl_Comm comm;
+  CommInfo comm;
   pevsl_Coo coo_local;
   pevsl_Parvec rhs, sol, res, x;
   pevsl_Polparams pol;
@@ -48,10 +50,10 @@ int main(int argc, char *argv[]) {
   /*-------------------- matrix A: parallel csr format */    
   pevsl_Parcsr A;
   /*-------------------- default values */
-  nx = 4;
-  ny = 4;
+  nx = 8*8*8;
+  ny = 1;
   nz = 1;
-  ngroups = 2;
+  ngroups = 1;
   /*-----------------------------------------------------------------------
    *-------------------- reset some default values from command line  
    *                     user input from command line */
@@ -69,7 +71,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- start pEVSL */
   pEVSL_Start(argc, argv);
   /*-------------------- Create communicators for groups, group leaders */
-  pEVSL_CommCreate(&comm, MPI_COMM_WORLD, ngroups);
+  CommInfoCreate(&comm, MPI_COMM_WORLD, ngroups);
   /*-------------------- Group leader (group_rank == 0) creates output file */
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //            Create Parcsr (Parallel CSR) matrix A
@@ -129,6 +131,7 @@ int main(int argc, char *argv[]) {
       icols[i] = j1;
     }
   }
+  tms = MPI_Wtime(); 
   MPI_Gatherv(rhs.data, rhs.n_local, MPI_DOUBLE, rhs_global,
               ncols, icols, MPI_DOUBLE, 0, comm.comm_group);
   /*
@@ -160,6 +163,9 @@ int main(int argc, char *argv[]) {
   MPI_Scatterv(rhs_global, ncols, icols, MPI_DOUBLE, sol.data, sol.n_local,
                MPI_DOUBLE, 0, comm.comm_group);
 
+  tme = MPI_Wtime();
+
+  printf("T-solve %f\n", tme-tms);
   if (comm.group_rank == 0) {
     free(rhs_global);
     free(ncols);
@@ -187,7 +193,7 @@ int main(int argc, char *argv[]) {
   pEVSL_ParvecFree(&res);
   pEVSL_ParvecFree(&x);
 
-  pEVSL_CommFree(&comm);
+  CommInfoFree(&comm);
 
   pEVSL_Finish();
 

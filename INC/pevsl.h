@@ -28,6 +28,8 @@ int pEVSL_SetStdEig();
 
 int pEVSL_SetGenEig();
 
+void pEVSL_StatsReset();
+
 void pEVSL_StatsPrint(FILE *fstats, MPI_Comm comm);
 
 int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 

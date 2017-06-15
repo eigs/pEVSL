@@ -84,15 +84,12 @@ void pEVSL_ParvecAddScalar(pevsl_Parvec *x, double t) {
     x->data[i] += t;
   }
 }
+*/
 
 void pEVSL_ParvecSetScalar(pevsl_Parvec *x, double t) {
-  int i;
-  for (i=0; i<x->n_local; i++) {
-    x->data[i] = t;
-  }
+  int one = 1, zero = 0;
+  DCOPY(&(x->n_local), &t, &zero, x->data, &one);
 }
-
-*/
 
 void pEVSL_ParvecSetZero(pevsl_Parvec *x) {
   memset(x->data, 0, x->n_local*sizeof(double));

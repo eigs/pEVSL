@@ -129,7 +129,10 @@ typedef struct _pevsl_Stat {
   /* timing [level-2 funcs] */
   double t_mvA;
   double t_mvB;
-  double t_solB;
+  double t_svB;
+  size_t n_mvA;
+  size_t n_mvB;
+  size_t n_svB;
   /* memory */
   size_t alloced;
   size_t alloced_total;

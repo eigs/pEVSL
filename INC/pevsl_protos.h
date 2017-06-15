@@ -138,9 +138,8 @@ void pEVSL_ParvecScal(pevsl_Parvec *x, double t);
 
 /*
 void pEVSL_ParvecAddScalar(pevsl_Parvec *x, double t);
-
-void pEVSL_ParvecSetScalar(pevsl_Parvec *x, double t);
 */
+void pEVSL_ParvecSetScalar(pevsl_Parvec *x, double t);
 
 void pEVSL_ParvecSetZero(pevsl_Parvec *x);
 
@@ -229,6 +228,7 @@ static inline void pEVSL_MatvecA(pevsl_Parvec *x, pevsl_Parvec *y) {
   
   double tme = pEVSL_Wtime();
   pevsl_stat.t_mvA += tme - tms;
+  pevsl_stat.n_mvA ++;
 }
 
 
@@ -253,6 +253,7 @@ static inline void pEVSL_MatvecB(pevsl_Parvec *x, pevsl_Parvec *y) {
   
   double tme = pEVSL_Wtime();
   pevsl_stat.t_mvB += tme - tms;
+  pevsl_stat.n_mvB ++;
 }
 
 /**
@@ -274,7 +275,8 @@ static inline void pEVSL_SolveB(pevsl_Parvec *x, pevsl_Parvec *y) {
   pevsl_data.Bsol->func(x->data, y->data, pevsl_data.Bsol->data);
   
   double tme = pEVSL_Wtime();
-  pevsl_stat.t_solB += tme - tms;
+  pevsl_stat.t_svB += tme - tms;
+  pevsl_stat.n_svB ++;
 }
 
 /**

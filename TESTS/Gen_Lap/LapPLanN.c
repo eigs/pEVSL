@@ -132,11 +132,15 @@ int main(int argc, char *argv[]) {
   sli = (double *) malloc((nslices+1)*sizeof(double));
   /*------------------- trivial */
   linspace(a, b, nslices+1, sli);      
+  /*--------------------- print stats */
+  pEVSL_StatsPrint(fstats, comm.comm_group);
   /*------------------- each group pick one slice and call ChebLanNr */
   for (sl=comm.group_id; sl<nslices; sl+=comm.ngroups) {
     int nev2, *ind;
     double *lam, *res, ai, bi;
     pevsl_Parvec *Y;
+    /*-------------------- zero out stats */
+    pEVSL_StatsReset();
     /*-------------------- */
     ai = sli[sl];
     bi = sli[sl+1];
@@ -157,6 +161,7 @@ int main(int argc, char *argv[]) {
     //-------------------- Now determine polymomial to use
     pEVSL_FindPol(xintv, &pol);
     if (comm.group_rank == 0) {
+      fprintf(fstats, "\n\n");
       fprintf(fstats, " ======================================================\n");
       fprintf(fstats, " subinterval: [%.4e , %.4e]\n", ai, bi);
       fprintf(fstats, " ======================================================\n");
@@ -193,6 +198,8 @@ int main(int argc, char *argv[]) {
         }
       }
     }
+    /*--------------------- print stats */
+    pEVSL_StatsPrint(fstats, comm.comm_group);
     /*-------------------- free within this slice */
     if (lam) free(lam);
     if (res) free(res);
@@ -206,9 +213,6 @@ int main(int argc, char *argv[]) {
   
   free(sli);
   //free(mu);
-
-  /*--------------------- print stats */
-  pEVSL_StatsPrint(fstats, comm.comm_group);
 
   /*--------------------- done */
   if (fstats) {
