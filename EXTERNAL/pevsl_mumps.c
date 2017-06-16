@@ -24,7 +24,7 @@ int SetupBSolMumps(pevsl_Parcsr *B, BSolDataMumps *data) {
   /* create solver the communicator of B */
   data->solver.comm_fortran = (MUMPS_INT) MPI_Comm_c2f(comm);
   data->solver.par = 1; /* host is also involved */
-  data->solver.sym = 1; /* SPD */
+  data->solver.sym = 1; /* 0: nonsymmetric, 1:SPD, 2: symmetric */
   data->solver.job = -1; /* initialization */
   dmumps_c(&(data->solver));
   /*------------------- local coo matrix (1-based indices) 

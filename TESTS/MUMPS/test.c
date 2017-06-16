@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   /*-------------------- matrix A: parallel csr format */    
   pevsl_Parcsr A;
   /*-------------------- default values */
-  nx = 20*20*20;
+  nx = 8*8*8;
   ny = 1;
   nz = 1;
   ngroups = 1;
