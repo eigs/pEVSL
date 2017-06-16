@@ -1,10 +1,11 @@
 # Compilers
 CC = mpiicc
 LINK = $(CC)
-#LINK = mpiifort
 
 # Common flags
-FLAGS = -DUNIX -O3 -g -Wall $(NO_DEBUG) $(TIMING)
+# Debug mode
+PEVSL_DEBUG = -DPEVSL_DEBUG
+FLAGS = -DUNIX -O3 -g -Wall $(PEVSL_DEBUG) $(TIMING)
 
 ##OBJ_TIME = mactime.o
 OBJ_TIME = timing.o 
@@ -15,6 +16,4 @@ RANLIB = ranlib
 
 #LIB0 = -lrt -lm #-lgfortran 
 LIBLAPACK =  -lmkl_intel_lp64 -lmkl_sequential -lmkl_intel_thread -lmkl_core -lmkl_lapack95_lp64 -lmkl_blas95_lp64 -lpthread -lm
-#LIBLAPACK = -llapack -lblas
-#LIBLAPACK = /home/li50/workspace/OpenBLAS/libopenblas.a -lpthread
 
