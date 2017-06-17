@@ -106,7 +106,8 @@ void PEVSL_FORT(pevsl_test)(MPI_Fint *Fcomm) {
   /*------------------- Create parallel vector: random initial guess */
   pEVSL_ParvecCreate(N, n, nfirst, comm, &vinit);
   //pEVSL_ParvecRand(&vinit);
-  pEVSL_ParvecSin(&vinit);
+  //pEVSL_ParvecSin(&vinit);
+  pEVSL_ParvecSetScalar(&vinit, 1.0);
   pEVSL_ParvecDupl(&vinit, &y);
   pEVSL_ParvecDupl(&vinit, &z);
 
