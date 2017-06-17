@@ -95,8 +95,8 @@ void PEVSL_FORT(pevsl_amv)(double *x, double *y) {
 
 void PEVSL_FORT(pevsl_test)(MPI_Fint *Fcomm) {
   int N, n, nfirst;
-  double nrm;
-  pevsl_Parvec vinit;
+  double nrmv, nrmy, nrmz;
+  pevsl_Parvec vinit, y, z;
   MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
   N = pevsl_data.N;
   n = pevsl_data.n;
@@ -104,10 +104,27 @@ void PEVSL_FORT(pevsl_test)(MPI_Fint *Fcomm) {
   /*------------------- Create parallel vector: random initial guess */
   pEVSL_ParvecCreate(N, n, nfirst, comm, &vinit);
   pEVSL_ParvecRand(&vinit);
+  pEVSL_ParvecDupl(&vinit, &y);
+  pEVSL_ParvecDupl(&vinit, &z);
 
-  pEVSL_ParvecNrm2(&vinit, &nrm);
+  pEVSL_ParvecNrm2(&vinit, &nrmv);
+  printf("norm v %.15e\n", nrmv);
 
-  printf("norm %.15e\n", nrm);
+  pEVSL_MatvecA(&vinit, &y);
+  pEVSL_ParvecNrm2(&y, &nrmy);
+  printf("norm y %.15e\n", nrmy);
+
+  pEVSL_MatvecB(&vinit, &z);
+  pEVSL_ParvecNrm2(&z, &nrmz);
+  printf("norm z %.15e\n", nrmz);
+
+  pEVSL_SolveB(&z, &y);
+  pEVSL_ParvecNrm2(&y, &nrmy);
+  printf("norm y2 %.15e\n", nrmy);
+
+  pEVSL_ParvecAxpy(-1.0, &vinit, &y);
+  pEVSL_ParvecNrm2(&y, &nrmy);
+  printf("norm y3 %.15e\n", nrmy);
 }
 
 /** @brief Fortran interface for evsl_lanbounds 
