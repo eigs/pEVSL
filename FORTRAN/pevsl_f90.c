@@ -93,8 +93,7 @@ void PEVSL_FORT(pevsl_amv)(double *x, double *y) {
 
 */
 
-void pEVSL_ParvecSin(pevsl_Parvec *x);
-
+#if 0
 void PEVSL_FORT(pevsl_test)(MPI_Fint *Fcomm) {
   int N, n, nfirst;
   double nrmv, nrmy, nrmz;
@@ -130,6 +129,7 @@ void PEVSL_FORT(pevsl_test)(MPI_Fint *Fcomm) {
   //pEVSL_ParvecNrm2(&y, &nrmy);
   //printf("norm y3 %.15e\n", nrmy);
 }
+#endif
 
 /** @brief Fortran interface for evsl_lanbounds 
  * @param[in] nstpes: number of steps
