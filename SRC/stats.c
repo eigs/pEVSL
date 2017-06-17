@@ -31,9 +31,15 @@ void pEVSL_StatsPrint(FILE *fstats, MPI_Comm comm) {
     /* time */
     fprintf(fstats, "= = = = = = = = = = = = = = = = = = = Time & Memory Stats = = = = = = = = = = = = = = = = = = = =\n");
     fprintf(fstats, " Timing (sec):\n");
-    fprintf(fstats, "   Create MPI communicators :  %f\n",  t_commgen);
-    fprintf(fstats, "   Compute spectrum bounds  :  %f\n",  t_eigbounds);
-    fprintf(fstats, "   Apply solver             :  %f\n",  t_solver);
+    if (t_commgen > 0.0) {
+      fprintf(fstats, "   Create MPI communicators :  %f\n",  t_commgen);
+    }
+    if (t_eigbounds > 0.0) {
+      fprintf(fstats, "   Compute spectrum bounds  :  %f\n",  t_eigbounds);
+    }
+    if (t_solver > 0.0) {
+      fprintf(fstats, "   Apply solver             :  %f\n",  t_solver);
+    }
     fprintf(fstats, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
     fprintf(fstats, "   Matvec matrix A          :  %f (%8ld, avg %f)\n",  t_mvA, n_mvA, t_mvA / n_mvA);
     fprintf(fstats, "   Matvec matrix B          :  %f (%8ld, avg %f)\n",  t_mvB, n_mvB, t_mvB / n_mvB);

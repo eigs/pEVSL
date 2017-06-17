@@ -93,6 +93,23 @@ void PEVSL_FORT(pevsl_amv)(double *x, double *y) {
 
 */
 
+void PEVSL_FORT(pevsl_test)(MPI_Fint *Fcomm) {
+  int N, n, nfirst;
+  double nrm;
+  pevsl_Parvec vinit;
+  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
+  N = pevsl_data.N;
+  n = pevsl_data.n;
+  nfirst = pevsl_data.nfirst;
+  /*------------------- Create parallel vector: random initial guess */
+  pEVSL_ParvecCreate(N, n, nfirst, comm, &vinit);
+  pEVSL_ParvecRand(&vinit);
+
+  pEVSL_ParvecNrm2(&vinit, &nrm);
+
+  printf("norm %.15e\n", nrm);
+}
+
 /** @brief Fortran interface for evsl_lanbounds 
  * @param[in] nstpes: number of steps
  * @param[out] lmin: lower bound
