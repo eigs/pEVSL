@@ -195,3 +195,39 @@ int pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn) {
    return 0;
    }
    */
+
+
+void pEVSL_ParvecSin(pevsl_Parvec *x) {
+  int i;
+#ifdef PEVSL_DEBUG
+  /* in debug mode, parallel random vector is generated in a way such that
+   * it is the sames as sequential vector. In this case, it is also independent
+   * of number of MPI ranks.
+   * [NOT scalable] ONLY for DEBUG
+   */
+  int np, rank, *nlocal_all, nfirst;
+  nfirst = x->n_first;
+  if (nfirst == PEVSL_NOT_DEFINED) {
+    /* if nfirst has not been defined, compute it */
+    MPI_Comm comm = x->comm;
+    MPI_Comm_size(MPI_COMM_WORLD, &np);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    PEVSL_MALLOC(nlocal_all, np, int);
+    MPI_Allgather(&x->n_local, 1, MPI_INT, nlocal_all, 1, MPI_INT, comm);
+    nfirst=0;
+    /* compute nfirst */
+    for (i=0; i<rank; i++) {
+      nfirst += nlocal_all[i];
+    }
+    PEVSL_FREE(nlocal_all);
+  }
+  /* populate the local portion of the vector */
+  for (i=0; i<x->n_global; i++) {
+    if (i >= nfirst && i < nfirst + x->n_local) {
+      x->data[i-nfirst] = sin(i);
+    }
+  }
+#else
+
+#endif
+}

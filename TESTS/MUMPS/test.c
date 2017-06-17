@@ -97,8 +97,8 @@ int main(int argc, char *argv[]) {
     coo_local.ir[i] += A.first_row;
     //printf("%d %d %f\n", coo_local.ir[i], coo_local.jc[i], coo_local.vv[i]);
   }
-  //solver.ICNTL(2) = -1; /* output suppressed */
-  //solver.ICNTL(3) = -1; /* output suppressed */
+  solver.ICNTL(2) = -1; /* output suppressed */
+  solver.ICNTL(3) = -1; /* output suppressed */
   solver.ICNTL(18) = 3; /* distributed matrix */
   solver.ICNTL(28) = 2; /* parallel ordering */
   solver.ICNTL(29) = 2; /* parmetis */
@@ -113,9 +113,10 @@ int main(int argc, char *argv[]) {
   //solver.ICNTL(20) = 0; /* dense rhs */
   //solver.ICNTL(21) = 0; /* centralized solution */
   pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, A.comm, &rhs);
-  pEVSL_ParvecDupl(&rhs, &x);
-  pEVSL_ParvecSetScalar(&x, 1.0);
+  //pEVSL_ParvecDupl(&rhs, &x);
+  //pEVSL_ParvecSetScalar(&x, 1.0);
   //pEVSL_ParcsrMatvec(&A, &x, &rhs);
+  srand(0);
   pEVSL_ParvecRand(&rhs);
   /*------------------- gather rhs to root */
   double *rhs_global = NULL;
@@ -171,9 +172,15 @@ int main(int argc, char *argv[]) {
     free(ncols);
     free(icols);
   }
+
+  double nrmx;
+  pEVSL_ParvecNrm2(&sol, &nrmx);
+  printf("sol nrm %.15e\n", nrmx);
+
   /*----------------- check residual */
   double nrm, nrmb;
   pEVSL_ParvecNrm2(&rhs, &nrmb);
+  printf("rhs nrm %.15e\n", nrmb);
   pEVSL_ParvecDupl(&rhs, &res);
   tms = MPI_Wtime(); 
   pEVSL_ParcsrMatvec(&A, &sol, &res);
