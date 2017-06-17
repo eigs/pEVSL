@@ -118,13 +118,13 @@ void PEVSL_FORT(pevsl_test)(MPI_Fint *Fcomm) {
   pEVSL_ParvecNrm2(&z, &nrmz);
   printf("norm z %.15e\n", nrmz);
 
-  pEVSL_SolveB(&z, &y);
+  pEVSL_SolveB(&vinit, &y);
   pEVSL_ParvecNrm2(&y, &nrmy);
   printf("norm y2 %.15e\n", nrmy);
 
-  pEVSL_ParvecAxpy(-1.0, &vinit, &y);
-  pEVSL_ParvecNrm2(&y, &nrmy);
-  printf("norm y3 %.15e\n", nrmy);
+  //pEVSL_ParvecAxpy(-1.0, &vinit, &y);
+  //pEVSL_ParvecNrm2(&y, &nrmy);
+  //printf("norm y3 %.15e\n", nrmy);
 }
 
 /** @brief Fortran interface for evsl_lanbounds 
