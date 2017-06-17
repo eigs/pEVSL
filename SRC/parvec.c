@@ -139,16 +139,20 @@ int pEVSL_ParvecSameSize(pevsl_Parvec *x, pevsl_Parvec *y) {
 
 /** @brief print Parvec on comm (squential in comm) 
  *  @param fn: filename (if NULL, print it to stdout) */
-int pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn, MPI_Comm comm) {
+int pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn) {
+  MPI_Comm comm = x->comm;
   /* if fn == NULL, print to stdout */
   FILE *fp = fn ? NULL : stdout;
   /* sequential loop with all ranks in comm */
   PEVSL_SEQ_BEGIN(comm, rank, size)
   {
-    /* if print to file, open it
-     * mode 'a' should work */
+    /* if print to file, rank 0 open it */
     if (fn) {
-      fp = fopen(fn, "a");
+      if (rank) {
+        fp = fopen(fn, "a");
+      } else {
+        fp = fopen(fn, "w");
+      }
     }
     /* if fp != NULL */
     if (fp) {

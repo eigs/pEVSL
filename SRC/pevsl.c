@@ -22,7 +22,9 @@ int pEVSL_Start() {
   pevsl_data.Bsol    = NULL;
   pevsl_data.LTsol   = NULL;
 
-#ifndef PEVSL_DEBUG
+#ifdef PEVSL_DEBUG
+  srand(0);
+#else
   /* in the non-debug mode, use MPI_COMM_WORLD rank as rand seed
    * for parallel random vectors */
   int rank;

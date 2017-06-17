@@ -50,9 +50,9 @@ int main(int argc, char *argv[]) {
   /*-------------------- matrix A: parallel csr format */    
   pevsl_Parcsr A;
   /*-------------------- default values */
-  nx = 8*8*8;
-  ny = 1;
-  nz = 1;
+  nx = 10;
+  ny = 10;
+  nz = 10;
   ngroups = 1;
   /*-----------------------------------------------------------------------
    *-------------------- reset some default values from command line  

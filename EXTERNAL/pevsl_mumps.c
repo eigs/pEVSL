@@ -18,9 +18,11 @@ int SetupBSolMumps(pevsl_Parcsr *B, BSolDataMumps *data) {
   /* global and local sizes */
   nglobal = B->nrow_global;
   nlocal = B->nrow_local;
+  data->N = nglobal;
+  data->n = nlocal;
   /* check if sizes match */
-  PEVSL_CHKERR(nglobal != pevsl_data.N);
-  PEVSL_CHKERR(nlocal != pevsl_data.n);
+  //PEVSL_CHKERR(nglobal != pevsl_data.N);
+  //PEVSL_CHKERR(nlocal != pevsl_data.n);
   /* create solver the communicator of B */
   data->solver.comm_fortran = (MUMPS_INT) MPI_Comm_c2f(comm);
   data->solver.par = 1; /* host is also involved */
@@ -114,7 +116,8 @@ void BSolMumps(double *b, double *x, void *data) {
   int *ncols = mumps_data->ncols;
   int *icols = mumps_data->icols;
   /* local size */
-  int nlocal = pevsl_data.n;
+  //int nlocal = pevsl_data.n;
+  int nlocal = mumps_data->n;
   /* MUMPS needs rhs to be centralized */
   double *rhs_global = mumps_data->rhs_global;
   /* gather rhs to rank 0 */

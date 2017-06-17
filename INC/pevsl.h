@@ -57,6 +57,7 @@ void pEVSL_ParvecSetScalar(pevsl_Parvec *x, double t);
 void pEVSL_ParvecSetZero(pevsl_Parvec *x);
 void pEVSL_ParvecAxpy(double a, pevsl_Parvec *x, pevsl_Parvec *y);
 int  pEVSL_ParvecSameSize(pevsl_Parvec *x, pevsl_Parvec *y);
+int pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn);
 
 /* spmat.c */
 void pEVSL_CsrResize(int nrow, int ncol, int nnz, pevsl_Csr *csr);

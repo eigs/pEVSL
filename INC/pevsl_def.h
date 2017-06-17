@@ -28,6 +28,9 @@
     MPI_Abort(comm, errcode); \
 }
 #else
+
+#define PEVSL_CHKERR(ierr) 
+
 #endif
 
 /* memory management, alloc and free */

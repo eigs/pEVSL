@@ -104,14 +104,14 @@ int main(int argc, char *argv[]) {
   // so A is defined on each group
   ParcsrLaplace(&A, nx, ny, nz, NULL, comm.comm_group);
   ParcsrLaplace(&B, nx*ny*nz, 1, 1, NULL, comm.comm_group);
+  /*-------------------- use MUMPS as the solver for B */
+  SetupBSolMumps(&B, &Bsol);
   /*-------------------- start pEVSL */
   pEVSL_Start(argc, argv);
   /*-------------------- set the left-hand side matrix A */
   pEVSL_SetAParcsr(&A);
   /*-------------------- set the left-hand side matrix A */
   pEVSL_SetBParcsr(&B);
-  /*-------------------- use MUMPS as the solver for B */
-  SetupBSolMumps(&B, &Bsol);
   /*-------------------- set the solver for B */
   pEVSL_SetBSol(BSolMumps, (void *) &Bsol);
   /*-------------------- for generalized eigenvalue problem */

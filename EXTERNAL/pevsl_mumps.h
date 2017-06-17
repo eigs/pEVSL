@@ -4,8 +4,13 @@
 #include "dmumps_c.h"
 
 typedef struct _BSolDataMumps {
+  /* global and local size */
+  int N, n;
   DMUMPS_STRUC_C solver;
   double *rhs_global;
+  /* number of local entries and start of local entries
+   * only exists on rank 0, needed by MUMPS since we need to 
+   * centralize rhs that needs to do Gatherv */
   int *ncols;
   int *icols;
 } BSolDataMumps;
