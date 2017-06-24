@@ -120,17 +120,24 @@ int main(int argc, char *argv[]) {
 //===================================================
 // TEST STUFF WITH CHEB SOL B, REMOVE LATER
   BSolDataChebiter BsolCheb;
-  pEVSL_SetupChebIterMatB(10, 50, 200, 1e-8, comm.comm_group, &BsolCheb);
+  pEVSL_ChebIterSetupMatB(10, 50, 200, 1e-8, comm.comm_group, &BsolCheb);
   printf("eig B: [%e,%e]\n", BsolCheb.lb, BsolCheb.ub);
-  pEVSL_SetBSol(pEVSL_ChebIterSolMatB, &BsolCheb);
+  pEVSL_SetBSol(pEVSL_ChebIterSolMatBv1, &BsolCheb);
   pevsl_Parvec bb, xx;
   pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, comm.comm_group, &bb);
   pEVSL_ParvecRand(&bb);
   pEVSL_ParvecDupl(&bb, &xx);
 
   pevsl_data.Bsol->func(bb.data, xx.data, pevsl_data.Bsol->data, bb.comm);
-  
-  printf("rel-res %e\n", BsolCheb.relres);
+   
+  if (BsolCheb.res) {
+    printf("CHEB ITER RES\n");
+    for (i=0; i<BsolCheb.deg+1; i++) {
+      printf("i %3d: %e\n", i, BsolCheb.res[i]);
+    }
+  }
+
+  pEVSL_ChebIterFree(&BsolCheb);
 
   MPI_Barrier(MPI_COMM_WORLD);
   exit(0);

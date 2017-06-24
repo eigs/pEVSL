@@ -263,8 +263,8 @@ void PEVSL_FORT(pevsl_setup_chebiterb)(int *deg, int *lanm, int *msteps, double 
   MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
   BSolDataChebiter *cheb;
   PEVSL_MALLOC(cheb, 1, BSolDataChebiter);
-  pEVSL_SetupChebIterMatB(*deg, *lanm, *msteps, *tol, comm, cheb);
-  pEVSL_SetBSol(pEVSL_ChebIterSolMatB, cheb);
+  pEVSL_ChebIterSetupMatB(*deg, *lanm, *msteps, *tol, comm, cheb);
+  pEVSL_SetBSol(pEVSL_ChebIterSolMatBv1, cheb);
 
   printf("CHEB SOL SETUP DONE: DEG %d, eig (%e, %e):%e\n", 
          cheb->deg, cheb->lb, cheb->ub, cheb->ub/cheb->lb);
@@ -272,10 +272,16 @@ void PEVSL_FORT(pevsl_setup_chebiterb)(int *deg, int *lanm, int *msteps, double 
   *chebf90 = (uintptr_t) cheb;
 }
 
-void PEVSL_FORT(pevsl_testchebiterb)(MPI_Fint *Fcomm) {
-  int N, n, nfirst;
+void PEVSL_FORT(pevsl_free_chebiterb)(uintptr_t *chebf90) {
+  BSolDataChebiter *data = (BSolDataChebiter *) (*chebf90);
+  pEVSL_ChebIterFree(data);
+}
+
+void PEVSL_FORT(pevsl_testchebiterb)(uintptr_t *chebf90, MPI_Fint *Fcomm) {
+  int i, N, n, nfirst;
   pevsl_Parvec b,x;
  
+  BSolDataChebiter *cheb = (BSolDataChebiter *) (*chebf90);
   MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
   N = pevsl_data.N;
   n = pevsl_data.n;
@@ -287,5 +293,11 @@ void PEVSL_FORT(pevsl_testchebiterb)(MPI_Fint *Fcomm) {
   
   pEVSL_SolveB(&b, &x);
   
-  //printf("rel-res %e\n", BsolCheb.relres);
+  if (cheb->res) {
+    printf("CHEB ITER RES\n");
+    for (i=0; i<cheb->deg+1; i++) {
+      printf("i %3d: %e\n", i, cheb->res[i]);
+    }
+  }
 }
+

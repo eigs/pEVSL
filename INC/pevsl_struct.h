@@ -242,7 +242,7 @@ typedef struct _BSolDataChebiter {
   /* work space */
   pevsl_Parvec *w, *r, *p;
   /* results */
-  double relres;
+  double* res;
 } BSolDataChebiter;
 
 
