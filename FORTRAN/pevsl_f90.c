@@ -259,13 +259,16 @@ void PEVSL_FORT(pevsl_copy_result)(double *val, double *vec) {
 }
 
 void PEVSL_FORT(pevsl_setup_chebiterb)(int *deg, int *lanm, int *msteps, double *tol,
-                                       MPI_Fint *Fcomm, uintptr_t *chebf90) {
+                                       int *type, MPI_Fint *Fcomm, uintptr_t *chebf90) {
   MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
   BSolDataChebiter *cheb;
   PEVSL_MALLOC(cheb, 1, BSolDataChebiter);
   pEVSL_ChebIterSetupMatB(*deg, *lanm, *msteps, *tol, comm, cheb);
-  pEVSL_SetBSol(pEVSL_ChebIterSolMatBv1, cheb);
-
+  if (*type == 1) {
+    pEVSL_SetBSol(pEVSL_ChebIterSolMatBv1, cheb);
+  } else {
+    pEVSL_SetBSol(pEVSL_ChebIterSolMatBv2, cheb);
+  }
   printf("CHEB SOL SETUP DONE: DEG %d, eig (%e, %e):%e\n", 
          cheb->deg, cheb->lb, cheb->ub, cheb->ub/cheb->lb);
   
