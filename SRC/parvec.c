@@ -1,11 +1,17 @@
 #include "pevsl_int.h"
 
-void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm, pevsl_Parvec *x) {
+void pEVSL_ParvecCreateShell(int nglobal, int nlocal, int nfirst, MPI_Comm comm, 
+                             pevsl_Parvec *x, double *data) {
   x->comm = comm;
   x->n_global = nglobal;
   x->n_local = nlocal;
   nfirst = nfirst < 0 ? PEVSL_NOT_DEFINED : nfirst;
   x->n_first = nfirst;
+  x->data = data;
+}
+
+void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm, pevsl_Parvec *x) {
+  pEVSL_ParvecCreateShell(nglobal, nlocal, nfirst, comm, x, NULL);
   PEVSL_MALLOC(x->data, nlocal, double);
 }
 

@@ -149,7 +149,7 @@ int pEVSL_SetBMatvec(MVFunc func, void *data) {
 /**
  * @brief Set the solve routine and the associated data for B
  * */
-int pEVSL_SetBSol(SolFuncR func, void *data) {
+int pEVSL_SetBSol(SVFunc func, void *data) {
   if (!pevsl_data.Bsol) {
     PEVSL_CALLOC(pevsl_data.Bsol, 1, pevsl_Bsol);
   }

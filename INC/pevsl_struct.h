@@ -186,20 +186,22 @@ typedef struct _pevsl_polparams {
  * be the  solution (complex vector),  and "data" contains  all the
  * data  needed  by  the  solver. 
  */
-typedef void (*SolFuncC)(pevsl_Parvec *br, pevsl_Parvec *bz, pevsl_Parvec *xr, pevsl_Parvec *xz, void *data);
+typedef void (*SVFuncC)(pevsl_Parvec *br, pevsl_Parvec *bz, 
+                        pevsl_Parvec *xr, pevsl_Parvec *xz, 
+                        void *data, MPI_Comm comm);
 
 /** 
  * @brief function prototype for applying the solve B x = b 
  * [the most general form]
  */
-//typedef void (*SolFuncR)(pevsl_Parvec *b, pevsl_Parvec *x, void *data);
-typedef void (*SolFuncR)(double *b, double *x, void *data);
+//typedef void (*SVFunc)(pevsl_Parvec *b, pevsl_Parvec *x, void *data);
+typedef void (*SVFunc)(double *b, double *x, void *data, MPI_Comm comm);
 
 /**
  * @brief matvec function prototype 
  */
 //typedef void (*MVFunc)(pevsl_Parvec *x, pevsl_Parvec *y, void *data);
-typedef void (*MVFunc)(double *x, double *y, void *data);
+typedef void (*MVFunc)(double *x, double *y, void *data, MPI_Comm comm);
 
 /*!
  * @brief user-provided Mat-Vec function and data for y = A * x or y = B * x
@@ -215,7 +217,7 @@ typedef struct _pevsl_Matvec {
  *
  */
 typedef struct _pevsl_Bsol {
-  SolFuncR func;       /**< function pointer */
+  SVFunc func;       /**< function pointer */
   void *data;          /**< data */
 } pevsl_Bsol;
 
@@ -224,7 +226,7 @@ typedef struct _pevsl_Bsol {
  *
  */
 typedef struct _pevsl_LtSol {
-  SolFuncR func;       /**< function pointer */
+  SVFunc func;       /**< function pointer */
   void *data;          /**< data */
 } pevsl_Ltsol;
 
@@ -237,6 +239,10 @@ typedef struct _BSolDataChebiter {
   double lb, ub;
   /* polynomial degree */
   int deg;
+  /* work space */
+  pevsl_Parvec *w, *r, *p;
+  /* results */
+  double relres;
 } BSolDataChebiter;
 
 

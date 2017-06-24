@@ -122,6 +122,16 @@ int main(int argc, char *argv[]) {
   BSolDataChebiter BsolCheb;
   pEVSL_SetupChebIterMatB(10, 50, 200, 1e-8, comm.comm_group, &BsolCheb);
   printf("eig B: [%e,%e]\n", BsolCheb.lb, BsolCheb.ub);
+  pEVSL_SetBSol(pEVSL_ChebIterSolMatB, &BsolCheb);
+  pevsl_Parvec bb, xx;
+  pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, comm.comm_group, &bb);
+  pEVSL_ParvecRand(&bb);
+  pEVSL_ParvecDupl(&bb, &xx);
+
+  pevsl_data.Bsol->func(bb.data, xx.data, pevsl_data.Bsol->data, bb.comm);
+  
+  printf("rel-res %e\n", BsolCheb.relres);
+
   MPI_Barrier(MPI_COMM_WORLD);
   exit(0);
   

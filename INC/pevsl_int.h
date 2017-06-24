@@ -73,7 +73,7 @@ void MGS_DGKS(int k, int i_max, pevsl_Parvec *Q, pevsl_Parvec *v, double *nrmv);
 void MGS_DGKS2(int k, int i_max, pevsl_Parvec *Z, pevsl_Parvec *Q, pevsl_Parvec *v);            
 
 /* parcsrmv.c */
-void pEVSL_ParcsrMatvec0(double *x, double *y, void *data);
+void pEVSL_ParcsrMatvec0(double *x, double *y, void *data, MPI_Comm comm);
 
 /* utils.c */
 double pEVSL_Wtime();
@@ -110,7 +110,7 @@ static inline void pEVSL_MatvecA(pevsl_Parvec *x, pevsl_Parvec *y) {
 
   double tms = pEVSL_Wtime();
 
-  pevsl_data.Amv->func(x->data, y->data, pevsl_data.Amv->data);
+  pevsl_data.Amv->func(x->data, y->data, pevsl_data.Amv->data, x->comm);
   
   double tme = pEVSL_Wtime();
   pevsl_stat.t_mvA += tme - tms;
@@ -134,7 +134,7 @@ static inline void pEVSL_MatvecB(pevsl_Parvec *x, pevsl_Parvec *y) {
 
   double tms = pEVSL_Wtime();
   
-  pevsl_data.Bmv->func(x->data, y->data, pevsl_data.Bmv->data);
+  pevsl_data.Bmv->func(x->data, y->data, pevsl_data.Bmv->data, x->comm);
   
   double tme = pEVSL_Wtime();
   pevsl_stat.t_mvB += tme - tms;
@@ -157,7 +157,7 @@ static inline void pEVSL_SolveB(pevsl_Parvec *x, pevsl_Parvec *y) {
 
   double tms = pEVSL_Wtime();
   
-  pevsl_data.Bsol->func(x->data, y->data, pevsl_data.Bsol->data);
+  pevsl_data.Bsol->func(x->data, y->data, pevsl_data.Bsol->data, x->comm);
   
   double tme = pEVSL_Wtime();
   pevsl_stat.t_svB += tme - tms;

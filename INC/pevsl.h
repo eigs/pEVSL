@@ -11,6 +11,7 @@
 /* chebiter.c */
 int pEVSL_SetupChebIterMatB(int deg, int lanm, int msteps, double tol, 
                             MPI_Comm comm, BSolDataChebiter *data);
+void pEVSL_ChebIterSolMatB(double *db, double *dx, void *data, MPI_Comm comm);
 
 /* chebpol.c */
 void pEVSL_SetPolDef(pevsl_Polparams *pol);
@@ -29,7 +30,7 @@ int pEVSL_SetAParcsr(pevsl_Parcsr *A);
 int pEVSL_SetBParcsr(pevsl_Parcsr *B);
 int pEVSL_SetAMatvec(MVFunc func, void *data);
 int pEVSL_SetBMatvec(MVFunc func, void *data);
-int pEVSL_SetBSol(SolFuncR func, void *data);
+int pEVSL_SetBSol(SVFunc func, void *data);
 int pEVSL_SetStdEig();
 int pEVSL_SetGenEig();
 
@@ -48,6 +49,7 @@ void pEVSL_ParcsrMatvec(pevsl_Parcsr *A, pevsl_Parvec *x, pevsl_Parvec *y);
 
 /* parvec.c */
 void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm, pevsl_Parvec *x);
+void pEVSL_ParvecCreateShell(int nglobal, int nlocal, int nfirst, MPI_Comm comm, pevsl_Parvec *x, double *data);
 void pEVSL_ParvecDupl(pevsl_Parvec *x, pevsl_Parvec *y);
 void pEVSL_ParvecFree(pevsl_Parvec *x);
 void pEVSL_ParvecRand(pevsl_Parvec *x);

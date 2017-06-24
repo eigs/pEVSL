@@ -45,7 +45,7 @@ void PEVSL_FORT(pevsl_setbmv)(void *func, void *data) {
 
 /** @brief Fortran interface for SetBsol */
 void PEVSL_FORT(pevsl_setbsol)(void *func, void *data) {
-  pEVSL_SetBSol((SolFuncR) func, data);
+  pEVSL_SetBSol((SVFunc) func, data);
 }
 
 /** @brief Fortran interface for SetGenEig */
@@ -258,3 +258,31 @@ void PEVSL_FORT(pevsl_copy_result)(double *val, double *vec) {
   pevsl_eigvec_computed = NULL;
 }
 
+void PEVSL_FORT(pevsl_setup_chebiterb)(int *deg, int *lanm, int *msteps, double *tol,
+                                       MPI_Fint *Fcomm, uintptr_t *chebf90) {
+  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
+  BSolDataChebiter *cheb;
+  PEVSL_MALLOC(cheb, 1, BSolDataChebiter);
+  pEVSL_SetupChebIterMatB(*deg, *lanm, *msteps, *tol, comm, cheb);
+  pEVSL_SetBSol(pEVSL_ChebIterSolMatB, cheb);
+  
+  *chebf90 = (uintptr_t) cheb;
+}
+
+void PEVSL_FORT(pevsl_testchebiterb)(MPI_Fint *Fcomm) {
+  int N, n, nfirst;
+  pevsl_Parvec b,x;
+ 
+  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
+  N = pevsl_data.N;
+  n = pevsl_data.n;
+  nfirst = pevsl_data.nfirst;
+
+  pEVSL_ParvecCreate(N, n, nfirst, comm, &b);
+  pEVSL_ParvecRand(&b);
+  pEVSL_ParvecDupl(&b, &x);
+  
+  pEVSL_SolveB(&b, &x);
+  
+  //printf("rel-res %e\n", BsolCheb.relres);
+}
