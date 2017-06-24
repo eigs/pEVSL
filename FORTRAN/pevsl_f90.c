@@ -265,6 +265,9 @@ void PEVSL_FORT(pevsl_setup_chebiterb)(int *deg, int *lanm, int *msteps, double 
   PEVSL_MALLOC(cheb, 1, BSolDataChebiter);
   pEVSL_SetupChebIterMatB(*deg, *lanm, *msteps, *tol, comm, cheb);
   pEVSL_SetBSol(pEVSL_ChebIterSolMatB, cheb);
+
+  printf("CHEB SOL SETUP DONE: DEG %d, eig (%e, %e):%e\n", 
+         cheb->deg, cheb->lb, cheb->ub, cheb->ub/cheb->lb);
   
   *chebf90 = (uintptr_t) cheb;
 }
