@@ -161,6 +161,7 @@ void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data, MPI_Comm comm) 
   sigma = theta / delta;
   rho   = 1.0 / sigma;
   /* use 0-initial guess, x_0 = 0, so r_0 = b */
+  pEVSL_ParvecSetZero(&x);
   pEVSL_ParvecCopy(&b, r);
   /* d = 1/theta * r */
   pEVSL_ParvecCopy(r, d);
