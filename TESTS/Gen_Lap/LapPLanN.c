@@ -116,6 +116,17 @@ int main(int argc, char *argv[]) {
   pEVSL_SetBSol(BSolMumps, (void *) &Bsol);
   /*-------------------- for generalized eigenvalue problem */
   pEVSL_SetGenEig();
+
+//===================================================
+// TEST STUFF WITH CHEB SOL B, REMOVE LATER
+  BSolDataChebiter BsolCheb;
+  pEVSL_SetupChebIterMatB(10, 50, 200, 1e-8, comm.comm_group, &BsolCheb);
+  printf("eig B: [%e,%e]\n", BsolCheb.lb, BsolCheb.ub);
+  MPI_Barrier(MPI_COMM_WORLD);
+  exit(0);
+  
+//===================================================
+
   /*-------------------- step 0: get eigenvalue bounds */
   /*-------------------- random initial guess */
   pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, comm.comm_group, &vinit);

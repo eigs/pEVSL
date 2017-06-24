@@ -9,7 +9,7 @@ RANLIB = ranlib
 INCLUDES = -I../INC 
 
 # Object files
-OBJS = cheblanNr.o chebpol.o lantrbnd.o pevsl.o miscla.o parcsr.o \
+OBJS = chebiter.o cheblanNr.o chebpol.o lantrbnd.o pevsl.o miscla.o parcsr.o \
        parcsrmv.o parvec.o spmat.o stats.o utils.o vector.o \
        ../FORTRAN/pevsl_f90.o
        

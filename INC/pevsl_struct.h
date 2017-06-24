@@ -228,6 +228,17 @@ typedef struct _pevsl_LtSol {
   void *data;          /**< data */
 } pevsl_Ltsol;
 
+/*!
+ * @brief data needed for Chebyshev iterations
+ *
+ */
+typedef struct _BSolDataChebiter {
+  /* eigenvalue bounds of B */
+  double lb, ub;
+  /* polynomial degree */
+  int deg;
+} BSolDataChebiter;
+
 
 /*!
  * @brief wrapper of all global variables in pEVSL

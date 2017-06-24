@@ -8,6 +8,10 @@
 #include "pevsl_struct.h"
 #include "pevsl_def.h"
 
+/* chebiter.c */
+int pEVSL_SetupChebIterMatB(int deg, int lanm, int msteps, double tol, 
+                            MPI_Comm comm, BSolDataChebiter *data);
+
 /* chebpol.c */
 void pEVSL_SetPolDef(pevsl_Polparams *pol);
 int  pEVSL_FindPol(double *intv, pevsl_Polparams *pol);
