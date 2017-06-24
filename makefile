@@ -8,5 +8,6 @@ clean:
 	( cd SRC           ; make clean)
 	( cd EXTERNAL      ; make clean)
 	( cd TESTS/Lap     ; make clean)
+	( cd TESTS/COMMON  ; make clean)
 	( cd TESTS/Gen_Lap ; make clean)
 

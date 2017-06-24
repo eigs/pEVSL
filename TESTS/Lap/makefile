@@ -2,7 +2,7 @@
 
 include ../../makefile.in
 
-FLAGS = -DUNIX -O3 -g -Wall 
+#FLAGS = -DUNIX -O3 -g -Wall 
 
 INCLUDES = -I../../INC -I../COMMON
 

@@ -282,7 +282,7 @@ void PEVSL_FORT(pevsl_free_chebiterb)(uintptr_t *chebf90) {
 
 void PEVSL_FORT(pevsl_testchebiterb)(uintptr_t *chebf90, MPI_Fint *Fcomm) {
   int i, N, n, nfirst;
-  pevsl_Parvec b,x;
+  pevsl_Parvec y,b,x,d;
  
   BSolDataChebiter *cheb = (BSolDataChebiter *) (*chebf90);
   MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
@@ -291,9 +291,15 @@ void PEVSL_FORT(pevsl_testchebiterb)(uintptr_t *chebf90, MPI_Fint *Fcomm) {
   nfirst = pevsl_data.nfirst;
 
   pEVSL_ParvecCreate(N, n, nfirst, comm, &b);
-  pEVSL_ParvecRand(&b);
+  pEVSL_ParvecDupl(&b, &y);
   pEVSL_ParvecDupl(&b, &x);
+  pEVSL_ParvecDupl(&b, &d);
   
+  /* y is the exact sol */
+  pEVSL_ParvecRand(&y);
+  /* rhs: b = B*y */
+  pEVSL_MatvecB(&y, &b);
+
   pEVSL_SolveB(&b, &x);
   
   if (cheb->res) {
@@ -302,5 +308,14 @@ void PEVSL_FORT(pevsl_testchebiterb)(uintptr_t *chebf90, MPI_Fint *Fcomm) {
       printf("i %3d: %e\n", i, cheb->res[i]);
     }
   }
+
+  pEVSL_MatvecB(&x, &d);
+  pEVSL_ParvecAxpy(-1.0, &b, &d);
+  pEVSL_ParvecAxpy(-1.0, &y, &x);
+  double err_r, err_x;
+  pEVSL_ParvecNrm2(&d, &err_r);
+  pEVSL_ParvecNrm2(&x, &err_x);
+
+  printf("||res|| %e, ||err|| %e\n", err_r, err_x); 
 }
 

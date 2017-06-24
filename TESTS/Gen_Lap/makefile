@@ -3,7 +3,7 @@
 include ../../makefile.in
 include ../../EXTERNAL/makefile.in
 
-FLAGS = -DUNIX -O3 -g -Wall 
+#FLAGS ?= -DUNIX -O3 -g -Wall 
 
 INCLUDES = -I../../INC -I../COMMON -I../../EXTERNAL $(MUMPS_INC)
 

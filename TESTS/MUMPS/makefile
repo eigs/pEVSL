@@ -2,7 +2,7 @@
 
 include ../../makefile.in
 
-FLAGS = -DUNIX -O3 -g -Wall 
+#FLAGS = -DUNIX -O3 -g -Wall 
 
 MUMPSDIR = /home/li50/workspace/MUMPS_5.1.1
 
