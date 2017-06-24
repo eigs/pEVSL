@@ -1,3 +1,4 @@
+#include <float.h>
 #include "pevsl.h"
 
 int lapgen(int nx, int ny, int nz, int m1, int m2, pevsl_Csr *csr) {

@@ -1,7 +1,7 @@
 #include "pevsl.h"
 #include "comm.h"
 
-#define PEVSL_CHKERR(ierr) assert(!(ierr))
+//#define PEVSL_CHKERR(ierr) assert(!(ierr))
 
 /* Constructor */
 int CommInfoCreate(CommInfo *comm, MPI_Comm comm_global, int ngroups) {
