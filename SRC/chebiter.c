@@ -1,6 +1,6 @@
 #include "pevsl_int.h"
 
-#define SAVE_CONV_HIST
+//#define SAVE_CONV_HIST
 
 /** @brief Solver function to setup Chebyshev iterations
  *
@@ -171,8 +171,8 @@ void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data) {
   pEVSL_ParvecCopy(r, d);
   pEVSL_ParvecScal(d, 1.0/theta);
   /* main iterations */
-  pEVSL_ParvecNrm2(r, &norm_r0);
 #ifdef SAVE_CONV_HIST
+  pEVSL_ParvecNrm2(r, &norm_r0);
   res[0] = norm_r0;
 #endif
   for (i=0; i<deg; i++) {
