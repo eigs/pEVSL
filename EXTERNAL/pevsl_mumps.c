@@ -105,14 +105,14 @@ int FreeBSolMumps(BSolDataMumps *data) {
 /** @brief Solver function of B with MUMPS
  *
  * */
-void BSolMumps(double *b, double *x, void *data, MPI_Comm comm) {
+void BSolMumps(double *b, double *x, void *data) {
   /* MUMPS data */
   BSolDataMumps *mumps_data = (BSolDataMumps *)data;
   /* MPI communicator */
-  MPI_Comm comm2 = MPI_Comm_f2c(mumps_data->solver.comm_fortran);
+  MPI_Comm comm = MPI_Comm_f2c(mumps_data->solver.comm_fortran);
   /* MPI rank */
   int rank;
-  MPI_Comm_rank(comm2, &rank);
+  MPI_Comm_rank(comm, &rank);
   int *ncols = mumps_data->ncols;
   int *icols = mumps_data->icols;
   /* local size */
@@ -122,7 +122,7 @@ void BSolMumps(double *b, double *x, void *data, MPI_Comm comm) {
   double *rhs_global = mumps_data->rhs_global;
   /* gather rhs to rank 0 */
   MPI_Gatherv(b, nlocal, MPI_DOUBLE, rhs_global,
-              ncols, icols, MPI_DOUBLE, 0, comm2);
+              ncols, icols, MPI_DOUBLE, 0, comm);
   /*----------------- solve */
   mumps_data->solver.rhs = rhs_global;
   mumps_data->solver.job = 3;
@@ -132,10 +132,10 @@ void BSolMumps(double *b, double *x, void *data, MPI_Comm comm) {
     char errmsg[1024];
     sprintf(errmsg, " (PROC %d) ERROR RETURN: \tINFOG(1)= %d\n\t\t\t\tINFOG(2)= %d\n",
             0, mumps_data->solver.infog[0], mumps_data->solver.infog[1]);
-    PEVSL_ABORT(comm2, 1, errmsg);
+    PEVSL_ABORT(comm, 1, errmsg);
   }
   /*----------------- distribute the solution */
   MPI_Scatterv(rhs_global, ncols, icols, MPI_DOUBLE, x, nlocal,
-               MPI_DOUBLE, 0, comm2);
+               MPI_DOUBLE, 0, comm);
 }
 

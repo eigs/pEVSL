@@ -48,13 +48,15 @@ int pEVSL_ChebIterSetupMatB(int deg, int lanm, int msteps, double tol,
   data->res = NULL;
 #endif
 
+  data->comm = comm;
+
   return 0;
 }
 
 /** @brief Solver function of B with Chebyshev iterations
  *
  * */
-void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data, MPI_Comm comm) {
+void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data) {
   int i;
   /* sizes */
   int N = pevsl_data.N;
@@ -73,6 +75,7 @@ void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data, MPI_Comm comm) 
   /* Parvec wrapper */
   pevsl_Parvec b, x;
   int deg = Chebdata->deg;
+  MPI_Comm comm = Chebdata->comm;
 
   /* center and half width */
   d = (Chebdata->ub + Chebdata->lb) * 0.5;
@@ -129,7 +132,7 @@ void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data, MPI_Comm comm) 
 /** @brief Solver function of B with Chebyshev iterations
  * ``Iterative methods for sparse linear systems (2nd edition)'', Page 399
  * */
-void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data, MPI_Comm comm) {
+void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data) {
   int i;
   /* sizes */
   int N = pevsl_data.N;
@@ -148,6 +151,7 @@ void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data, MPI_Comm comm) 
   /* Parvec wrapper */
   pevsl_Parvec b, x;
   int deg = Chebdata->deg;
+  MPI_Comm comm = Chebdata->comm;
 
   /* wrap b and x into pevsl_Parvec */
   pEVSL_ParvecCreateShell(N, n, nfirst, comm, &b, db);
@@ -179,10 +183,10 @@ void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data, MPI_Comm comm) 
     /* r = r - w */
     pEVSL_ParvecAxpy(-1.0, w, r);
     /* rho1 = 1.0 / (2*sigma-rho) */
-    rho1 = 1.0 / (2*sigma - rho);
+    rho1 = 1.0 / (2.0*sigma - rho);
     /* d = rho1*rho*d + 2*rho1/sigma*r */
     pEVSL_ParvecScal(d, rho1*rho);
-    pEVSL_ParvecAxpy(2*rho1/delta, r, d);
+    pEVSL_ParvecAxpy(2.0*rho1/delta, r, d);
     /* update rho */
     rho = rho1;
 #ifdef SAVE_CONV_HIST

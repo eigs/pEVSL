@@ -188,20 +188,20 @@ typedef struct _pevsl_polparams {
  */
 typedef void (*SVFuncC)(pevsl_Parvec *br, pevsl_Parvec *bz, 
                         pevsl_Parvec *xr, pevsl_Parvec *xz, 
-                        void *data, MPI_Comm comm);
+                        void *data);
 
 /** 
  * @brief function prototype for applying the solve B x = b 
  * [the most general form]
  */
 //typedef void (*SVFunc)(pevsl_Parvec *b, pevsl_Parvec *x, void *data);
-typedef void (*SVFunc)(double *b, double *x, void *data, MPI_Comm comm);
+typedef void (*SVFunc)(double *b, double *x, void *data);
 
 /**
  * @brief matvec function prototype 
  */
 //typedef void (*MVFunc)(pevsl_Parvec *x, pevsl_Parvec *y, void *data);
-typedef void (*MVFunc)(double *x, double *y, void *data, MPI_Comm comm);
+typedef void (*MVFunc)(double *x, double *y, void *data);
 
 /*!
  * @brief user-provided Mat-Vec function and data for y = A * x or y = B * x
@@ -227,7 +227,7 @@ typedef struct _pevsl_Bsol {
  */
 typedef struct _pevsl_LtSol {
   SVFunc func;       /**< function pointer */
-  void *data;          /**< data */
+  void *data;        /**< data */
 } pevsl_Ltsol;
 
 /*!
@@ -243,6 +243,8 @@ typedef struct _BSolDataChebiter {
   pevsl_Parvec *w, *r, *p;
   /* results */
   double* res;
+  /* communicator */
+  MPI_Comm comm;
 } BSolDataChebiter;
 
 

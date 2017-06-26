@@ -122,13 +122,21 @@ int main(int argc, char *argv[]) {
   BSolDataChebiter BsolCheb;
   pEVSL_ChebIterSetupMatB(10, 50, 200, 1e-8, comm.comm_group, &BsolCheb);
   printf("eig B: [%e,%e]\n", BsolCheb.lb, BsolCheb.ub);
-  pEVSL_SetBSol(pEVSL_ChebIterSolMatBv1, &BsolCheb);
-  pevsl_Parvec bb, xx;
+  pEVSL_SetBSol(pEVSL_ChebIterSolMatBv2, &BsolCheb);
+  
+  MPI_Fint Fcomm = MPI_Comm_c2f(comm.comm_group);
+  uintptr_t X = &BsolCheb;
+  pevsl_testchebiterb_f90_(&X, &Fcomm);
+  exit(0);
+
+
+  pevsl_Parvec bb, xx, dd;
   pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, comm.comm_group, &bb);
   pEVSL_ParvecRand(&bb);
   pEVSL_ParvecDupl(&bb, &xx);
+  pEVSL_ParvecDupl(&bb, &dd);
 
-  pevsl_data.Bsol->func(bb.data, xx.data, pevsl_data.Bsol->data, bb.comm);
+  pevsl_data.Bsol->func(bb.data, xx.data, pevsl_data.Bsol->data);
    
   if (BsolCheb.res) {
     printf("CHEB ITER RES\n");
@@ -137,6 +145,12 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  double resnorm;
+  pevsl_data.Bmv->func(xx.data, dd.data, pevsl_data.Bmv->data);
+  pEVSL_ParvecAxpy(-1.0, &bb, &dd);
+  pEVSL_ParvecNrm2(&dd, &resnorm);
+  printf("res %e\n", resnorm);
+  
   pEVSL_ChebIterFree(&BsolCheb);
 
   MPI_Barrier(MPI_COMM_WORLD);

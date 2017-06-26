@@ -16,7 +16,7 @@ typedef struct _BSolDataMumps {
 } BSolDataMumps;
 
 /* B-solve routines with MUMPS */
-void BSolMumps(double *b, double *x, void *data, MPI_Comm comm);
+void BSolMumps(double *b, double *x, void *data);
 
 int SetupBSolMumps(pevsl_Parcsr *B, BSolDataMumps *data);
 

@@ -11,8 +11,8 @@
 /* chebiter.c */
 int  pEVSL_ChebIterSetupMatB(int deg, int lanm, int msteps, double tol, 
                              MPI_Comm comm, BSolDataChebiter *data);
-void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data, MPI_Comm comm);
-void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data, MPI_Comm comm);
+void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data);
+void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data);
 void pEVSL_ChebIterFree(BSolDataChebiter *data);
 
 /* chebpol.c */
@@ -51,7 +51,8 @@ void pEVSL_ParcsrMatvec(pevsl_Parcsr *A, pevsl_Parvec *x, pevsl_Parvec *y);
 
 /* parvec.c */
 void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm, pevsl_Parvec *x);
-void pEVSL_ParvecCreateShell(int nglobal, int nlocal, int nfirst, MPI_Comm comm, pevsl_Parvec *x, double *data);
+void pEVSL_ParvecCreateShell(int nglobal, int nlocal, int nfirst, MPI_Comm comm,
+                             pevsl_Parvec *x, double *data);
 void pEVSL_ParvecDupl(pevsl_Parvec *x, pevsl_Parvec *y);
 void pEVSL_ParvecFree(pevsl_Parvec *x);
 void pEVSL_ParvecRand(pevsl_Parvec *x);
@@ -65,7 +66,7 @@ void pEVSL_ParvecSetScalar(pevsl_Parvec *x, double t);
 void pEVSL_ParvecSetZero(pevsl_Parvec *x);
 void pEVSL_ParvecAxpy(double a, pevsl_Parvec *x, pevsl_Parvec *y);
 int  pEVSL_ParvecSameSize(pevsl_Parvec *x, pevsl_Parvec *y);
-int pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn);
+int  pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn);
 
 /* spmat.c */
 void pEVSL_CsrResize(int nrow, int ncol, int nnz, pevsl_Csr *csr);
