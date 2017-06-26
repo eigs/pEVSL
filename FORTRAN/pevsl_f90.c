@@ -90,8 +90,11 @@ void PEVSL_FORT(pevsl_parvecfree)(uintptr_t *xf90) {
 void PEVSL_FORT(pevsl_amv)(double *x, double *y) {
   pevsl_data.Amv->func(x, y, pevsl_data.Amv->data);
 }
-
 */
+
+void PEVSL_FORT(pevsl_bsv)(double *b, double *x) {
+  pevsl_data.Bsol->func(b, x, pevsl_data.Bsol->data);
+}
 
 #if 0
 void PEVSL_FORT(pevsl_test)(MPI_Fint *Fcomm) {
