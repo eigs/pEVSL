@@ -150,7 +150,7 @@ int pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn) {
   /* if fn == NULL, print to stdout */
   FILE *fp = fn ? NULL : stdout;
   /* sequential loop with all ranks in comm */
-  PEVSL_SEQ_BEGIN(comm, rank, size)
+  PEVSL_SEQ_BEGIN(comm)
   {
     /* if print to file, rank 0 open it */
     if (fn) {

@@ -109,6 +109,10 @@ Example: partition  9 into 4 parts: [3,2,2,2]
     }
 }
 
+/*! search an element in a sorted array,
+ *  if found return its position
+ *  if not found, return -1
+ */  
 int pEVSL_BinarySearch(int *x, int n, int key) {
     int *p = bsearch(&key, x, n, sizeof(int), compareInt);
     if (p) {
@@ -117,6 +121,34 @@ int pEVSL_BinarySearch(int *x, int n, int key) {
         // not found
         return -1;
     }
+}
+/*! search an element in a sorted array, of length n, 
+ *  that represents intervals
+ *  [x0, x1), [x1, x2), [x2, x3),...,[x_{n-2}, x_{n-1})
+ *  if x_{i} <= key < x_{i+1}, return i
+ *  if key < x_{0}, return -1
+ *  if x_{n-1} <= key return n-1 
+ */  
+int pEVSL_BinarySearchInterval(int *x, int n, int key) {
+  if (key < x[0]) {
+    return -1;
+  }
+  if (key >= x[n-1]) {
+    return n-1;
+  }
+  int a = 0;
+  int b = n-2;
+  while (a < b) {
+    int c = (a+b)/2;
+    if (key >= x[c] && key < x[c+1]) {
+      return c;
+    } else if (key < x[c]) {
+      b = c-1;
+    } else {
+      a = c+1;
+    }
+  }
+  return a;
 }
 
 void pEVSL_Vecset(int n, double t, double *v) {

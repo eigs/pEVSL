@@ -1,7 +1,7 @@
 #include <float.h>
 #include "pevsl.h"
 
-int lapgen(int nx, int ny, int nz, int m1, int m2, pevsl_Csr *csr) {
+int LocalLapGen(int nx, int ny, int nz, int m1, int m2, pevsl_Csr *csr) {
     pevsl_Coo coo;
     pevsl_Coo *Acoo = &coo;
 
@@ -69,36 +69,59 @@ int lapgen(int nx, int ny, int nz, int m1, int m2, pevsl_Csr *csr) {
     return 0;
 }
 
-int ParcsrLaplace(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_col_starts_in, MPI_Comm comm) {
-    int r1, r2;
-    int nrow = nx * ny * nz;
-    int *row_col_starts;
-    int comm_size, comm_rank;
-    MPI_Comm_size(comm, &comm_size);
-    MPI_Comm_rank(comm, &comm_rank);
+/* @brief create a parallel csr matrix of 3-D Laplacians
+ * A         : parcsr matrix
+ * nx, ny, nz: grid sizes
+ * row_starts: row starts of each MPI rank (of size NP + 1)
+ * col_starts: col starts of each MPI rank (of size NP + 1)
+ * comm      : MPI communicator of A
+ */ 
+int ParcsrLaplace2(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_starts, 
+                   int *col_starts, MPI_Comm comm) {
 
-    // Assume that the same row and col partitionings are used
-    row_col_starts = row_col_starts_in;
-    // when row_col_starts == NULL, it will use the default 1D partitioning
-    if (!row_col_starts_in) {
-        // if not provided from the user, then use the default one
-        pEVSL_Part1d(nrow, comm_size, &comm_rank, &r1, &r2, 1);
-    } else {
-        r1 = row_col_starts[comm_rank];
-        r2 = row_col_starts[comm_rank+1];
-    }
+  /* row range of this rank: [r1, r2) and
+   * col range of this rank: [c1, c2) */
+  int r1, r2/*, c1, c2*/;
+  int nrow = nx * ny * nz;
+  int ncol = nrow;
+  int comm_size, comm_rank;
+  pevsl_Csr csr_local;
 
-    /* matrix allocation */
-    pEVSL_ParcsrCreate(nrow, nrow, row_col_starts, row_col_starts, A, comm);
-    /* local rows */
-    pevsl_Csr csr_local;
-    lapgen(nx, ny, nz, r1, r2, &csr_local);
-    /* setup parcsr matrix */
-    pEVSL_ParcsrSetup(&csr_local, A);
+  MPI_Comm_size(comm, &comm_size);
+  MPI_Comm_rank(comm, &comm_rank);
 
-    pEVSL_FreeCsr(&csr_local);
+  /* parcsr matrix allocation */
+  /* when row_starts == NULL, will use the default 1D partitioning */
+  /* when col_starts == NULL, will use the default 1D partitioning */
+  pEVSL_ParcsrCreate(nrow, ncol, row_starts, col_starts, A, comm);
+  
+  r1 = A->first_row;
+  r2 = A->first_row + A->nrow_local;
+  /*
+  c1 = A->first_col;
+  c2 = A->first_col + A->ncol_local;
+  */
 
-    return 0;
+  /* local rows of Lap */
+  LocalLapGen(nx, ny, nz, r1, r2, &csr_local);
+  
+  /* setup parcsr matrix: create parcsr internal data and 
+   * communication handle for matvec */
+  pEVSL_ParcsrSetup(&csr_local, A);
+
+  /* safe to destroy csr */
+  pEVSL_FreeCsr(&csr_local);
+
+  return 0;
+}
+
+
+/* @brief create a parallel csr matrix of 3-D Laplacians
+ * For the same row and col starts [easier interface]
+ */ 
+int ParcsrLaplace(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_col_starts, MPI_Comm comm) {
+  int err = ParcsrLaplace2(A, nx, ny, nz, row_col_starts, row_col_starts, comm);
+  return (err);
 }
 
 /**-----------------------------------------------------------------------

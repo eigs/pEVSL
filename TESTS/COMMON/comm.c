@@ -1,5 +1,5 @@
 #include "pevsl.h"
-#include "comm.h"
+#include "common.h"
 
 //#define PEVSL_CHKERR(ierr) assert(!(ierr))
 
@@ -13,7 +13,7 @@ int CommInfoCreate(CommInfo *comm, MPI_Comm comm_global, int ngroups) {
 
   if (ngroups > comm->global_size) {
     printf("Warning: Number of procs is %d. Number of groups asked was %d, now changed to %d\n",\
-        comm->global_size, ngroups, comm->global_size);
+           comm->global_size, ngroups, comm->global_size);
     ngroups = comm->global_size;
   }
 

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <mpi.h>
 #include "pevsl.h"
-#include "comm.h"
+#include "common.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -74,7 +74,9 @@ int main(int argc, char *argv[]) {
   xintv[3] = lmax;
   tol  = 1e-8;
   n = nx * ny * nz;
-  /*-------------------- Create communicators for groups, group leaders */
+  /*-------------------- Partition MPI_COMM_WORLD into ngroups subcomm's,
+   * create a communicator for each group, and one for group leaders
+   * saved in comm */
   CommInfoCreate(&comm, MPI_COMM_WORLD, ngroups);
   /*-------------------- Group leader (group_rank == 0) creates output file */
   if (comm.group_rank == 0) {

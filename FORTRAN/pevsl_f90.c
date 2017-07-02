@@ -53,6 +53,35 @@ void PEVSL_FORT(pevsl_set_geneig)() {
   pEVSL_SetGenEig();
 }
 
+void PEVSL_FORT(pevsl_parcsrcreate)(int *nrow, int *ncol, int *row_starts, int *col_starts,
+                int *ia, int *ja, double *aa,
+                MPI_Fint *Fcomm, uintptr_t *matf90) {
+  pevsl_Parcsr *mat;
+  pevsl_Csr matloc;
+  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
+
+  PEVSL_MALLOC(mat, 1, pevsl_Parcsr);
+  pEVSL_ParcsrCreate(*nrow, *ncol, row_starts, col_starts, mat, comm);
+
+  /* matloc is the local CSR wrapper */
+  matloc.nrows = mat->nrow_local;
+  matloc.ncols = mat->ncol_global;
+  matloc.ia = ia;
+  matloc.ja = ja;
+  matloc.a  = aa;
+
+  /* setup parcsr with matloc */
+  pEVSL_ParcsrSetup(&matloc, mat);
+
+  *matf90 = (uintptr_t) mat;
+}
+
+void PEVSL_FORT(pevsl_parcsrmatvec)(uintptr_t *matf90, double *x, double *y) {
+  /* cast pointer */
+  pevsl_Parcsr *mat = (pevsl_Parcsr *) (*matf90);
+  pEVSL_ParcsrMatvec0(x, y, (void *) mat);
+}
+
 /*
 void PEVSL_FORT(pevsl_parveccreate)(int *N, int *n, MPI_Fint *Fcomm, uintptr_t *xf90) {
   pevsl_Parvec *x;

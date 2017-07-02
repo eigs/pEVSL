@@ -1,0 +1,15 @@
+This folder contains the test drivers for parallel matrix-vector product
+
+y = A * x,
+
+where A is a parallel CSR (Parcsr) matrix, and x and y are parallel vectors (Parvec).
+
+test1.c : Laplacian matrix with DEFAULT    row and column partitionings.
+
+test2.c : Laplacian matrix with CUSTOMIZED row and column partitionings, 
+          where the row partitioning is the SAME as the column partitioning.
+
+test3.c : Laplacian matrix with CUSTOMIZED row and column partitionings, 
+          where the row partitioning is NOT the same as the column partitioning.
+
+test4.c : Rectangular randomized sparse matrix with CUSTOMIZED row and column partitionings.

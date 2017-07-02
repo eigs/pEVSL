@@ -53,7 +53,7 @@
 }
 
 
-#define PEVSL_SEQ_BEGIN(MPI_COMM, rank, size) { \
+#define PEVSL_SEQ_BEGIN(MPI_COMM) { \
     int size, rank, __i; \
     MPI_Barrier(MPI_COMM); \
     MPI_Comm_size(MPI_COMM, &size); \

@@ -54,6 +54,13 @@ void pEVSL_ParcsrMatvec0(double *x, double *y, void *data) {
 }
 
 void pEVSL_ParcsrMatvec(pevsl_Parcsr *A, pevsl_Parvec *x, pevsl_Parvec *y) {
+  PEVSL_CHKERR(A->nrow_global != y->n_global);
+  PEVSL_CHKERR(A->ncol_global != x->n_global);
+  PEVSL_CHKERR(A->nrow_local  != y->n_local);
+  PEVSL_CHKERR(A->ncol_local  != x->n_local);
+  PEVSL_CHKERR(A->first_row   != y->n_first);
+  PEVSL_CHKERR(A->first_col   != x->n_first);
+
   pEVSL_ParcsrMatvec0(x->data, y->data, (void *) A);
 }
 

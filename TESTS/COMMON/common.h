@@ -22,11 +22,18 @@ typedef struct _CommInfo {
 #include "io.h"
 
 int CommInfoCreate(CommInfo *comm, MPI_Comm comm_global, int ngroups);
-
 void CommInfoFree(CommInfo *comm);
 
-int ParcsrLaplace(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_col_starts_in, MPI_Comm comm);
+int LocalLapGen(int nx, int ny, int nz, int m1, int m2, pevsl_Csr *csr);
+
+int ParcsrLaplace(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_col_starts, MPI_Comm comm);
+
+int ParcsrLaplace2(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_starts, int *col_starts, MPI_Comm comm);
 
 int ExactEigLap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
+
+int RandElems(int n, int m, int *elem);
+
+void SpRandCsr(int nrow, int ncol, int rownnz, pevsl_Csr *csr);
 
 #endif

@@ -83,10 +83,11 @@ typedef struct _pevsl_parcsr {
    * my_col_range = [my_first_col : my_first_col + ncol_local-1]
    * 
    * For square matrix: row_range and col_range are often set to be the same
-   * We reserve these for rectangular matrices (may not be useful EVSL though)
+   * We reserve these for rectangular matrices (may not be useful pEVSL though)
    *
    * NOTE: if row_starts or col_starts == NULL, it means that the default 1D partitioning is used
-   * Using routine evsl_Part1d can easily decide all the info regarding the partitioning
+   * Using routine pEVSL_Part1d can easily decide all the info regarding the partitioning,
+   * see utils.c for details
    */
 
   int first_row;

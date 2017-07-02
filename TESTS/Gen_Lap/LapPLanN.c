@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <mpi.h>
 #include "pevsl.h"
-#include "comm.h"
+#include "common.h"
 #include "pevsl_mumps.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -117,11 +117,13 @@ int main(int argc, char *argv[]) {
   /*-------------------- for generalized eigenvalue problem */
   pEVSL_SetGenEig();
 
+#if 0
 //===================================================
 // TEST STUFF WITH CHEB SOL B, REMOVE LATER
   BSolDataChebiter BsolCheb;
   pEVSL_ChebIterSetupMatB(10, 50, 200, 1e-8, comm.comm_group, &BsolCheb);
   printf("eig B: [%e,%e]\n", BsolCheb.lb, BsolCheb.ub);
+
 #if 0
   pEVSL_SetBSol(pEVSL_ChebIterSolMatBv2, &BsolCheb);
   MPI_Fint Fcomm = MPI_Comm_c2f(comm.comm_group);
@@ -156,7 +158,7 @@ int main(int argc, char *argv[]) {
 
   MPI_Barrier(MPI_COMM_WORLD);
   exit(0);
-  
+#endif
 //===================================================
 
   /*-------------------- step 0: get eigenvalue bounds */

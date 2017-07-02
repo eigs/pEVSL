@@ -76,6 +76,7 @@ void MGS_DGKS2(int k, int i_max, pevsl_Parvec *Z, pevsl_Parvec *Q, pevsl_Parvec 
 void pEVSL_ParcsrMatvec0(double *x, double *y, void *data);
 
 /* utils.c */
+int pEVSL_BinarySearchInterval(int *x, int n, int key);
 double pEVSL_Wtime();
 
 /*------------------- inline functions */
