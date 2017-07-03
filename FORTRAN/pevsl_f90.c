@@ -76,10 +76,32 @@ void PEVSL_FORT(pevsl_parcsrcreate)(int *nrow, int *ncol, int *row_starts, int *
   *matf90 = (uintptr_t) mat;
 }
 
-void PEVSL_FORT(pevsl_parcsrmatvec)(uintptr_t *matf90, double *x, double *y) {
+/* perform matvec with Parcsr matrix */
+void PEVSL_FORT(pevsl_parcsrmatvec)(double *x, double *y, uintptr_t *matf90) {
   /* cast pointer */
   pevsl_Parcsr *mat = (pevsl_Parcsr *) (*matf90);
   pEVSL_ParcsrMatvec0(x, y, (void *) mat);
+}
+
+void PEVSL_FORT(pevsl_seta_parcsr)(uintptr_t *Af90) {
+  /* cast pointer */
+  pevsl_Parcsr *A = (pevsl_Parcsr *) (*Af90);
+
+  pEVSL_SetAParcsr(A);
+}
+
+void PEVSL_FORT(pevsl_setb_parcsr)(uintptr_t *Bf90) {
+  /* cast pointer */
+  pevsl_Parcsr *B = (pevsl_Parcsr *) (*Bf90);
+
+  pEVSL_SetBParcsr(B);
+}
+
+void PEVSL_FORT(pevsl_parcsr_free)(uintptr_t *Af90) {
+  /* cast pointer */
+  pevsl_Parcsr *A = (pevsl_Parcsr *) (*Af90);
+
+  pEVSL_ParcsrFree(A);
 }
 
 /*
