@@ -2,73 +2,62 @@
 
 //#define SAVE_CONV_HIST
 
-/** @brief Solver function to setup Chebyshev iterations
+/** @brief Solver function to setup Chebyshev iterations for a matrix A
  *
  * */
-int pEVSL_ChebIterSetupMatB(int deg, int lanm, int msteps, double tol, 
-                            MPI_Comm comm, BSolDataChebiter *data) {
-  int N = pevsl_data.N;
-  int n = pevsl_data.n;
-  int nfirst = pevsl_data.nfirst;
-  /* save the states, will be changed in this function */
-  int ifGenEv = pevsl_data.ifGenEv;
-  pevsl_Matvec *Amvsave = pevsl_data.Amv;
-  pevsl_Parvec *vinit, *r, *p;
-  double lmin, lmax;
-  
-  PEVSL_MALLOC(vinit, 1, pevsl_Parvec);
-  pEVSL_ParvecCreate(N, n, nfirst, comm, vinit);
-  pEVSL_ParvecRand(vinit);
-  /* compute eig bounds of B */
-  pEVSL_SetStdEig();
-  pevsl_data.Amv = pevsl_data.Bmv;
-  /* compute bounds */
-  pEVSL_LanTrbounds(lanm, msteps, tol, vinit, 1, &lmin, &lmax, comm, NULL);
-  /* save the results */
-  deg = PEVSL_MAX(deg, 0);
-  data->lb = lmin;
-  data->ub = lmax;
-  data->deg = deg;
-  /* restore states */
-  pevsl_data.ifGenEv = ifGenEv;
-  pevsl_data.Amv = Amvsave;
-  
-  /* alloc work space */
+int pEVSL_ChebIterSetup(double lmin, double lmax, int deg, pevsl_Parcsr *A, 
+                        MPI_Comm comm, Chebiter_Data *cheb) {
+  pevsl_Parvec *w, *r, *p;
+  PEVSL_MALLOC(w, 1, pevsl_Parvec);
   PEVSL_MALLOC(r, 1, pevsl_Parvec);
   PEVSL_MALLOC(p, 1, pevsl_Parvec);
-  pEVSL_ParvecDupl(vinit, r);
-  pEVSL_ParvecDupl(vinit, p);
-  data->w = vinit; /* reuse vinit */
-  data->r = r;
-  data->p = p;
+  pEVSL_ParvecCreate(A->ncol_global, A->ncol_local, A->first_col, comm, w);
+  pEVSL_ParvecDupl(w, r);
+  pEVSL_ParvecDupl(w, p);
+  /* save the results */
+  deg = PEVSL_MAX(deg, 0);
+  cheb->lb  = lmin;
+  cheb->ub  = lmax;
+  cheb->deg = deg;
+  cheb->N = A->ncol_global;
+  cheb->n = A->ncol_local;
+  cheb->nfirst = A->first_col;
+  PEVSL_MALLOC(cheb->mv, 1, pevsl_Matvec);
+  cheb->mv->func = pEVSL_ParcsrMatvec0;
+  cheb->mv->data = (void *) A;
+  /* alloc work space */
+  cheb->w = w;
+  cheb->r = r;
+  cheb->p = p;
 
 #ifdef SAVE_CONV_HIST
-  PEVSL_CALLOC(data->res, deg+1, double);
+  PEVSL_CALLOC(cheb->res, deg+1, double);
 #else
-  data->res = NULL;
+  cheb->res = NULL;
 #endif
 
-  data->comm = comm;
+  cheb->comm = comm;
 
   return 0;
 }
 
-/** @brief Solver function of B with Chebyshev iterations
+/** @brief Solver function with Chebyshev iterations
  *
  * */
-void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data) {
+void pEVSL_ChebIterSolv1(double *db, double *dx, void *data) {
   int i;
-  /* sizes */
-  int N = pevsl_data.N;
-  int n = pevsl_data.n;
-  int nfirst = pevsl_data.nfirst;
   /* Cheb sol data */
-  BSolDataChebiter *Chebdata = (BSolDataChebiter *) data;
+  Chebiter_Data *Chebdata = (Chebiter_Data *) data;
   double d, c, alp=0.0, bet, t;
 #ifdef SAVE_CONV_HIST
   double norm_r0, norm_r;
   double *res = Chebdata->res;
 #endif
+  /* sizes and nfirst */
+  int N = Chebdata->N;
+  int n = Chebdata->n;
+  int nfirst = Chebdata->nfirst;
+
   pevsl_Parvec *w = Chebdata->w;
   pevsl_Parvec *r = Chebdata->r;
   pevsl_Parvec *p = Chebdata->p;
@@ -76,6 +65,8 @@ void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data) {
   pevsl_Parvec b, x;
   int deg = Chebdata->deg;
   MPI_Comm comm = Chebdata->comm;
+  /* matvec */
+  pevsl_Matvec *mv = Chebdata->mv;
 
   /* center and half width */
   d = (Chebdata->ub + Chebdata->lb) * 0.5;
@@ -97,8 +88,8 @@ void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data) {
   /* x = alp * p */
   pEVSL_ParvecCopy(p, &x);
   pEVSL_ParvecScal(&x, alp);
-  /* w = B * x */
-  pEVSL_MatvecB(&x, w);
+  /* w = C * x */
+  mv->func(x.data, w->data, mv->data);
   /* r = b - w */
   pEVSL_ParvecCopy(&b, r);
   pEVSL_ParvecAxpy(-1.0, w, r);
@@ -116,8 +107,8 @@ void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data) {
     pEVSL_ParvecAxpy(1.0, r, p);
     /* x = x + alp * p */
     pEVSL_ParvecAxpy(alp, p, &x);
-    /* w = B * x */
-    pEVSL_MatvecB(&x, w);
+    /* w = C * x */
+    mv->func(x.data, w->data, mv->data);
     /* r = b - w */
     pEVSL_ParvecCopy(&b, r);
     pEVSL_ParvecAxpy(-1.0, w, r);
@@ -132,19 +123,20 @@ void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data) {
 /** @brief Solver function of B with Chebyshev iterations
  * ``Iterative methods for sparse linear systems (2nd edition)'', Page 399
  * */
-void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data) {
+void pEVSL_ChebIterSolv2(double *db, double *dx, void *data) {
   int i;
-  /* sizes */
-  int N = pevsl_data.N;
-  int n = pevsl_data.n;
-  int nfirst = pevsl_data.nfirst;
   /* Cheb sol data */
-  BSolDataChebiter *Chebdata = (BSolDataChebiter *) data;
+  Chebiter_Data *Chebdata = (Chebiter_Data *) data;
   double theta, delta, alpha, beta, sigma, rho, rho1;
 #ifdef SAVE_CONV_HIST
   double norm_r0, norm_r;
   double *res = Chebdata->res;
 #endif
+  /* sizes and nfirst */
+  int N = Chebdata->N;
+  int n = Chebdata->n;
+  int nfirst = Chebdata->nfirst;
+  
   pevsl_Parvec *w = Chebdata->w;
   pevsl_Parvec *r = Chebdata->r;
   pevsl_Parvec *d = Chebdata->p;
@@ -152,6 +144,8 @@ void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data) {
   pevsl_Parvec b, x;
   int deg = Chebdata->deg;
   MPI_Comm comm = Chebdata->comm;
+  /* matvec */
+  pevsl_Matvec *mv = Chebdata->mv;
 
   /* wrap b and x into pevsl_Parvec */
   pEVSL_ParvecCreateShell(N, n, nfirst, comm, &b, db);
@@ -178,8 +172,8 @@ void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data) {
   for (i=0; i<deg; i++) {
     /* x = x + d */
     pEVSL_ParvecAxpy(1.0, d, &x);
-    /* w = A * d */
-    pEVSL_MatvecB(d, w);
+    /* w = C * d */
+    mv->func(d->data, w->data, mv->data);
     /* r = r - w */
     pEVSL_ParvecAxpy(-1.0, w, r);
     /* rho1 = 1.0 / (2*sigma-rho) */
@@ -196,10 +190,16 @@ void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data) {
   }
 }
 
-void pEVSL_ChebIterFree(BSolDataChebiter *data) {
+void pEVSL_ChebIterFree(Chebiter_Data *data) {
   pEVSL_ParvecFree(data->w);
   pEVSL_ParvecFree(data->r);
   pEVSL_ParvecFree(data->p);
+  PEVSL_FREE(data->w);
+  PEVSL_FREE(data->r);
+  PEVSL_FREE(data->p);
+  if (data->mv) {
+    PEVSL_FREE(data->mv);
+  }
   if (data->res) {
     PEVSL_FREE(data->res);
   }

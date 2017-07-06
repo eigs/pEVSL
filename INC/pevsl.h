@@ -9,11 +9,12 @@
 #include "pevsl_def.h"
 
 /* chebiter.c */
-int  pEVSL_ChebIterSetupMatB(int deg, int lanm, int msteps, double tol, 
-                             MPI_Comm comm, BSolDataChebiter *data);
-void pEVSL_ChebIterSolMatBv1(double *db, double *dx, void *data);
-void pEVSL_ChebIterSolMatBv2(double *db, double *dx, void *data);
-void pEVSL_ChebIterFree(BSolDataChebiter *data);
+int  pEVSL_ChebIterSetup(double lmin, double lmax, int deg, 
+                         pevsl_Parcsr *A,
+                         MPI_Comm comm, Chebiter_Data *cheb);
+void pEVSL_ChebIterSolv1(double *db, double *dx, void *data);
+void pEVSL_ChebIterSolv2(double *db, double *dx, void *data);
+void pEVSL_ChebIterFree(Chebiter_Data *data);
 
 /* chebpol.c */
 void pEVSL_SetPolDef(pevsl_Polparams *pol);

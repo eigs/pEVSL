@@ -48,6 +48,7 @@ void PEVSL_FORT(pevsl_setbsol)(void *func, void *data) {
   pEVSL_SetBSol((SVFunc) func, data);
 }
 
+
 /** @brief Fortran interface for SetGenEig */
 void PEVSL_FORT(pevsl_set_geneig)() {
   pEVSL_SetGenEig();
@@ -312,33 +313,53 @@ void PEVSL_FORT(pevsl_copy_result)(double *val, double *vec) {
   pevsl_eigvec_computed = NULL;
 }
 
-void PEVSL_FORT(pevsl_setup_chebiterb)(int *deg, int *lanm, int *msteps, double *tol,
-                                       int *type, MPI_Fint *Fcomm, uintptr_t *chebf90) {
+void PEVSL_FORT(pevsl_setup_chebiter)(double *lmin, double *lmax, int *deg, 
+                                      uintptr_t *parcsrf90, MPI_Fint *Fcomm, 
+                                      uintptr_t *chebf90) {
+  /* cast pointer of the matrix */
+  pevsl_Parcsr *A = (pevsl_Parcsr *) (*parcsrf90);
   MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
-  BSolDataChebiter *cheb;
-  PEVSL_MALLOC(cheb, 1, BSolDataChebiter);
-  pEVSL_ChebIterSetupMatB(*deg, *lanm, *msteps, *tol, comm, cheb);
-  if (*type == 1) {
-    pEVSL_SetBSol(pEVSL_ChebIterSolMatBv1, cheb);
-  } else {
-    pEVSL_SetBSol(pEVSL_ChebIterSolMatBv2, cheb);
-  }
-  printf("CHEB SOL SETUP DONE: DEG %d, eig (%e, %e):%e\n", 
-         cheb->deg, cheb->lb, cheb->ub, cheb->ub/cheb->lb);
+  Chebiter_Data *cheb;
+  PEVSL_MALLOC(cheb, 1, Chebiter_Data);
+  pEVSL_ChebIterSetup(*lmin, *lmax, *deg, A, comm, cheb);
   
   *chebf90 = (uintptr_t) cheb;
 }
 
-void PEVSL_FORT(pevsl_free_chebiterb)(uintptr_t *chebf90) {
-  BSolDataChebiter *data = (BSolDataChebiter *) (*chebf90);
-  pEVSL_ChebIterFree(data);
+/** @brief Fortran interface for ChebIterSol */
+void PEVSL_FORT(pevsl_chebiter)(int *type, double *b, double *x, uintptr_t *chebf90) {
+  /* cast pointer */
+  Chebiter_Data *cheb = (Chebiter_Data *) (*chebf90);
+  if (*type == 1) {
+    pEVSL_ChebIterSolv1(b, x, cheb);
+  } else {
+    pEVSL_ChebIterSolv2(b, x, cheb);
+  }
 }
 
+/** @brief Fortran interface for ChebIterFree */
+void PEVSL_FORT(pevsl_free_chebiterb)(uintptr_t *chebf90) {
+  /* cast pointer */
+  Chebiter_Data *cheb = (Chebiter_Data *) (*chebf90);
+  pEVSL_ChebIterFree(cheb);
+}
+
+
+/** @brief Fortran interface for SetBsol with ChebIterSol */
+void PEVSL_FORT(pevsl_setbsol_chebiter)(int *type, void *data) {
+  if (*type == 1) {
+    pEVSL_SetBSol(pEVSL_ChebIterSolv1, data);
+  } else {
+    pEVSL_SetBSol(pEVSL_ChebIterSolv2, data);
+  }
+}
+
+#if 0
 void PEVSL_FORT(pevsl_testchebiterb)(uintptr_t *chebf90, MPI_Fint *Fcomm) {
   int i, N, n, nfirst;
   pevsl_Parvec y,b,x,d;
  
-  BSolDataChebiter *cheb = (BSolDataChebiter *) (*chebf90);
+  ChebiterData *cheb = (ChebiterData *) (*chebf90);
   MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
   N = pevsl_data.N;
   n = pevsl_data.n;
@@ -372,4 +393,4 @@ void PEVSL_FORT(pevsl_testchebiterb)(uintptr_t *chebf90, MPI_Fint *Fcomm) {
 
   printf("||res|| %e, ||err|| %e\n", err_r, err_x); 
 }
-
+#endif

@@ -94,7 +94,6 @@ static inline void pEVSL_fprintf0(int rank, FILE *fp, const char *format, ...) {
   va_end(args);
 }
 
-
 /** 
  * @brief Perform matrix-vector product y = A * x
  * 

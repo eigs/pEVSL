@@ -235,18 +235,22 @@ typedef struct _pevsl_LtSol {
  * @brief data needed for Chebyshev iterations
  *
  */
-typedef struct _BSolDataChebiter {
-  /* eigenvalue bounds of B */
+typedef struct _Chebiter_Data{
+  /* eigenvalue bounds of the matrix */
   double lb, ub;
   /* polynomial degree */
   int deg;
+  /* sizes and nfirst */
+  int N, n, nfirst;
+  /* matvec function and data */
+  pevsl_Matvec *mv;
   /* work space */
   pevsl_Parvec *w, *r, *p;
   /* results */
   double* res;
   /* communicator */
   MPI_Comm comm;
-} BSolDataChebiter;
+} Chebiter_Data;
 
 
 /*!
