@@ -43,6 +43,7 @@
  *
  *
  * @warning memory allocation for Wo/lamo/reso within this function 
+ *
  * ------------------------------------------------------------ */
 int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
                     pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvec **Wo, 
@@ -58,9 +59,9 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     do_print = 0;
   }
   /*-------------------- frequently used constants  */
-  //char cN = 'N';   
-  //int one = 1;
-  //double done=1.0,dzero=0.0;
+  char cN = 'N';   
+  int one = 1;
+  double done = 1.0, dzero = 0.0;
   /* MPI communicator */
   /*
   MPI_Comm_compare(comm, vinit->comm, &comp);
@@ -221,8 +222,8 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
       pEVSL_ParvecDot(vnew, znew, &beta);
       beta = sqrt(beta);
     } else {
-      /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
-      /*   beta = norm(vnew) */
+      /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+      /* beta = norm(vnew) */
       MGS_DGKS(k+1, NGS_MAX, V, vnew, &beta);
     }
     wn += 2.0 * beta;
@@ -267,7 +268,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     }
     /*-------------------- T(k+1,k) = alpha */
     eT[k] = beta;
-    
+
     /*---------------------- test for Ritz vectors */
     if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 ) {
       continue;
@@ -305,14 +306,19 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     }
     /* -------------------- simple test because all eigenvalues
                             are between gamB and ~1. */
-    if (fabs(tr1-tr0) < tol*fabs(tr1)) {
+    if ( (fabs(tr1-tr0) < 1e-13) || (fabs(tr1)+fabs(tr0) < 1e-10) ) {
       break;
     }
     tr0 = tr1;
   } /* end of the main loop */
 
-  /*-------------------- compute eig vals and vector */    
-  PEVSL_MALLOC(EvecT, kdim*kdim, double); // Eigen vectors of T
+  if (k >= maxit) {
+     pEVSL_fprintf0(rank, fstats, "The max number of iterations [%d] has been reached. The eigenvalues computed may not have converged\n", maxit);
+  }
+
+  /*-------------------- compute eig vals and vector */
+  size_t kdim_l = kdim; /* just in case if kdim is > 65K */
+  PEVSL_MALLOC(EvecT, kdim_l*kdim_l, double); // Eigen vectors of T
   SymmTridEig(EvalT, EvecT, kdim, dT, eT);
   
   /*-------------------- done == compute Ritz vectors */
@@ -327,7 +333,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     if (flami < bar) {
       continue;
     }
-    y = &EvecT[i*kdim];
+    y = &EvecT[i*kdim_l];
     /*-------------------- make sure to normalize */
     /*
     t = DNRM2(&kdim, y, &one);
@@ -376,14 +382,12 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     if (pevsl_data.ifGenEv) {
       /*-------------------- w = w - t*B*u */
       pEVSL_ParvecAxpy(nt, w2, wk);
-      /*-------------------- res0 = norm(w) */
-      pEVSL_ParvecNrm2(wk, &res0); 
     } else {
       /*-------------------- w = w - t*u */
       pEVSL_ParvecAxpy(nt, u, wk);
-      /*-------------------- res0 = norm(w) */
-      pEVSL_ParvecNrm2(wk, &res0); 
     }
+    /*-------------------- res0 = norm(w) */
+    pEVSL_ParvecNrm2(wk, &res0); 
     /*--------------------   accept (t, y) */
     if (res0 < tol) {
       Lam[nev] = t;
@@ -426,5 +430,4 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
 
   return 0;
 }
-
 
