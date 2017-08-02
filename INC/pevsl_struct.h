@@ -118,20 +118,20 @@ typedef struct _pevsl_parvec {
 } pevsl_Parvec;
 
 /*! 
- * @brief parallel multi-vectors
+ * @brief parallel multiple vectors
  * global size: n_global x m
  *  local size: n_local  x m
  *          ld: leading dimension (must be >= n_local)
  */
-typedef struct _pevsl_parmultvecs {
+typedef struct _pevsl_parvecs {
   MPI_Comm comm;
   int n_global;
   int n_local;
   int n_first;
-  int m;
+  int n_vecs;
   int ld;
   double *data;
-} pevsl_Parmultvecs;
+} pevsl_Parvecs;
 
 /*!
  * @brief timing and memory statistics of pEVSL

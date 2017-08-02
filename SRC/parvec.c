@@ -1,33 +1,47 @@
 #include "pevsl_int.h"
 
+/*!
+ * @brief Create a parallel vector struct without allocating memory for data 
+ */
 void pEVSL_ParvecCreateShell(int nglobal, int nlocal, int nfirst, MPI_Comm comm, 
                              pevsl_Parvec *x, double *data) {
+  
   x->comm = comm;
   x->n_global = nglobal;
   x->n_local = nlocal;
-  nfirst = nfirst < 0 ? PEVSL_NOT_DEFINED : nfirst;
-  x->n_first = nfirst;
+  x->n_first = nfirst < 0 ? PEVSL_NOT_DEFINED : nfirst;
   x->data = data;
 }
 
-void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm, pevsl_Parvec *x) {
+/*!
+ * @brief Create a parallel vector struct
+ */
+void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm, 
+                        pevsl_Parvec *x) {
+
   pEVSL_ParvecCreateShell(nglobal, nlocal, nfirst, comm, x, NULL);
   PEVSL_MALLOC(x->data, nlocal, double);
 }
 
-
+/*!
+ * @brief Create a parallel vector struct
+ */
 void pEVSL_ParvecDupl(pevsl_Parvec *x, pevsl_Parvec *y) {
-  y->comm = x->comm;
-  y->n_global = x->n_global;
-  y->n_local = x->n_local;
-  y->n_first = x->n_first;
-  PEVSL_MALLOC(y->data, y->n_local, double);
+
+  pEVSL_ParvecCreate(x->n_global, x->n_local, x->n_first, x->comm, y);
 }
 
+/*!
+ * @brief Destroy a Parvec struct
+ */
 void pEVSL_ParvecFree(pevsl_Parvec *x) {
+   
   PEVSL_FREE(x->data);
 }
 
+/*!
+ * @brief generate a random parallel vector
+ */
 void pEVSL_ParvecRand(pevsl_Parvec *x) {
   int i;
   double t = ((double) RAND_MAX) / 2.0;
