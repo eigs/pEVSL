@@ -31,7 +31,7 @@ void pEVSL_ParvecsCreate(int nglobal, int nvecs, int ld, int nlocal, int nfirst,
 /*!
  * @brief Creates multi-vectors of the same type as an existing vector
  */
-void pEVSL_ParvecsDuplFromParvec(pevsl_Parvec *x, int nvecs, int ld, pevsl_Parvecs *y) {
+void pEVSL_ParvecsDuplParvec(pevsl_Parvec *x, int nvecs, int ld, pevsl_Parvecs *y) {
 
   pEVSL_ParvecsCreate(x->n_global, nvecs, ld, x->n_local, x->n_first, x->comm, y);
 }
@@ -42,5 +42,14 @@ void pEVSL_ParvecsDuplFromParvec(pevsl_Parvec *x, int nvecs, int ld, pevsl_Parve
 void pEVSL_ParvecsFree(pevsl_Parvecs *x) {
 
   PEVSL_FREE(x->data);
+}
+
+/*!
+ * @brief enables access vector i of a Parvecs as a Parvec 
+ */
+void pEVSL_ParvecsGetParvecShell(pevsl_Parvecs *X, int i, pevsl_Parvec *x) {
+
+  pEVSL_ParvecCreateShell(X->n_global, X->n_local, X->n_first, X->comm, x,
+                          X->data + X->ld*i);
 }
 

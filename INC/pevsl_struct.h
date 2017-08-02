@@ -119,9 +119,11 @@ typedef struct _pevsl_parvec {
 
 /*! 
  * @brief parallel multiple vectors
- * global size: n_global x m
- *  local size: n_local  x m
+ * global size: n_global x n_vecs
+ *  local size: n_local  x n_vecs
  *          ld: leading dimension (must be >= n_local)
+ * in pEVSL, this is for storing Lanczos or Ritz vectors, so we often have n_global >> m
+ * Thus, in the current code, we use only 1-D partitioning in rows for this data structure
  */
 typedef struct _pevsl_parvecs {
   MPI_Comm comm;
@@ -132,6 +134,7 @@ typedef struct _pevsl_parvecs {
   int ld;
   double *data;
 } pevsl_Parvecs;
+
 
 /*!
  * @brief timing and memory statistics of pEVSL

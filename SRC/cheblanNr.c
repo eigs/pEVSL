@@ -1,11 +1,17 @@
 #include "pevsl_int.h"
 
 /**
+ * @file cheblanNr.c
+ * @brief Polynomial Filtered no-restart Lanczos
+ */
+
+/**
  * if filter the initial vector
  */ 
+
 #define FILTER_VINIT 1
 
-/**-----------------------------------------------------------------------
+/* -----------------------------------------------------------------------
  *  @brief Chebyshev polynomial filtering Lanczos process [NON-restarted version]
  *
  *  @param intv     An array of length 4 \n
@@ -48,13 +54,16 @@
 int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
                     pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvec **Wo, 
                     double **reso, MPI_Comm comm, FILE *fstats) {
-  /*-------------------- for stats */
-  double tms = pEVSL_Wtime();
+  //-------------------- to report timings/
+  double tall, tm1 = 0.0, tt;
+  tall = pEVSL_Wtime();
+  const int ifGenEv = evsldata.ifGenEv;
   double tr0, tr1;
   double *y, flami; 
-  int i, j, k, kdim=0, rank;
+  int i, j, k, kdim;
+  int rank;
   /* handle case where fstats is NULL. Then no output. Needed for openMP */
-  int do_print = 1;   
+  int do_print = 1;
   if (fstats == NULL) {
     do_print = 0;
   }
@@ -78,7 +87,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   /* size of the matrix. N: global size */
   int N;
   N = pevsl_data.N;
-  /*-------------------- the communicator working on */
+  /* max num of its */
   maxit = PEVSL_MIN(N, maxit);
   /*-------------------- polynomial filter  approximates the delta
                          function centered at 'gamB'. 
@@ -97,7 +106,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   if (do_print) {
     pEVSL_fprintf0(rank, fstats, "intv:[%e, %e, %e, %e]\n", intv[0], intv[1], intv[2], intv[3]);
     pEVSL_fprintf0(rank, fstats, " ** Cheb Poly of deg = %d, gam = %.15e, bar: %.15e\n", 
-                  deg, gamB, bar);
+                   deg, gamB, bar);
   }
   /*-------------------- gamB must be within [-1, 1] */
   if (gamB > 1.0 || gamB < -1.0) {
@@ -111,18 +120,14 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     pEVSL_fprintf0(rank, fstats, " ** Cheb-LanNr \n");
   }
   /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
-  pevsl_Parvec *V, *Rvec, *Z;
+  pevsl_Parvecs *V, *Z;
   double *dT, *eT;
-  PEVSL_MALLOC(V, maxit+1, pevsl_Parvec);
-  for (i=0; i<maxit+1; i++) {
-    pEVSL_ParvecDupl(vinit, &V[i]);
-  }
-  if (pevsl_data.ifGenEv) {
+  PEVSL_MALLOC(V, 1, pevsl_Parvecs);
+  pEVSL_ParvecsDuplParvec(vinit, maxit+1, vinit->nlocal, V);
+  if (ifGenEv) {
     /* storage for Z = B * V */
-    PEVSL_MALLOC(Z, maxit+1, pevsl_Parvec);
-    for (i=0; i<maxit+1; i++) {
-      pEVSL_ParvecDupl(vinit, &Z[i]);
-    }
+    PEVSL_MALLOC(Z, 1, pevsl_Parvecs);
+    pEVSL_ParvecsDuplParvec(vinit, maxit+1, vinit->nlocal, Z);
   } else {
     /* Z and V are the same */
     Z = V;
@@ -130,29 +135,32 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   /*-------------------- diag. subdiag of Tridiagional matrix */
   PEVSL_MALLOC(dT, maxit, double);
   PEVSL_MALLOC(eT, maxit, double);
+  pevsl_Parvecs Rvec;
   double *Lam, *res, *EvalT, *EvecT;
   /*-------------------- Lam, Rvec: the converged (locked) Ritz values vecs*/
-  PEVSL_MALLOC(Lam, maxit, double);         // holds computed Ritz values
-  PEVSL_MALLOC(res, maxit, double);         // residual norms (w.r.t. ro(A))
-  PEVSL_MALLOC(EvalT, maxit, double);       // eigenvalues of tridia. matrix  T
-  //PEVSL_MALLOC(EvecT, maxit*maxit, double); // Eigen vectors of T
+  PEVSL_MALLOC(Lam,   maxit, double);         // holds computed Ritz values
+  PEVSL_MALLOC(res,   maxit, double);         // residual norms (w.r.t. ro(A))
+  PEVSL_MALLOC(EvalT, maxit, double);         // eigenvalues of tridiag matrix T
   /*-------------------- nev = current number of converged e-pairs 
                          nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
-  /*-------------------- nmv counts  matvecs */
-  //int nmv = 0;
-  /*-------------------- u  is just a pointer. wk == work space */
-  pevsl_Parvec *wk, *w2, *vrand = NULL, *u;
-  int wk_size = pevsl_data.ifGenEv ? 4 : 3;
+  /*-------------------- u is just a pointer. wk == work space */
+  pevsl_Parvec *wk, *w2, *vrand = NULL, *u; //TODO remove u
+  int wk_size = ifGenEv ? 4 : 3;
   PEVSL_MALLOC(wk, wk_size, pevsl_Parvec);
   for (i=0; i<wk_size; i++) {
     pEVSL_ParvecDupl(vinit, &wk[i]);
   }
   w2 = wk + 1;
+  /*-------------------- lanczos vectors updated by rotating pointer*/
+  /*-------------------- pointers to Lanczos vectors */
+  pevsl_Parvec zold, z, znew, v, vnew;
+
 #if FILTER_VINIT
+  pEVSL_ParvecsGetParvecShell(V, 0, &v);
   /*-------------------- compute w = p[(A-cc)/dd] * v */
-  /*------------------  Filter the initial vector*/
-  pEVSL_ChebAv(pol, vinit, V, wk);    
+  /*-------------------- Filter the initial vector */
+  pEVSL_ChebAv(pol, vinit, v, wk);
   PEVSL_MALLOC(vrand, 1, pevsl_Parvec);
   pEVSL_ParvecDupl(vinit, vrand);
 #else
@@ -179,9 +187,6 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   int nwn = 0;
   /*-------------------- for stopping test [restricted trace]*/
   tr0 = 0;
-  /*-------------------- lanczos vectors updated by rotating pointer*/
-  /*-------------------- pointers to Lanczos vectors */
-  pevsl_Parvec *zold, *z, *znew, *v, *vnew;
   /*--------------------  Lanczos recurrence coefficients */
   double alpha, beta=0.0;
   int count = 0;
