@@ -56,19 +56,15 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   //-------------------- to report timings/
   double tall, tm1 = 0.0, tt;
   tall = pEVSL_Wtime();
-  const int ifGenEv = evsldata.ifGenEv;
+  const int ifGenEv = pevsl_data.ifGenEv;
   double tr0, tr1;
   double *y, flami; 
-  int i, j, k, kdim, rank;
+  int i, k, kdim=0, rank;
   /* handle case where fstats is NULL. Then no output. Needed for openMP */
   int do_print = 1;
   if (fstats == NULL) {
     do_print = 0;
   }
-  /*-------------------- frequently used constants  */
-  char cN = 'N';   
-  int one = 1;
-  double done = 1.0, dzero = 0.0;
   /* MPI communicator */
   /*
   MPI_Comm_compare(comm, vinit->comm, &comp);
@@ -121,11 +117,11 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   pevsl_Parvecs *V, *Z;
   double *dT, *eT;
   PEVSL_MALLOC(V, 1, pevsl_Parvecs);
-  pEVSL_ParvecsDuplParvec(vinit, maxit+1, vinit->nlocal, V);
+  pEVSL_ParvecsDuplParvec(vinit, maxit+1, vinit->n_local, V);
   if (ifGenEv) {
     /* storage for Z = B * V */
     PEVSL_MALLOC(Z, 1, pevsl_Parvecs);
-    pEVSL_ParvecsDuplParvec(vinit, maxit+1, vinit->nlocal, Z);
+    pEVSL_ParvecsDuplParvec(vinit, maxit+1, vinit->n_local, Z);
   } else {
     /* Z and V are the same */
     Z = V;
@@ -142,7 +138,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   /*-------------------- nev = current number of converged e-pairs 
                          nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
-  /*-------------------- u is just a pointer. wk == work space */
+  /*-------------------- u is just a pointer. wk: work space [Parvec] */
   pevsl_Parvec *wk, *w2;
   int wk_size = ifGenEv ? 4 : 3;
   PEVSL_MALLOC(wk, wk_size, pevsl_Parvec);
@@ -150,15 +146,19 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     pEVSL_ParvecDupl(vinit, &wk[i]);
   }
   w2 = wk + 1;
+  /*-------------------- workspace [double * array] */
+  double *warr;
+  PEVSL_MALLOC(warr, 3*maxit, double);
   /*-------------------- lanczos vectors: Parvec referencing to Parvecs */
-  pevsl_Parvec parvec[6];
+  pevsl_Parvec parvec[7];
   pevsl_Parvec *zold  = &parvec[0]; 
   pevsl_Parvec *z     = &parvec[1];
   pevsl_Parvec *znew  = &parvec[2];
   pevsl_Parvec *v     = &parvec[3];
   pevsl_Parvec *vnew  = &parvec[4];
+  pevsl_Parvec *u     = &parvec[5];
 #if FILTER_VINIT
-  pevsl_Parvec *vrand = &parvec[5];
+  pevsl_Parvec *vrand = &parvec[6];
 #endif
   /* v references the 1st columns of V */
   pEVSL_ParvecsGetParvecShell(V, 0, v);
@@ -172,8 +172,8 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   pEVSL_ParvecCopy(vinit, v);
 #endif
   /*-------------------- normalize it */
-  double t, nt, res0;
-  if (pevsl_data.ifGenEv) {
+  double t, res0;
+  if (ifGenEv) {
     /* z references the 1st columns of Z */
     pEVSL_ParvecsGetParvecShell(Z, 0, z);
     /* B norm */
@@ -227,7 +227,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     /*-------------------- FULL reortho to all previous Lan vectors */
     if (ifGenEv) {
       /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
-      CGS_DGKS2(k+1, NGS_MAX, Z, V, znew, wk);
+      CGS_DGKS2(k+1, NGS_MAX, Z, V, znew, warr);
       /* vnew = B \ znew */
       pEVSL_SolveB(znew, vnew);
       /*-------------------- beta = (vnew, znew)^{1/2} */
@@ -236,7 +236,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     } else {
       /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
       /* beta = norm(vnew) */
-      CGS_DGKS(k+1, NGS_MAX, V, vnew, &beta, wk);
+      CGS_DGKS(k+1, NGS_MAX, V, vnew, &beta, warr);
     }
     wn += 2.0 * beta;
     nwn += 3;
@@ -255,7 +255,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
 #endif
       if (ifGenEv) {
         /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-        CGS_DGKS2(k+1, NGS_MAX, V, Z, vnew, wk);
+        CGS_DGKS2(k+1, NGS_MAX, V, Z, vnew, warr);
         pEVSL_MatvecB(vnew, znew);
         pEVSL_ParvecDot(vnew, znew, &beta);
         beta = sqrt(beta);
@@ -268,7 +268,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
       } else {
         /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
         /* beta = norm(vnew) */
-        CGS_DGKS(k+1, NGS_MAX, V, vnew, &beta, wk);
+        CGS_DGKS(k+1, NGS_MAX, V, vnew, &beta, warr);
         /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
         pEVSL_ParvecScal(vnew, t);
@@ -337,10 +337,10 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   PEVSL_MALLOC(EvecT, kdim_l*kdim_l, double); // Eigen vectors of T
   SymmTridEig(EvalT, EvecT, kdim, dT, eT);
   
-  tt = evsl_timer();
+  tt = pEVSL_Wtime();
   /*-------------------- done == compute Ritz vectors */
   PEVSL_MALLOC(Rvec, 1, pevsl_Parvecs);
-  pEVSL_ParvecsDuplParvec(vinit, nconv, vinit->nlocal, Rvec);
+  pEVSL_ParvecsDuplParvec(vinit, nconv, vinit->n_local, Rvec);
   
   nev = 0;
   for (i=0; i<count; i++) {
@@ -358,7 +358,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     */
     /*-------------------- compute Ritz vectors */
     pEVSL_ParvecsGetParvecShell(Rvec, nev, u);
-    pEVSL_ParvecsGemv(V, kdim, y, u);
+    pEVSL_ParvecsGemv(1.0, V, kdim, y, 0.0, u);
     /*-------------------- normalize u */
     if (ifGenEv) {
       /* B-norm, w2 = B*u */
@@ -432,6 +432,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     pEVSL_ParvecsFree(Z);
     PEVSL_FREE(Z);
   }
+  PEVSL_FREE(warr);
   /*-------------------- record stats */
   tall = pEVSL_Wtime() - tall;
   pevsl_stat.t_solver += tall;

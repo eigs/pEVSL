@@ -69,6 +69,28 @@ void pEVSL_ParvecAxpy(double a, pevsl_Parvec *x, pevsl_Parvec *y);
 int  pEVSL_ParvecSameSize(pevsl_Parvec *x, pevsl_Parvec *y);
 int  pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn);
 
+/* parvecs.c */
+void pEVSL_ParvecsCreateShell(int nglobal, int nvecs, int ld, int nlocal, int nfirst, 
+                              MPI_Comm comm, pevsl_Parvecs *x, double *data);
+
+void pEVSL_ParvecsCreate(int nglobal, int nvecs, int ld, int nlocal, int nfirst,
+                         MPI_Comm comm, pevsl_Parvecs *x);
+
+void pEVSL_ParvecsDuplParvec(pevsl_Parvec *x, int nvecs, int ld, pevsl_Parvecs *y);
+
+void pEVSL_ParvecsFree(pevsl_Parvecs *x);
+
+void pEVSL_ParvecsGetParvecShell(pevsl_Parvecs *X, int i, pevsl_Parvec *x);
+
+void pEVSL_ParvecsGemv(double alp, pevsl_Parvecs *A, int nvecs, double *x, 
+                       double bet, pevsl_Parvec *y);
+
+void pEVSL_ParvecsGemtvWithWspace(double alp, pevsl_Parvecs *A, int nvecs, pevsl_Parvec *x, 
+                                  double bet, double *y, double *w);
+
+void pEVSL_ParvecsGemtv(double alp, pevsl_Parvecs *A, int nvecs, pevsl_Parvec *x, 
+                        double bet, double *y);
+
 /* spmat.c */
 void pEVSL_CsrResize(int nrow, int ncol, int nnz, pevsl_Csr *csr);
 void pEVSL_FreeCsr(pevsl_Csr *csr);
@@ -99,7 +121,8 @@ void pEVSL_StatsPrint(FILE *fstats, MPI_Comm comm);
 
 /* cheblanNr.c */
 int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
-                    pevsl_Polparams *pol, int *nevOut, double **lamo, 
-                    pevsl_Parvec **Wo, double **reso, MPI_Comm comm, FILE *fstats);
+                    pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvecs **Wo, 
+                    double **reso, MPI_Comm comm, FILE *fstats);
+
 #endif
 

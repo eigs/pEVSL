@@ -35,21 +35,38 @@
 
 /* memory management, alloc and free */
 
-#define PEVSL_MALLOC(base, nmem, type) {\
-  (base) = (type *)malloc((nmem)*sizeof(type)); \
-  PEVSL_CHKERR((base) == NULL); \
+#define PEVSL_MALLOC(base, nmem, type) { \
+  size_t nbytes = (nmem) * sizeof(type); \
+  (base) = (type*) malloc(nbytes); \
+  if ((base) == NULL) { \
+    fprintf(stdout, "EVSL Error: out of memory [%zu bytes asked]\n", nbytes); \
+    fprintf(stdout, "Malloc at FILE %s, LINE %d, nmem %zu\n", __FILE__, __LINE__, (size_t) nmem); \
+    MPI_Abort(MPI_COMM_WORLD, -1); \
+  } \
 }
-#define PEVSL_CALLOC(base, nmem, type) {\
-  (base) = (type *)calloc((nmem), sizeof(type)); \
-  PEVSL_CHKERR((base) == NULL); \
+
+#define PEVSL_CALLOC(base, nmem, type) { \
+  size_t nbytes = (nmem) * sizeof(type); \
+  (base) = (type*) calloc((nmem), sizeof(type)); \
+  if ((base) == NULL) { \
+    fprintf(stdout, "EVSL Error: out of memory [%zu bytes asked]\n", nbytes); \
+    fprintf(stdout, "Calloc at FILE %s, LINE %d, nmem %zu\n", __FILE__, __LINE__, (size_t) nmem); \
+    MPI_Abort(MPI_COMM_WORLD, -1); \
+  } \
 }
+
 #define PEVSL_REALLOC(base, nmem, type) {\
-  (base) = (type *)realloc((base), (nmem)*sizeof(type)); \
-  PEVSL_CHKERR((base) == NULL && nmem > 0); \
+  size_t nbytes = (nmem) * sizeof(type); \
+  (base) = (type*) realloc((base), nbytes); \
+  if ((base) == NULL && nbytes > 0) { \
+    fprintf(stdout, "EVSL Error: out of memory [%zu bytes asked]\n", nbytes); \
+    fprintf(stdout, "Realloc at FILE %s, LINE %d, nmem %zu\n", __FILE__, __LINE__, (size_t) nmem); \
+    MPI_Abort(MPI_COMM_WORLD, -1); \
+  } \
 }
 
 #define PEVSL_FREE(base) {\
-    free(base);\
+    free(base); \
 }
 
 

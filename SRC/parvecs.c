@@ -49,9 +49,9 @@ void pEVSL_ParvecsFree(pevsl_Parvecs *x) {
  */
 void pEVSL_ParvecsGetParvecShell(pevsl_Parvecs *X, int i, pevsl_Parvec *x) {
 
-  size_t offset = ((size_t) X->ld) * ((size_t) i);
-  pEVSL_ParvecCreateShell(X->n_global, X->n_local, X->n_first, X->comm, x,
-                          X->data + offset);
+  PEVSL_CHKERR(i >= X->n_vecs);
+  double *data = i < 0 ? NULL : X->data + ((size_t) X->ld) * ((size_t) i);
+  pEVSL_ParvecCreateShell(X->n_global, X->n_local, X->n_first, X->comm, x, data);
 }
 
 /*!
@@ -72,7 +72,30 @@ void pEVSL_ParvecsGemv(double alp, pevsl_Parvecs *A, int nvecs, double *x,
  * @brief Perform GEMV with the transpose of a Parvecs and a Parvec
  * y = alp * A(:,0:nvecs-1)^T * x + bet * y
  * y is the same array stored on every proc
+ * w is the workspace of size 2*nvecs
  */
+void pEVSL_ParvecsGemtvWithWspace(double alp, pevsl_Parvecs *A, int nvecs, pevsl_Parvec *x, 
+                                  double bet, double *y, double *w) {
+  PEVSL_CHKERR(A->n_global != x->n_global);
+  PEVSL_CHKERR(A->n_local != x->n_local);
+  PEVSL_CHKERR(A->n_first != x->n_first);
+  char cT = 'T';
+  int one = 1;
+  double done = 1.0, dzero = 0.0, *w1, *w2;
+
+  w1 = w;
+  w2 = w + nvecs;
+  
+  DGEMV(&cT, &A->n_local, &nvecs, &done, A->data, &A->ld, x->data, &one, &dzero,
+        w1, &one);
+
+  MPI_Allreduce(w1, w2, nvecs, MPI_DOUBLE, MPI_SUM, A->comm);
+
+  DSCAL(&nvecs, &bet, y, &one);
+  DAXPY(&nvecs, &alp, w2, &one, y, &one);
+}
+
+
 void pEVSL_ParvecsGemtv(double alp, pevsl_Parvecs *A, int nvecs, pevsl_Parvec *x, 
                         double bet, double *y) {
   PEVSL_CHKERR(A->n_global != x->n_global);

@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
   for (sl=comm.group_id; sl<nslices; sl+=comm.ngroups) {
     int nev2, *ind, nev_ex;
     double *lam, *res, *lam_ex, ai, bi;
-    pevsl_Parvec *Y;
+    pevsl_Parvecs *Y;
     /*-------------------- */
     ai = sli[sl];
     bi = sli[sl+1];
@@ -200,9 +200,7 @@ int main(int argc, char *argv[]) {
     if (res) free(res);
     pEVSL_FreePol(&pol);
     free(ind);
-    for (i=0; i<nev2; i++) {
-      pEVSL_ParvecFree(&Y[i]);
-    }
+    pEVSL_ParvecsFree(Y);
     free(Y);
   } /* for (sl=0 */
   

@@ -69,8 +69,9 @@ int SymmTridEig(double *eigVal, double *eigVec, int n, const double *diag, const
 int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
                  int *nevO, const double *diag, const double *sdiag);
 void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam);
-void MGS_DGKS(int k, int i_max, pevsl_Parvec *Q, pevsl_Parvec *v, double *nrmv);
-void MGS_DGKS2(int k, int i_max, pevsl_Parvec *Z, pevsl_Parvec *Q, pevsl_Parvec *v);            
+void CGS_DGKS(int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v, double *nrmv, double *w);
+void CGS_DGKS2(int k, int i_max, pevsl_Parvecs *V, pevsl_Parvecs *Z, pevsl_Parvec *v,
+               double *w);
 
 /* parcsrmv.c */
 void pEVSL_ParcsrMatvec0(double *x, double *y, void *data);
