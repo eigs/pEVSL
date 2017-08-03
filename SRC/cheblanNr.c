@@ -8,21 +8,20 @@
 /**
  * if filter the initial vector
  */ 
-
 #define FILTER_VINIT 1
 
 /* -----------------------------------------------------------------------
  *  @brief Chebyshev polynomial filtering Lanczos process [NON-restarted version]
  *
- *  @param intv     An array of length 4 \n
+ *  @param[in] intv     An array of length 4 \n
  *          [intv[0], intv[1]] is the interval of desired eigenvalues \n
  *          [intv[2], intv[3]] is the global interval of all eigenvalues \n
  *          Must contain all eigenvalues of A
  *  
- *  @param maxit    Max number of outer Lanczos steps  allowed --[max dim of Krylov 
+ *  @param[in] maxit    Max number of outer Lanczos steps  allowed --[max dim of Krylov 
  *          subspace]
  *  
- *  @param tol       
+ *  @param[in] tol       
  *          Tolerance for convergence. The code uses a stopping criterion based
  *          on the convergence of the restricted trace. i.e., the sum of the
  *          eigenvalues of T_k that  are in the desired interval. This test  is
@@ -32,9 +31,9 @@
  *          - *but* the actual residual norm associated with the original
  *          matrix A is returned
  *  
- *  @param vinit  initial  vector for Lanczos -- [optional]
+ *  @param[in] vinit  initial  vector for Lanczos -- [optional]
  * 
- *  @param pol       A struct containing the parameters of the polynomial..
+ *  @param[in] pol       A struct containing the parameters of the polynomial..
  *  This is set up by a call to find_deg prior to calling chenlanNr 
  * 
  *  @b Modifies:
@@ -52,7 +51,7 @@
  *
  * ------------------------------------------------------------ */
 int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
-                    pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvec **Wo, 
+                    pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvecs **Wo, 
                     double **reso, MPI_Comm comm, FILE *fstats) {
   //-------------------- to report timings/
   double tall, tm1 = 0.0, tt;
@@ -60,8 +59,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   const int ifGenEv = evsldata.ifGenEv;
   double tr0, tr1;
   double *y, flami; 
-  int i, j, k, kdim;
-  int rank;
+  int i, j, k, kdim, rank;
   /* handle case where fstats is NULL. Then no output. Needed for openMP */
   int do_print = 1;
   if (fstats == NULL) {
@@ -135,53 +133,61 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   /*-------------------- diag. subdiag of Tridiagional matrix */
   PEVSL_MALLOC(dT, maxit, double);
   PEVSL_MALLOC(eT, maxit, double);
-  pevsl_Parvecs Rvec;
+  pevsl_Parvecs *Rvec;
   double *Lam, *res, *EvalT, *EvecT;
   /*-------------------- Lam, Rvec: the converged (locked) Ritz values vecs*/
-  PEVSL_MALLOC(Lam,   maxit, double);         // holds computed Ritz values
-  PEVSL_MALLOC(res,   maxit, double);         // residual norms (w.r.t. ro(A))
-  PEVSL_MALLOC(EvalT, maxit, double);         // eigenvalues of tridiag matrix T
+  PEVSL_MALLOC(Lam,   maxit, double);       // holds computed Ritz values
+  PEVSL_MALLOC(res,   maxit, double);       // residual norms (w.r.t. ro(A))
+  PEVSL_MALLOC(EvalT, maxit, double);       // eigenvalues of tridiag matrix T
   /*-------------------- nev = current number of converged e-pairs 
                          nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
   /*-------------------- u is just a pointer. wk == work space */
-  pevsl_Parvec *wk, *w2, *vrand = NULL, *u; //TODO remove u
+  pevsl_Parvec *wk, *w2;
   int wk_size = ifGenEv ? 4 : 3;
   PEVSL_MALLOC(wk, wk_size, pevsl_Parvec);
   for (i=0; i<wk_size; i++) {
     pEVSL_ParvecDupl(vinit, &wk[i]);
   }
   w2 = wk + 1;
-  /*-------------------- lanczos vectors updated by rotating pointer*/
-  /*-------------------- pointers to Lanczos vectors */
-  pevsl_Parvec zold, z, znew, v, vnew;
-
+  /*-------------------- lanczos vectors: Parvec referencing to Parvecs */
+  pevsl_Parvec parvec[6];
+  pevsl_Parvec *zold  = &parvec[0]; 
+  pevsl_Parvec *z     = &parvec[1];
+  pevsl_Parvec *znew  = &parvec[2];
+  pevsl_Parvec *v     = &parvec[3];
+  pevsl_Parvec *vnew  = &parvec[4];
 #if FILTER_VINIT
-  pEVSL_ParvecsGetParvecShell(V, 0, &v);
+  pevsl_Parvec *vrand = &parvec[5];
+#endif
+  /* v references the 1st columns of V */
+  pEVSL_ParvecsGetParvecShell(V, 0, v);
+#if FILTER_VINIT
   /*-------------------- compute w = p[(A-cc)/dd] * v */
   /*-------------------- Filter the initial vector */
   pEVSL_ChebAv(pol, vinit, v, wk);
-  PEVSL_MALLOC(vrand, 1, pevsl_Parvec);
   pEVSL_ParvecDupl(vinit, vrand);
 #else
   /*-------------------- copy initial vector to V(:,1) */
-  pEVSL_ParvecCopy(vinit, V);
+  pEVSL_ParvecCopy(vinit, v);
 #endif
-  /*--------------------  normalize it */
+  /*-------------------- normalize it */
   double t, nt, res0;
   if (pevsl_data.ifGenEv) {
+    /* z references the 1st columns of Z */
+    pEVSL_ParvecsGetParvecShell(Z, 0, z);
     /* B norm */
-    pEVSL_MatvecB(V, Z);
-    pEVSL_ParvecDot(V, Z, &t);
+    pEVSL_MatvecB(v, z);
+    pEVSL_ParvecDot(v, z, &t);
     t = 1.0 / sqrt(t);
-    pEVSL_ParvecScal(Z, t);
+    pEVSL_ParvecScal(z, t);
   } else {
     /* 2-norm */
-    pEVSL_ParvecNrm2(V, &t);
+    pEVSL_ParvecNrm2(v, &t);
     t = 1.0 / t;
   }
   /* unit B-norm or 2-norm */
-  pEVSL_ParvecScal(V, t);
+  pEVSL_ParvecScal(v, t);
   /*-------------------- for ortho test */
   double wn = 0.0;
   int nwn = 0;
@@ -192,22 +198,23 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   int count = 0;
   // ---------------- main Lanczos loop
   for (k=0; k<maxit; k++) {
-    /*-------------------- quick reference to Z(:,k-1) when k>0*/
-    zold = k > 0 ? Z+k-1 : NULL;
+    /*-------------------- quick reference to Z(:,k-1) when k>0 */
+    if (k > 0) {
+      pEVSL_ParvecsGetParvecShell(Z, k-1, zold);
+    }
     /*-------------------- a quick reference to V(:,k) */
-    v = &V[k];
+    pEVSL_ParvecsGetParvecShell(V, k, v);
     /*-------------------- a quick reference to Z(:,k) */
-    z = &Z[k];
+    pEVSL_ParvecsGetParvecShell(Z, k, z);
     /*-------------------- next Lanczos vector V(:,k+1)*/
-    vnew = v + 1;
+    pEVSL_ParvecsGetParvecShell(V, k+1, vnew);
     /*-------------------- next Lanczos vector Z(:,k+1)*/
-    znew = z + 1;
+    pEVSL_ParvecsGetParvecShell(Z, k+1, znew);
     /*-------------------- compute w = p[(A-cc)/dd] * v */
-    /*------------------ NOTE: z is used!!! [TODO: FIX ME] */
+    /*-------------------- NOTE: z is used!!! [TODO: FIX ME] */
     pEVSL_ChebAv(pol, z, znew, wk);
     /*------------------ znew = znew - beta*zold */
-    if (zold) {
-      //nbeta = -beta;
+    if (k > 0) {
       pEVSL_ParvecAxpy(-beta, zold, znew);
     }
     /*-------------------- alpha = znew'*v */
@@ -218,9 +225,9 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     /*-------------------- znew = znew - alpha*z */
     pEVSL_ParvecAxpy(-alpha, z, znew);
     /*-------------------- FULL reortho to all previous Lan vectors */
-    if (pevsl_data.ifGenEv) {
+    if (ifGenEv) {
       /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
-      MGS_DGKS2(k+1, NGS_MAX, Z, V, znew);
+      CGS_DGKS2(k+1, NGS_MAX, Z, V, znew, wk);
       /* vnew = B \ znew */
       pEVSL_SolveB(znew, vnew);
       /*-------------------- beta = (vnew, znew)^{1/2} */
@@ -229,7 +236,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     } else {
       /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
       /* beta = norm(vnew) */
-      MGS_DGKS(k+1, NGS_MAX, V, vnew, &beta);
+      CGS_DGKS(k+1, NGS_MAX, V, vnew, &beta, wk);
     }
     wn += 2.0 * beta;
     nwn += 3;
@@ -246,34 +253,38 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
 #else
       pEVSL_ParvecRand(vnew);
 #endif
-      if (pevsl_data.ifGenEv) {
-      /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-        MGS_DGKS2(k+1, NGS_MAX, V, Z, vnew);
+      if (ifGenEv) {
+        /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
+        CGS_DGKS2(k+1, NGS_MAX, V, Z, vnew, wk);
         pEVSL_MatvecB(vnew, znew);
         pEVSL_ParvecDot(vnew, znew, &beta);
-        beta = sqrt(beta); 
+        beta = sqrt(beta);
+        /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
         pEVSL_ParvecScal(vnew, t);
+	/*-------------------- znew = znew / beta */
         pEVSL_ParvecScal(znew, t);
         beta = 0.0;
       } else {
-        MGS_DGKS(k+1, NGS_MAX, V, vnew, &beta);
+        /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+        /* beta = norm(vnew) */
+        CGS_DGKS(k+1, NGS_MAX, V, vnew, &beta, wk);
+        /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
         pEVSL_ParvecScal(vnew, t);
-        beta = 0.0;      
+        beta = 0.0;
       }
     } else {
       /*-------------------- vnew = vnew / beta */
       t = 1.0 / beta;
       pEVSL_ParvecScal(vnew, t);
-      if (pevsl_data.ifGenEv) {
+      if (ifGenEv) {
         /*-------------------- znew = znew / beta */
         pEVSL_ParvecScal(znew, t);
       }
     }
-    /*-------------------- T(k+1,k) = alpha */
+    /*-------------------- T(k+1,k) = beta */
     eT[k] = beta;
-
     /*---------------------- test for Ritz vectors */
     if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 ) {
       continue;
@@ -311,7 +322,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     }
     /* -------------------- simple test because all eigenvalues
                             are between gamB and ~1. */
-    if ( (fabs(tr1-tr0) < 1e-13) || (fabs(tr1)+fabs(tr0) < 1e-10) ) {
+    if ( (fabs(tr1-tr0) < 2e-12) || (fabs(tr1)+fabs(tr0) < 1e-10) ) {
       break;
     }
     tr0 = tr1;
@@ -326,11 +337,11 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   PEVSL_MALLOC(EvecT, kdim_l*kdim_l, double); // Eigen vectors of T
   SymmTridEig(EvalT, EvecT, kdim, dT, eT);
   
+  tt = evsl_timer();
   /*-------------------- done == compute Ritz vectors */
-  PEVSL_MALLOC(Rvec, nconv, pevsl_Parvec);
-  for (i=0; i<nconv; i++) {
-    pEVSL_ParvecDupl(vinit, &Rvec[i]); // holds computed Ritz vectors
-  }
+  PEVSL_MALLOC(Rvec, 1, pevsl_Parvecs);
+  pEVSL_ParvecsDuplParvec(vinit, nconv, vinit->nlocal, Rvec);
+  
   nev = 0;
   for (i=0; i<count; i++) {
     flami = EvalT[i];
@@ -346,20 +357,16 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     DSCAL(&kdim, &t, y, &one);
     */
     /*-------------------- compute Ritz vectors */
-    u = &Rvec[nev];
-    pEVSL_ParvecSetZero(u);
-    for (j=0; j<kdim; j++) {
-      pEVSL_ParvecAxpy(y[j], V+j, u);
-    }
+    pEVSL_ParvecsGetParvecShell(Rvec, nev, u);
+    pEVSL_ParvecsGemv(V, kdim, y, u);
     /*-------------------- normalize u */
-    if (pevsl_data.ifGenEv) {
+    if (ifGenEv) {
       /* B-norm, w2 = B*u */
       pEVSL_MatvecB(u, w2);
       pEVSL_ParvecDot(u, w2, &t);
       t = sqrt(t); /* should be one */
     } else {
       /* 2-norm */
-      //t = DNRM2(&n, u, &one); 
       pEVSL_ParvecNrm2(u, &t); /* should be one */
     }
     /*-------------------- return code 2 --> zero eigenvector found */
@@ -369,7 +376,8 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     /*-------------------- scal u */
     t = 1.0 / t;
     pEVSL_ParvecScal(u, t);
-    if (pevsl_data.ifGenEv) {
+    /*-------------------- scal B*u */
+    if (ifGenEv) {
       /*------------------ w2 = B*u */
       pEVSL_ParvecScal(w2, t);
     }
@@ -383,15 +391,14 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
       continue;
     }
     /*-------------------- compute residual wrt A for this pair */
-    nt = -t;
-    if (pevsl_data.ifGenEv) {
+    if (ifGenEv) {
       /*-------------------- w = w - t*B*u */
-      pEVSL_ParvecAxpy(nt, w2, wk);
+      pEVSL_ParvecAxpy(-t, w2, wk);
     } else {
       /*-------------------- w = w - t*u */
-      pEVSL_ParvecAxpy(nt, u, wk);
+      pEVSL_ParvecAxpy(-t, u, wk);
     }
-    /*-------------------- res0 = norm(w) */
+    /*-------------------- res0 = 2-norm(wk) */
     pEVSL_ParvecNrm2(wk, &res0); 
     /*--------------------   accept (t, y) */
     if (res0 < tol) {
@@ -400,6 +407,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
       nev++;
     }
   }
+  tm1 = pEVSL_Wtime() - tt;
 
   /*-------------------- Done.  output : */
   *nevOut = nev;
@@ -407,9 +415,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   *Wo = Rvec;
   *reso = res;
   /*-------------------- free arrays */
-  for (i=0; i<maxit+1; i++) {
-    pEVSL_ParvecFree(&V[i]);
-  }
+  pEVSL_ParvecsFree(V);
   PEVSL_FREE(V);
   PEVSL_FREE(dT);
   PEVSL_FREE(eT);
@@ -419,19 +425,16 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     pEVSL_ParvecFree(&wk[i]);
   }
   PEVSL_FREE(wk);
-  if (vrand) {
-    pEVSL_ParvecFree(vrand);
-    PEVSL_FREE(vrand);
-  }
-  if (pevsl_data.ifGenEv) {
-    for (i=0; i<maxit+1; i++) {
-      pEVSL_ParvecFree(&Z[i]);
-    }
+#if FILTER_VINIT
+  pEVSL_ParvecFree(vrand);
+#endif
+  if (ifGenEv) {
+    pEVSL_ParvecsFree(Z);
     PEVSL_FREE(Z);
   }
-
-  double tme = pEVSL_Wtime();
-  pevsl_stat.t_solver += tme - tms;
+  /*-------------------- record stats */
+  tall = pEVSL_Wtime() - tall;
+  pevsl_stat.t_solver += tall;
 
   return 0;
 }

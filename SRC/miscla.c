@@ -167,24 +167,24 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
 /**
   * @brief Modified GS reortho with Daniel, Gragg, Kaufman, Stewart test 
  **/
-void MGS_DGKS(int k, int i_max, pevsl_Parvec *Q, pevsl_Parvec *v, double *nrmv) {
+void CGS_DGKS(int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v, double *w, 
+              double *nrmv) {
   double eta = 1.0 / sqrt(2.0);
   double old_nrm, new_nrm;
-  double w;
-  int i, j;
+  int i;
 
   pEVSL_ParvecNrm2(v, &old_nrm);
+
   for (i=0; i<i_max; i++) {
-    for (j=0; j<k; j++) {
-      pEVSL_ParvecDot(&Q[j], v, &w);
-      pEVSL_ParvecAxpy(-w, &Q[j], v);
-    }
+    pEVSL_ParvecsGemv( 1.0, Q, k, v, 0.0, w);
+    pEVSL_ParvecsGemv (-1.0, Q, k, w, 1.0, v);
     pEVSL_ParvecNrm2(v, &new_nrm);
     if (new_nrm > eta * old_nrm) {
       break;
     }
     old_nrm = new_nrm;
   }
+
   if (nrmv) {
     *nrmv = new_nrm;
   }
@@ -195,15 +195,12 @@ void MGS_DGKS(int k, int i_max, pevsl_Parvec *Q, pevsl_Parvec *v, double *nrmv) 
  * used in generalized ev problems
  * znew = z - (z, v_j)*z_j, for j=1,2,...
  **/
-void MGS_DGKS2(int k, int i_max, pevsl_Parvec *Z, pevsl_Parvec *V, pevsl_Parvec *z) {
-  double w;
-  int i, j;
+void CGS_DGKS2(int k, int i_max, pevsl_Parvec *Z, pevsl_Parvec *V, pevsl_Parvec *z,
+               double *w) {
+  int i;
   for (i=0; i<i_max; i++) {
-    for (j=0; j<k; j++) {
-      pEVSL_ParvecDot(&V[j], z, &w);
-      pEVSL_ParvecAxpy(-w, &Z[j], z);
-    }
+    pEVSL_ParvecsGemtv( 1.0, V, k, z, 0.0, w);
+    pEVSL_ParvecsGemv (-1.0, Z, k, w, 1.0, z);
   }
 }
-
 
