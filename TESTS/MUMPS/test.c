@@ -3,7 +3,7 @@
 #include "pevsl.h"
 #include "io.h"
 #include "dmumps_c.h"
-#include "comm.h"
+#include "common.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
