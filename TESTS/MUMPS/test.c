@@ -97,8 +97,9 @@ int main(int argc, char *argv[]) {
     coo_local.ir[i] += A.first_row;
     //printf("%d %d %f\n", coo_local.ir[i], coo_local.jc[i], coo_local.vv[i]);
   }
-  solver.ICNTL(2) = -1; /* output suppressed */
-  solver.ICNTL(3) = -1; /* output suppressed */
+  solver.ICNTL(2) = 6;//-1; /* output suppressed */
+  solver.ICNTL(3) = 6;//-1; /* output suppressed */
+  //solver.ICNTL(4) = 4;  /* output level */
   solver.ICNTL(18) = 3; /* distributed matrix */
   solver.ICNTL(28) = 2; /* parallel ordering */
   solver.ICNTL(29) = 2; /* parmetis */

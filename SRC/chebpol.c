@@ -317,7 +317,8 @@ void pEVSL_SetPolDef(pevsl_Polparams *pol) {
   pol->damping = 2;        // damping. 0 = no damping, 1 = Jackson, 2 = Lanczos
   pol->thresh_ext = 0.50;  // threshold for accepting polynomial for end intervals 
   pol->thresh_int = 0.8;   // threshold for accepting polynomial for interior
-                           // intervals 
+                           // intervals
+  pol->mu = NULL;
   pol-> deg = 0;           // degree =0 means determine optimal degree.
 }
 
