@@ -208,8 +208,10 @@ int main(int argc, char *argv[]) {
     if (res) free(res);
     pEVSL_FreePol(&pol);
     free(ind);
-    pEVSL_ParvecsFree(Y);
-    free(Y);
+    if (Y) {
+      pEVSL_ParvecsFree(Y);
+      free(Y);
+    }
   } /* for (sl=0 */
   
   free(sli);

@@ -66,7 +66,8 @@
 }
 
 #define PEVSL_FREE(base) {\
-    free(base); \
+    if (base) {free(base);} \
+    base = NULL; \
 }
 
 
