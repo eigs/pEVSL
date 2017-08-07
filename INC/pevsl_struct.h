@@ -35,21 +35,22 @@ typedef struct _pevsl_csrMat {
  * 
  */ 
 typedef struct _commHandle {
-  int num_proc_send_to; /**< num of procs to send data to */
-  int *proc_send_to;    /**< ranks of these procs */
-  int *send_elmts_ids;  /**< local ids of all sending data */
-  int *send_elmts_ptr;  /**< starting ptr of each piece of sending data, size of num_proc_send_to+1 */
+  int  num_proc_send_to;   /**< num of procs to send data to */
+  int *proc_send_to;       /**< ranks of these procs */
+  int *send_elmts_ids;     /**< local ids of all sending data */
+  int *send_elmts_ptr;     /**< starting ptr of each piece of sending data, size of num_proc_send_to+1 */
 
-  int num_proc_recv_from; /**< num of procs to receive data from */
-  int *proc_recv_from;    /**< ranks of these procs */
-  int *recv_elmts_ptr;    /**< starting ptr of each piece of data reiceived [from each proc], size of num_proc_recv_from+1 */
+  int  num_proc_recv_from; /**< num of procs to receive data from */
+  int *proc_recv_from;     /**< ranks of these procs */
+  int *recv_elmts_ptr;     /**< starting ptr of each piece of data reiceived [from each proc], size of num_proc_recv_from+1 */
 
   double *send_buf;
   double *recv_buf;
+  
   MPI_Request *send_requests;
-  MPI_Status *send_status;
+  MPI_Status  *send_status;
   MPI_Request *recv_requests;
-  MPI_Status *recv_status;
+  MPI_Status  *recv_status;
 } commHandle;
 
 
@@ -103,35 +104,38 @@ typedef struct _pevsl_parcsr {
 
 } pevsl_Parcsr;
 
+
 /*! 
  * @brief parallel vector
- * 
  */ 
 typedef struct _pevsl_parvec {
-  MPI_Comm comm;
-  int n_global;
-  int n_local;
-  int n_first;
-  double *data;
+  MPI_Comm comm; /**< MPI communicator */
+  int n_global;  /**< number of elements in the global vector */
+  int n_local;   /**< number of elements in the local portion */
+  int n_first;   /**< the index of the first local element in the global vector
+                      NOTE: this can be set as PEVSL_NOT_DEFINED */
+  double *data;  /**< the data pointer */
 } pevsl_Parvec;
+
 
 /*! 
  * @brief parallel multiple vectors
  * global size: n_global x n_vecs
  *  local size: n_local  x n_vecs
- *          ld: leading dimension (must be >= n_local)
  * in pEVSL, this is for storing Lanczos or Ritz vectors, so we often have n_global >> m
  * Thus, in the current code, we use only 1-D partitioning in rows for this data structure
  */
 typedef struct _pevsl_parvecs {
-  MPI_Comm comm;
-  int n_global;
-  int n_local;
-  int n_first;
-  int n_vecs;
-  int ld;
-  double *data;
+  MPI_Comm comm; /**< MPI communicator */
+  int n_global;  /**< number of elements in the global vector */
+  int n_local;   /**< number of elements in the local portion */
+  int n_first;   /**< the index of the first local element in the global vector
+                      NOTE: this can be set as PEVSL_NOT_DEFINED */
+  int n_vecs;    /**< the number of vectors */
+  int ld;        /**< leading dimension (must be >= n_local) */
+  double *data;  /**< the data pointer */
 } pevsl_Parvecs;
+
 
 /*!
  * @brief  parameters for polynomial filter 
@@ -176,21 +180,30 @@ typedef struct _pevsl_polparams {
  * be the  solution (complex vector),  and "data" contains  all the
  * data  needed  by  the  solver. 
  */
+/*
 typedef void (*SVFuncC)(pevsl_Parvec *br, pevsl_Parvec *bz, 
                         pevsl_Parvec *xr, pevsl_Parvec *xz, 
+                        void *data);
+*/
+typedef void (*SVFuncC)(double *br, double *bz, 
+                        double *xr, double *xz, 
                         void *data);
 
 /** 
  * @brief function prototype for applying the solve B x = b 
  * [the most general form]
  */
-//typedef void (*SVFunc)(pevsl_Parvec *b, pevsl_Parvec *x, void *data);
+/* 
+typedef void (*SVFunc)(pevsl_Parvec *b, pevsl_Parvec *x, void *data);
+*/
 typedef void (*SVFunc)(double *b, double *x, void *data);
 
 /**
  * @brief matvec function prototype 
  */
-//typedef void (*MVFunc)(pevsl_Parvec *x, pevsl_Parvec *y, void *data);
+/*
+typedef void (*MVFunc)(pevsl_Parvec *x, pevsl_Parvec *y, void *data);
+*/
 typedef void (*MVFunc)(double *x, double *y, void *data);
 
 /*!
@@ -208,7 +221,7 @@ typedef struct _pevsl_Matvec {
  */
 typedef struct _pevsl_Bsol {
   SVFunc func;       /**< function pointer */
-  void *data;          /**< data */
+  void *data;        /**< data */
 } pevsl_Bsol;
 
 /*!
