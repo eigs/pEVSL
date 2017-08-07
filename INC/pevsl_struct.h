@@ -60,10 +60,8 @@ typedef struct _commHandle {
 typedef struct _pevsl_parcsr {
   /**< mpi communicator that this matrix resides on */
   MPI_Comm comm;
-  //MPI_Comm comm_global;
-  //MPI_Comm comm_group;
 
-  /* handle communications involved in parCSR matvec */
+  /**< handle communications involved in parCSR matvec */
   commHandle *comm_handle;
 
   int nrow_global;
@@ -134,33 +132,6 @@ typedef struct _pevsl_parvecs {
   int ld;
   double *data;
 } pevsl_Parvecs;
-
-
-/*!
- * @brief timing and memory statistics of pEVSL
- *
- */
-typedef struct _pevsl_Stat {
-  /* timing [level-1 funcs] */
-  double t_commgen;
-  double t_eigbounds;
-  double t_solver;
-  /* timing [level-2 funcs] */
-  double t_mvA;
-  double t_mvB;
-  double t_svB;
-  size_t n_mvA;
-  size_t n_mvB;
-  size_t n_svB;
-  /* memory */
-  size_t alloced;
-  size_t alloced_total;
-  size_t alloced_max;
-} pevsl_Stat;
-
-/* global variable: pevsl_stats */
-extern pevsl_Stat pevsl_stat;
-
 
 /*!
  * @brief  parameters for polynomial filter 
@@ -250,26 +221,26 @@ typedef struct _pevsl_LtSol {
 } pevsl_Ltsol;
 
 /*!
- * @brief data needed for Chebyshev iterations
+ * @brief timing and memory statistics of pEVSL
  *
  */
-typedef struct _Chebiter_Data{
-  /* eigenvalue bounds of the matrix */
-  double lb, ub;
-  /* polynomial degree */
-  int deg;
-  /* sizes and nfirst */
-  int N, n, nfirst;
-  /* matvec function and data */
-  pevsl_Matvec *mv;
-  /* work space */
-  pevsl_Parvec *w, *r, *p;
-  /* results */
-  double* res;
-  /* communicator */
-  MPI_Comm comm;
-} Chebiter_Data;
-
+typedef struct _pevsl_Stat {
+  /* timing [level-1 funcs] */
+  double t_commgen;
+  double t_eigbounds;
+  double t_solver;
+  /* timing [level-2 funcs] */
+  double t_mvA;
+  double t_mvB;
+  double t_svB;
+  size_t n_mvA;
+  size_t n_mvB;
+  size_t n_svB;
+  /* memory */
+  size_t alloced;
+  size_t alloced_total;
+  size_t alloced_max;
+} pevsl_Stat;
 
 /*!
  * @brief wrapper of all global variables in pEVSL
@@ -283,22 +254,27 @@ typedef struct _pevsl_Data {
    *  nfirst is the first row owned.
    *  NOTE that currently Parcsr matrix is always assumed to have such partitioning. 
    *  More general partitionings are NOT yet supported
-   *  BUT, we leave the option to not have such consecutive row partitioning. 
+   *  BUT, we leave the option to have such non-consecutive row partitioning. 
    *  The users can implement their own Amv, Bmv, Bsol routines with arbitrary partitionings,
    *  and only set N and n but leave nfirst as PEVSL_NOT_DEFINED
    */
-  int N;                    /**< global size of matrix A and B */
-  int n;                    /**< local size of matrix A and B */
-  int nfirst;               /**< the first local row and column */
-  int ifGenEv;              /**< if it is a generalized eigenvalue problem */
+  MPI_Comm      comm;       /**< MPI communicator where this instance of pEVSL lives;
+                                 all parallel matrices and vectors should the SAME MPI_Comm */
+  int           N;          /**< global size of matrix A and B */
+  int           n;          /**< local size of matrix A and B */
+  int           nfirst;     /**< the first local row and column */
+  int           ifGenEv;    /**< if it is a generalized eigenvalue problem */
   pevsl_Matvec *Amv;        /**< external matvec routine and the associated data for A */
   pevsl_Matvec *Bmv;        /**< external matvec routine and the associated data for B */
-  pevsl_Bsol *Bsol;         /**< external function and data for B solve */
-  pevsl_Ltsol *LTsol;       /**< external function and data for LT solve */
+  pevsl_Bsol   *Bsol;       /**< external function and data for B solve */
+  pevsl_Ltsol  *LTsol;      /**< external function and data for LT solve */
+  pevsl_Stat   *stats;      /**< timing and memory statistics of pEVSL */
+
+  int            nev_computed;    /**< Used in Fortran interface:
+                                       hold the points of last computed results */
+  double        *eval_computed;
+  pevsl_Parvecs *evec_computed;
+  
 } pevsl_Data;
-
-
-/* global variable: pevsl_data */
-extern pevsl_Data pevsl_data;
 
 #endif

@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   generates a laplacean matrix on an nx x ny x nz mesh 
   and test parcsrmv
 ------------------------------------------------------------*/
-  int nrow, ncol, nnzrow, i, j, ngroups, flg, np, rank, *row_starts, *col_starts, seed;
+  int nrow, ncol, nnzrow, nnz, i, j, ngroups, flg, np, rank, *row_starts, *col_starts, seed;
   double err, err_all;
   /*-------------------- communicator struct, which contains all the communicators */
   CommInfo comm;
@@ -35,8 +35,8 @@ int main(int argc, char *argv[]) {
   /*-------------------- default values */
   nrow = 64;
   ncol = 32;
-  nnzrow = 16;
-  ngroups = 1;
+  nnzrow = 17;
+  ngroups = 2;
   /*-----------------------------------------------------------------------
    *-------------------- reset some default values from command line  
    *                     user input from command line */
@@ -110,6 +110,8 @@ int main(int argc, char *argv[]) {
   //printf("Aloc nnz %d\n", Aloc.ia[Aloc.nrows]);
   /*------------------- Setup Parcsr A */
   pEVSL_ParcsrSetup(&Aloc, &A);
+  /*------------------- nnz(A) */
+  nnz = pEVSL_ParcsrNnz(&A);
   /*------------------- Create parallel vector */
   /* x has the same parallel layout of A col */
   pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, comm.comm_group, &x);
@@ -141,14 +143,19 @@ int main(int argc, char *argv[]) {
   }
   err = sqrt(err);
   MPI_Reduce(&err, &err_all, 1, MPI_DOUBLE, MPI_SUM, 0, comm.comm_group);
+
+  if (comm.global_rank == 0) {
+    fprintf(stdout, "Random A : nrow %d x ncol %d, nnz %d\n", nrow, ncol, nnz);
+  }
   if (comm.group_rank == 0) {
     PEVSL_SEQ_BEGIN(comm.comm_group_leader);
-    printf("Group %d:\n", comm.group_id);
+    printf("- - - - - - - - - - - - - - - - - - - - - - - - - -\n");
+    printf("Group %d, size %d, ", comm.group_id, comm.group_size);
     printf("row_starts:");
     for (i=0; i<comm.group_size+1; i++) {
       printf(" %d", row_starts[i]);
     }
-    printf("\n");
+    printf("; ");
     printf("col_starts:");
     for (i=0; i<comm.group_size+1; i++) {
       printf(" %d", col_starts[i]);

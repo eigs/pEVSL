@@ -27,21 +27,30 @@
  * @return Returns 0 on success 
  *
  **/
-int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
-                      int bndtype, double *lammin, double *lammax, MPI_Comm comm, FILE *fstats) {
+int pEVSL_LanTrbounds(pevsl_Data   *pevsl, 
+                      int           lanm, 
+                      int           maxit,
+                      double        tol, 
+                      pevsl_Parvec *vinit,
+                      int           bndtype,
+                      double       *lammin, 
+                      double       *lammax, 
+                      FILE         *fstats) {
+
   double tms = pEVSL_Wtime();
-  const int ifGenEv = pevsl_data.ifGenEv;
+  const int ifGenEv = pevsl->ifGenEv;
   double lmin=0.0, lmax=0.0, t, t1, t2;
   int do_print = 1, rank;
   /* handle case where fstats is NULL. Then no output. Needed for openMP. */
   if (fstats == NULL) {
     do_print = 0;
   }
+  MPI_Comm comm = pevsl->comm; 
   /*-------------------- MPI rank in comm */
   MPI_Comm_rank(comm, &rank);  
   /* size of the matrix */
   int N;
-  N = pevsl_data.N;
+  N = pevsl->N;
   /*--------------------- adjust lanm and maxit */
   lanm = PEVSL_MIN(lanm, N);
   int lanm1=lanm+1;
@@ -115,7 +124,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
     /* z references the 1st columns of Z */
     pEVSL_ParvecsGetParvecShell(Z, 0, z);
     /* B norm */
-    pEVSL_MatvecB(v, z);
+    pEVSL_MatvecB(pevsl, v, z);
     pEVSL_ParvecDot(v, z, &t);
     t = 1.0 / sqrt(t);
     /* z = B*v */
@@ -152,7 +161,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
       pEVSL_ParvecsGetParvecShell(V, k1+1, vnew);
       pEVSL_ParvecsGetParvecShell(Z, k1+1, znew);
       /*------------------ znew = A * v */
-      pEVSL_MatvecA(v, znew);
+      pEVSL_MatvecA(pevsl, v, znew);
       /*-------------------- restart with 'trlen' Ritz values/vectors
                              T = diag(Rval(1:trlen)) */
       for (i=0; i<trlen; i++) {
@@ -174,7 +183,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
       wn += fabs(s[k1]);
       if (ifGenEv) {
         /*-------------------- vnew = B \ znew */
-        pEVSL_SolveB(znew, vnew);
+        pEVSL_SolveB(pevsl, znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         pEVSL_ParvecDot(vnew, znew, &beta);
         beta = sqrt(beta);
@@ -190,7 +199,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(k, NGS_MAX, V, Z, vnew, warr);          
-          pEVSL_MatvecB(vnew, znew);
+          pEVSL_MatvecB(pevsl, vnew, znew);
           pEVSL_ParvecDot(vnew, znew, &beta);
           beta = sqrt(beta);         
           double ibeta = 1.0 / beta;
@@ -238,7 +247,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
       pEVSL_ParvecsGetParvecShell(V, k, vnew);
       pEVSL_ParvecsGetParvecShell(Z, k, znew);
       /*------------------ znew = A * v */
-      pEVSL_MatvecA(v, znew);
+      pEVSL_MatvecA(pevsl, v, znew);
       it++;
       /*-------------------- znew = znew - beta*zold */
       if (zold->data) {
@@ -257,7 +266,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
         CGS_DGKS2(k, NGS_MAX, Z, V, znew, warr);
         /* vnew = B \ znew */
-        pEVSL_SolveB(znew, vnew);
+        pEVSL_SolveB(pevsl, znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         pEVSL_ParvecDot(vnew, znew, &beta);
         beta = sqrt(beta);
@@ -280,7 +289,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_DGKS2(k, NGS_MAX, V, Z, vnew, warr);          
-          pEVSL_MatvecB(vnew, znew);
+          pEVSL_MatvecB(pevsl, vnew, znew);
           pEVSL_ParvecDot(vnew, znew, &beta);
           beta = sqrt(beta); 
           double ibeta = 1.0 / beta;
@@ -389,7 +398,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
   PEVSL_FREE(EvecT);
   pEVSL_ParvecFree(&Rvec[0]);
   pEVSL_ParvecFree(&Rvec[1]);
-  free(warr);
+  PEVSL_FREE(warr);
   if (ifGenEv) {
     pEVSL_ParvecsFree(Z);
     PEVSL_FREE(Z);
@@ -398,7 +407,7 @@ int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
   }
 
   double tme = pEVSL_Wtime();
-  pevsl_stat.t_eigbounds += tme - tms;
+  pevsl->stats->t_eigbounds += tme - tms;
   
   return 0;
 }

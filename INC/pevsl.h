@@ -8,41 +8,34 @@
 #include "pevsl_struct.h"
 #include "pevsl_def.h"
 
-/* chebiter.c */
-int  pEVSL_ChebIterSetup(double lmin, double lmax, int deg, 
-                         pevsl_Parcsr *A,
-                         MPI_Comm comm, Chebiter_Data *cheb);
-void pEVSL_ChebIterSolv1(double *db, double *dx, void *data);
-void pEVSL_ChebIterSolv2(double *db, double *dx, void *data);
-void pEVSL_ChebIterFree(Chebiter_Data *data);
-
 /* chebpol.c */
 void pEVSL_SetPolDef(pevsl_Polparams *pol);
 int  pEVSL_FindPol(double *intv, pevsl_Polparams *pol);
 void pEVSL_FreePol(pevsl_Polparams *pol);
 
 /* lantrbnd.c */
-int pEVSL_LanTrbounds(int lanm, int maxit, double tol, pevsl_Parvec *vinit,
-                      int bndtype, double *lammin, double *lammax, MPI_Comm comm, FILE *fstats);
+int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol, 
+                      pevsl_Parvec *vinit, int bndtype, double *lammin, 
+                      double *lammax, FILE *fstats);
 
 /* pevsl.c */
-int pEVSL_Start();
-int pEVSL_Finish();
-int pEVSL_SetProbSizes(int N, int n, int nfirst);
-int pEVSL_SetAParcsr(pevsl_Parcsr *A);
-int pEVSL_SetBParcsr(pevsl_Parcsr *B);
-int pEVSL_SetAMatvec(MVFunc func, void *data);
-int pEVSL_SetBMatvec(MVFunc func, void *data);
-int pEVSL_SetBSol(SVFunc func, void *data);
-int pEVSL_SetStdEig();
-int pEVSL_SetGenEig();
+int pEVSL_Start       (MPI_Comm comm, pevsl_Data **data);
+int pEVSL_Finish      (pevsl_Data *pevsl_data);
+int pEVSL_SetProbSizes(pevsl_Data *pevsl_data, int N, int n, int nfirst);
+int pEVSL_SetAParcsr  (pevsl_Data *pevsl_data, pevsl_Parcsr *A);
+int pEVSL_SetBParcsr  (pevsl_Data *pevsl_data, pevsl_Parcsr *B);
+int pEVSL_SetAMatvec  (pevsl_Data *pevsl_data, MVFunc func, void *data);
+int pEVSL_SetBMatvec  (pevsl_Data *pevsl_data, MVFunc func, void *data);
+int pEVSL_SetBSol     (pevsl_Data *pevsl_data, SVFunc func, void *data);
+int pEVSL_SetStdEig   (pevsl_Data *pevsl_data);
+int pEVSL_SetGenEig   (pevsl_Data *pevsl_data);
 
 /* parcsr.c */
 int  pEVSL_ParcsrCreate(int nrow, int ncol, int *row_starts, int *col_starts, 
                         pevsl_Parcsr *A, MPI_Comm comm);
 int  pEVSL_ParcsrSetup(pevsl_Csr *Ai, pevsl_Parcsr *A);
 void pEVSL_ParcsrFree(pevsl_Parcsr *A);
-int  pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int cooidx, pevsl_Coo *coo, 
+int  pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int idx, pevsl_Coo *coo, 
                              pevsl_Csr *csr, char stype);
 int  pEVSL_ParcsrNnz(pevsl_Parcsr *A);
 int  pEVSL_ParcsrLocalNnz(pevsl_Parcsr *A);
@@ -116,13 +109,13 @@ void vecset(int n, double t, double *v);
 void sort_double(int n, double *v, int *ind);
 
 /* stats.c */
-void pEVSL_StatsReset();
-void pEVSL_StatsPrint(FILE *fstats, MPI_Comm comm);
+void pEVSL_StatsReset(pevsl_Data *pevsl);
+void pEVSL_StatsPrint(pevsl_Data *pevsl, FILE *fstats);
 
 /* cheblanNr.c */
-int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
+int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
                     pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvecs **Wo, 
-                    double **reso, MPI_Comm comm, FILE *fstats);
+                    double **reso, FILE *fstats);
 
 #endif
 

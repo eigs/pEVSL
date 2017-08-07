@@ -1,9 +1,13 @@
 include ../makefile.in
-include makefile.in
 
-OBJ = pevsl_mumps.o 
-
-INCLUDES = -I../INC -I. $(MUMPS_INC)
+ifeq ($(INTEL), 1)
+  OBJ = DIRECTSOL/pevsl_pardiso.o ITERSOL/chebiter.o
+  INCLUDES = -I../INC -I. -I$(MKLROOT)/include
+else
+  include DIRECTSOL/makefile_mumps.in
+  OBJ = DIRECTSOL/pevsl_mumps.o ITERSOL/chebiter.o
+  INCLUDES = -I../INC -I. $(MUMPS_INC)
+endif
 
 %.o : %.c
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
@@ -11,5 +15,5 @@ INCLUDES = -I../INC -I. $(MUMPS_INC)
 all : $(OBJ)
 
 clean:
-	rm -f $(OBJ)
+	rm -f DIRECTSOL/*.o ITERSOL/*.o
 

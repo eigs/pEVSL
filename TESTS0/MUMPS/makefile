@@ -2,14 +2,12 @@
 
 include ../../makefile.in
 
-#FLAGS = -DUNIX -O3 -g -Wall 
-
 MUMPSDIR = /home/li50/workspace/MUMPS_5.1.1
 
-INCLUDES = -I../../INC -I../COMMON -I$(MUMPSDIR)/include
+INCLUDES = -I../../INC -I../../TESTS/COMMON -I$(MUMPSDIR)/include
 
 # Object files
-OBJS  = test.o ../COMMON/comm.o ../COMMON/io.o ../COMMON/lapl.o
+OBJS  = test.o ../../TESTS/COMMON/comm.o ../../TESTS/COMMON/io.o ../../TESTS/COMMON/lapl.o
 
 LIB = -L../../ -lpevsl 
 
@@ -22,7 +20,13 @@ LORDERINGS = $(LMETIS) $(LPORD)
 LSCALAP  = /home/li50/workspace/scalapack-2.0.2/libscalapack.a
 #$(LAPACK)  -lmpi
 
-LIB_EXT = -fopenmp $(LIBLAPACK) $(LIB0) -lmpifort
+LIB_EXT = -fopenmp $(LIBLAPACK) $(LIB0) -lgfortran
+
+ifeq ($(INTEL), 1)
+LIB_EXT += -lifcore
+else
+LIB_EXT += -lmpifort
+endif
 
 # Rules
 default: test.ex

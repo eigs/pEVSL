@@ -2,14 +2,13 @@
 
 include ../makefile.in
 
-# Compilers
-AR = ar rv
-RANLIB = ranlib
-
-INCLUDES = -I../INC 
+INCLUDES = -I../INC -I../EXTERNAL/ITERSOL -I../EXTERNAL/DIRECTSOL
+ifeq ($(INTEL), 1)
+INCLUDES += -I${MKLROOT}/include
+endif
 
 # Object files
-OBJS = chebiter.o cheblanNr.o chebpol.o lantrbnd.o pevsl.o miscla.o parcsr.o \
+OBJS = cheblanNr.o chebpol.o lantrbnd.o pevsl.o miscla.o parcsr.o \
        parcsrmv.o parvec.o parvecs.o spmat.o stats.o utils.o vector.o \
        ../FORTRAN/pevsl_f90.o
        

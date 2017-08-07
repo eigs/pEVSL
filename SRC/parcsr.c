@@ -312,7 +312,7 @@ void pEVSL_ParcsrFree(pevsl_Parcsr *A) {
  *        'U' or 'u', only return the "global" upper triangular portion 
  *        others    ,      return the "entire" local matrix 
  * */
-int pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int cooidx, pevsl_Coo *coo, 
+int pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int idx, pevsl_Coo *coo, 
     pevsl_Csr *csr, char stype) {
   /* upper case letter */
   stype = toupper(stype);
@@ -373,10 +373,21 @@ int pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int cooidx, pevsl_Coo *coo,
   pEVSL_SortRow(&csr_local);
   /* coo */
   if (coo) {
-    pEVSL_CsrToCoo(&csr_local, cooidx, coo);
+    pEVSL_CsrToCoo(&csr_local, idx, coo);
   }
   /* csr */
   if (csr) {
+    /* adjust CSR index to 1-based */
+    if (idx) {
+      for (i=0; i<nrow; i++) {
+        for (j=csr_local.ia[i]; j<csr_local.ia[i+1]; j++) {
+          csr_local.ja[j]++;
+        }
+      }
+      for (i=0; i<=nrow; i++) {
+        csr_local.ia[i]++;
+      }
+    }
     *csr = csr_local;
   } else {
     pEVSL_FreeCsr(&csr_local);

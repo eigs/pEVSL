@@ -1,5 +1,23 @@
 #include "pevsl_int.h"
-#include "pevsl_mumps.h"
+#include "pevsl_direct.h"
+#include "dmumps_c.h"
+
+/**
+ * @file pevsl_mumps.c
+ * @brief Definitions used for MUMPS interface
+ */
+
+typedef struct _BSolDataDirect {
+  /* global and local size */
+  int N, n;
+  DMUMPS_STRUC_C solver;
+  double *rhs_global;
+  /* number of local entries and start of local entries
+   * only exists on rank 0, needed by MUMPS since we need to 
+   * centralize rhs that needs to do Gatherv */
+  int *ncols;
+  int *icols;
+} BSolDataDirect;
 
 /* MUMPS macro s.t. indices match documentation */
 #define ICNTL(I) icntl[(I)-1]
@@ -8,8 +26,11 @@
  *
  * @param B      parcsr matrix B
  * */
-int SetupBSolMumps(pevsl_Parcsr *B, BSolDataMumps *data) {
+int SetupBSolDirect(pevsl_Parcsr *B, void **data) {
   int i, nglobal, nlocal, rank, size;
+  BSolDataDirect *Bsol_data;
+  PEVSL_MALLOC(Bsol_data, 1, BSolDataDirect);
+
   /* MUMPS solver will use the same communicator as B */
   MPI_Comm comm = B->comm;
   /*-------------------- MPI rank and size in comm */
@@ -18,17 +39,17 @@ int SetupBSolMumps(pevsl_Parcsr *B, BSolDataMumps *data) {
   /* global and local sizes */
   nglobal = B->nrow_global;
   nlocal = B->nrow_local;
-  data->N = nglobal;
-  data->n = nlocal;
+  Bsol_data->N = nglobal;
+  Bsol_data->n = nlocal;
   /* check if sizes match */
   //PEVSL_CHKERR(nglobal != pevsl_data.N);
   //PEVSL_CHKERR(nlocal != pevsl_data.n);
   /* create solver the communicator of B */
-  data->solver.comm_fortran = (MUMPS_INT) MPI_Comm_c2f(comm);
-  data->solver.par = 1; /* host is also involved */
-  data->solver.sym = 1; /* 0: nonsymmetric, 1:SPD, 2: symmetric */
-  data->solver.job = -1; /* initialization */
-  dmumps_c(&(data->solver));
+  Bsol_data->solver.comm_fortran = (MUMPS_INT) MPI_Comm_c2f(comm);
+  Bsol_data->solver.par = 1; /* host is also involved */
+  Bsol_data->solver.sym = 1; /* 0: nonsymmetric, 1:SPD, 2: symmetric */
+  Bsol_data->solver.job = -1; /* initialization */
+  dmumps_c(&(Bsol_data->solver));
   /*------------------- local coo matrix (1-based indices) 
    *                    Upper triangular part */
   pevsl_Coo coo_local;
@@ -38,29 +59,29 @@ int SetupBSolMumps(pevsl_Parcsr *B, BSolDataMumps *data) {
     /* NOTE: change row indices to global ones */
     coo_local.ir[i] += B->first_row;
   }
-  data->solver.ICNTL(2) = -1; /* output suppressed */
-  data->solver.ICNTL(3) = -1; /* output suppressed */
-  data->solver.ICNTL(18) = 3; /* distributed matrix */
-  data->solver.ICNTL(28) = 2; /* parallel ordering */
-  data->solver.ICNTL(29) = 2; /* parmetis */
-  data->solver.n = nglobal;
-  data->solver.nnz_loc = coo_local.nnz;
-  data->solver.irn_loc = coo_local.ir;
-  data->solver.jcn_loc = coo_local.jc;
-  data->solver.a_loc = coo_local.vv;
-  data->solver.job = 4; /* analysis and factorization */
-  dmumps_c(&(data->solver));
+  Bsol_data->solver.ICNTL(2) = -1; /* output suppressed */
+  Bsol_data->solver.ICNTL(3) = -1; /* output suppressed */
+  Bsol_data->solver.ICNTL(18) = 3; /* distributed matrix */
+  Bsol_data->solver.ICNTL(28) = 2; /* parallel ordering */
+  Bsol_data->solver.ICNTL(29) = 2; /* parmetis */
+  Bsol_data->solver.n = nglobal;
+  Bsol_data->solver.nnz_loc = coo_local.nnz;
+  Bsol_data->solver.irn_loc = coo_local.ir;
+  Bsol_data->solver.jcn_loc = coo_local.jc;
+  Bsol_data->solver.a_loc = coo_local.vv;
+  Bsol_data->solver.job = 4; /* analysis and factorization */
+  dmumps_c(&(Bsol_data->solver));
   /* free local coo */
   pEVSL_FreeCoo(&coo_local);
   /* setup for the solve */
-  data->rhs_global = NULL;
-  data->ncols = NULL;
-  data->icols = NULL;
+  Bsol_data->rhs_global = NULL;
+  Bsol_data->ncols = NULL;
+  Bsol_data->icols = NULL;
   /* global rhs on the root */
   if (rank == 0) {
-    PEVSL_MALLOC(data->rhs_global, nglobal, double);
-    PEVSL_MALLOC(data->ncols, size, int);
-    PEVSL_MALLOC(data->icols, size, int);
+    PEVSL_MALLOC(Bsol_data->rhs_global, nglobal, double);
+    PEVSL_MALLOC(Bsol_data->ncols, size, int);
+    PEVSL_MALLOC(Bsol_data->icols, size, int);
     for (i=0; i<size; i++) {
       int j1, j2;
       /* range of each proc */
@@ -72,42 +93,23 @@ int SetupBSolMumps(pevsl_Parcsr *B, BSolDataMumps *data) {
         /* if NULL, use default partition */
         pEVSL_Part1d(nglobal, size, &i, &j1, &j2, 1);
       }
-      data->ncols[i] = j2-j1;
-      data->icols[i] = j1;
+      Bsol_data->ncols[i] = j2-j1;
+      Bsol_data->icols[i] = j1;
     }
   }
 
-  return 0;
-}
-
-/** @brief Free the factorization of B with MUMPS
- *
- * @param data  MUMPS solver instance
- * */
-int FreeBSolMumps(BSolDataMumps *data) {
-  /* free the solver */
-  data->solver.job = -2;
-  dmumps_c(&(data->solver));
-
-  if (data->rhs_global) {
-    free(data->rhs_global);
-  }
-  if (data->ncols) {
-    free(data->ncols);
-  }
-  if (data->icols) {
-    free(data->icols);
-  }
+  *data = (void *) Bsol_data;
 
   return 0;
 }
+
 
 /** @brief Solver function of B with MUMPS
  *
  * */
-void BSolMumps(double *b, double *x, void *data) {
+void BSolDirect(double *b, double *x, void *data) {
   /* MUMPS data */
-  BSolDataMumps *mumps_data = (BSolDataMumps *)data;
+  BSolDataDirect *mumps_data = (BSolDataDirect *)data;
   /* MPI communicator */
   MPI_Comm comm = MPI_Comm_f2c(mumps_data->solver.comm_fortran);
   /* MPI rank */
@@ -138,4 +140,29 @@ void BSolMumps(double *b, double *x, void *data) {
   MPI_Scatterv(rhs_global, ncols, icols, MPI_DOUBLE, x, nlocal,
                MPI_DOUBLE, 0, comm);
 }
+
+
+/** @brief Free the factorization of B with MUMPS
+ *
+ * @param data  MUMPS solver instance
+ * */
+void FreeBSolDirectData(void *data) {
+  BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
+  /* destroy the solver */
+  Bsol_data->solver.job = -2;
+  dmumps_c(&(Bsol_data->solver));
+
+  if (Bsol_data->rhs_global) {
+    PEVSL_FREE(Bsol_data->rhs_global);
+  }
+  if (Bsol_data->ncols) {
+    PEVSL_FREE(Bsol_data->ncols);
+  }
+  if (Bsol_data->icols) {
+    PEVSL_FREE(Bsol_data->icols);
+  }
+
+  PEVSL_FREE(data);
+}
+
 

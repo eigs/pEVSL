@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
   nx = 16;
   ny = 16;
   nz = 16;
-  ngroups = 1;
+  ngroups = 2;
   /*-----------------------------------------------------------------------
    *-------------------- reset some default values from command line  
    *                     user input from command line */
@@ -112,9 +112,14 @@ int main(int argc, char *argv[]) {
   }
   err = sqrt(err);
   MPI_Reduce(&err, &err_all, 1, MPI_DOUBLE, MPI_SUM, 0, comm.comm_group);
+  
+  if (comm.global_rank == 0) {
+    fprintf(stdout, "Laplacian A : %d x %d x %d, n = %d\n", nx, ny, nz, n);
+  }
   if (comm.group_rank == 0) {
     PEVSL_SEQ_BEGIN(comm.comm_group_leader);
-    printf("Group %d:\nstarts: ", comm.group_id);
+    printf("- - - - - - - - - - - - - - - - - - - - - - - - - -\n");
+    printf("Group %d, size %d, row/col starts: ", comm.group_id, comm.group_size);
     for (i=0; i<comm.group_size+1; i++) {
       printf(" %d", starts[i]);
     }

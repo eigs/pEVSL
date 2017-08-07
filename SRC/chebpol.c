@@ -253,14 +253,13 @@ int indexofSmallestElement(double *array, int size){
  * @param m   degree of polynomial
  * @param v difference between cosines on left and right [(3.12) in paper] 
  * @param jac   damping coefficients 
- * @param thcIn   initial value of theta_c [refer to paper]
  * @param tha    theta_a [refer to paper]
  * @param thb    theta_b [refer to paper]
  * @param mu     expansion coefficients. 
- * @param[out] thc  value of theta_c  
+ * @param[out] thcOut  value of theta_c  
 **/
 int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
-	        double *thcOut){
+	    double *thcOut){
   int MaxIterBalan = 30;     // max steps in Newton to balance interval
   double tolBal; 
   // do 2 newton steps -- if OK exit otherwise
@@ -432,7 +431,7 @@ int pEVSL_FindPol(double *intv, pevsl_Polparams *pol) {
     for (j=0; j<min_deg; j++)
       v[j] = cos(j*thb) - cos(j*tha);
     /*-------------------- DEGREE LOOP -------------------- */
-    for (m=min_deg; m < max_deg;m++){
+    for (m=min_deg; m < max_deg; m++){
       dampcf(m, damping, jac);
       //-------------------- update v: add one more entry
       v[m] = cos(m*thb)-cos(m*tha);
@@ -487,7 +486,11 @@ void pEVSL_FreePol(pevsl_Polparams *pol) {
  * @param w Work vector of length 3*n [allocate before call]
  * @param v is untouched
  **/
-int pEVSL_ChebAv(pevsl_Polparams *pol, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_Parvec *w) {
+int pEVSL_ChebAv(pevsl_Data      *pevsl,
+                 pevsl_Polparams *pol, 
+                 pevsl_Parvec    *v, 
+                 pevsl_Parvec    *y, 
+                 pevsl_Parvec    *w) {
   /*-------------------- unpack pol */
   double *mu = pol->mu;
   double dd = pol->dd;
@@ -497,7 +500,7 @@ int pEVSL_ChebAv(pevsl_Polparams *pol, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_P
   pevsl_Parvec *vk   = w;
   pevsl_Parvec *vkp1 = w + 1;
   pevsl_Parvec *vkm1 = w + 2;
-  pevsl_Parvec *w2 = pevsl_data.ifGenEv ? w + 3 : NULL;
+  pevsl_Parvec *w2 = pevsl->ifGenEv ? w + 3 : NULL;
   /*-------------------- */
   int k;
   double t, s, t1= 1.0 / dd, t2 = 2.0 / dd;
@@ -515,13 +518,13 @@ int pEVSL_ChebAv(pevsl_Polparams *pol, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_P
     t = k == 1 ? t1 : t2; 
     /*-------------------- */    
     s = mu[k];
-    if (pevsl_data.ifGenEv) {
+    if (pevsl->ifGenEv) {
       /*-------------------- Vkp1 = A*B\Vk - cc*Vk */    
-      pEVSL_SolveB(vk, w2);
-      pEVSL_MatvecA(w2, vkp1);
+      pEVSL_SolveB(pevsl, vk, w2);
+      pEVSL_MatvecA(pevsl, w2, vkp1);
     } else {
       /*-------------------- Vkp1 = A*Vk - cc*Vk */    
-      pEVSL_MatvecA(vk, vkp1);
+      pEVSL_MatvecA(pevsl, vk, vkp1);
     }
 
     pEVSL_ParvecAxpy(-cc, vk, vkp1);
@@ -538,5 +541,4 @@ int pEVSL_ChebAv(pevsl_Polparams *pol, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_P
 
   return 0;
 }
-
 

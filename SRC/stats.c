@@ -1,7 +1,8 @@
 #include "pevsl_int.h"
 
-void pEVSL_StatsPrint(FILE *fstats, MPI_Comm comm) {
-  pevsl_Stat *stats = &pevsl_stat;
+void pEVSL_StatsPrint(pevsl_Data *pevsl, FILE *fstats) {
+  pevsl_Stat *stats = pevsl->stats;
+  MPI_Comm comm = pevsl->comm;
   /* time, max */
   double t_commgen, t_eigbounds, t_solver, t_mvA, t_mvB, t_svB;
   MPI_Reduce(&stats->t_commgen,   &t_commgen,   1, MPI_DOUBLE, MPI_MAX, 0, comm);
@@ -63,6 +64,7 @@ void pEVSL_StatsPrint(FILE *fstats, MPI_Comm comm) {
   }
 }
 
-void pEVSL_StatsReset() {
-  memset(&pevsl_stat, 0, sizeof(pevsl_Stat));
+void pEVSL_StatsReset(pevsl_Data *pevsl) {
+  pevsl_Stat *stats = pevsl->stats;
+  memset(stats, 0, sizeof(pevsl_Stat));
 }

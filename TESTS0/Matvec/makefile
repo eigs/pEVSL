@@ -2,15 +2,13 @@
 
 include ../../makefile.in
 
-#FLAGS = -DUNIX -O3 -g -Wall 
-
-INCLUDES = -I../../INC -I../COMMON
+INCLUDES = -I../../INC -I../../TESTS/COMMON
 
 # Object files
-OBJS_1  = test1.o ../COMMON/comm.o ../COMMON/io.o ../COMMON/lapl.o
-OBJS_2  = test2.o ../COMMON/comm.o ../COMMON/io.o ../COMMON/lapl.o
-OBJS_3  = test3.o ../COMMON/comm.o ../COMMON/io.o ../COMMON/lapl.o
-OBJS_4  = test4.o ../COMMON/comm.o ../COMMON/io.o ../COMMON/sprand.o
+OBJS_1  = test1.o ../../TESTS/COMMON/comm.o ../../TESTS/COMMON/io.o ../../TESTS/COMMON/lapl.o
+OBJS_2  = test2.o ../../TESTS/COMMON/comm.o ../../TESTS/COMMON/io.o ../../TESTS/COMMON/lapl.o
+OBJS_3  = test3.o ../../TESTS/COMMON/comm.o ../../TESTS/COMMON/io.o ../../TESTS/COMMON/lapl.o
+OBJS_4  = test4.o ../../TESTS/COMMON/comm.o ../../TESTS/COMMON/io.o ../../TESTS/COMMON/sprand.o
 
 LIB = -L../../ -lpevsl 
 

@@ -20,6 +20,9 @@
 
 #ifdef PEVSL_DEBUG
 #define PEVSL_CHKERR(ierr) assert(!(ierr))
+#else
+#define PEVSL_CHKERR(ierr) 
+#endif
 
 #define PEVSL_ABORT(comm, errcode, msg) {\
     int pid; \
@@ -27,11 +30,6 @@
     printf("PEVSL error (processor %d): %s \n", pid, msg);  \
     MPI_Abort(comm, errcode); \
 }
-#else
-
-#define PEVSL_CHKERR(ierr) 
-
-#endif
 
 /* memory management, alloc and free */
 
@@ -66,7 +64,7 @@
 }
 
 #define PEVSL_FREE(base) {\
-    if (base) {free(base);} \
+    if (base) { free(base); } \
     base = NULL; \
 }
 

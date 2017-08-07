@@ -2,13 +2,10 @@
 #include <mpi.h>
 #include "pevsl.h"
 #include "common.h"
-#include "pevsl_mumps.h"
+#include "pevsl_direct.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
-
-int ParcsrLaplace(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_col_starts_in, MPI_Comm comm);
-int ExactEigLap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
 
 int main(int argc, char *argv[]) {
 /*------------------------------------------------------------
@@ -47,8 +44,10 @@ int main(int argc, char *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   /*-------------------- matrices A, B: parallel csr format */    
   pevsl_Parcsr A, B;
+  /*-------------------- instance of pEVSL */
+  pevsl_Data *pevsl;
   /*-------------------- Bsol */
-  BSolDataMumps Bsol;
+  void *Bsol;
   /*-------------------- default values */
   nx = 8;
   ny = 8;
@@ -105,23 +104,24 @@ int main(int argc, char *argv[]) {
   ParcsrLaplace(&A, nx, ny, nz, NULL, comm.comm_group);
   ParcsrLaplace(&B, nx*ny*nz, 1, 1, NULL, comm.comm_group);
   /*-------------------- use MUMPS as the solver for B */
-  SetupBSolMumps(&B, &Bsol);
-  /*-------------------- start pEVSL */
-  pEVSL_Start(argc, argv);
+  SetupBSolDirect(&B, &Bsol);
+  /*-------------------- start pEVSL
+   * Create an instance of pEVSL on the GROUP communicator */
+  pEVSL_Start(comm.comm_group, &pevsl);
   /*-------------------- set the left-hand side matrix A */
-  pEVSL_SetAParcsr(&A);
+  pEVSL_SetAParcsr(pevsl, &A);
   /*-------------------- set the left-hand side matrix A */
-  pEVSL_SetBParcsr(&B);
+  pEVSL_SetBParcsr(pevsl, &B);
   /*-------------------- set the solver for B */
-  pEVSL_SetBSol(BSolMumps, (void *) &Bsol);
+  pEVSL_SetBSol(pevsl, BSolDirect, Bsol);
   /*-------------------- for generalized eigenvalue problem */
-  pEVSL_SetGenEig();
+  pEVSL_SetGenEig(pevsl);
   /*-------------------- step 0: get eigenvalue bounds */
   /*-------------------- random initial guess */
   pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, comm.comm_group, &vinit);
   pEVSL_ParvecRand(&vinit);
   /*-------------------- bounds by TR-Lanczos */
-  ierr = pEVSL_LanTrbounds(50, 200, 1e-8, &vinit, 1, &lmin, &lmax, comm.comm_group, fstats);
+  ierr = pEVSL_LanTrbounds(pevsl, 50, 200, 1e-8, &vinit, 1, &lmin, &lmax, fstats);
   if (!comm.group_rank) {
     fprintf(fstats, "Step 0: Eigenvalue bound s for B^{-1}*A: [%.15e, %.15e]\n", lmin, lmax);
   }
@@ -136,14 +136,14 @@ int main(int argc, char *argv[]) {
   /*------------------- trivial */
   linspace(a, b, nslices+1, sli);      
   /*--------------------- print stats */
-  pEVSL_StatsPrint(fstats, comm.comm_group);
+  pEVSL_StatsPrint(pevsl, fstats);
   /*------------------- each group pick one slice and call ChebLanNr */
   for (sl=comm.group_id; sl<nslices; sl+=comm.ngroups) {
     int nev2, *ind;
     double *lam, *res, ai, bi;
     pevsl_Parvecs *Y;
     /*-------------------- zero out stats */
-    pEVSL_StatsReset();
+    pEVSL_StatsReset(pevsl);
     /*-------------------- */
     ai = sli[sl];
     bi = sli[sl+1];
@@ -171,8 +171,7 @@ int main(int argc, char *argv[]) {
       fprintf(fstats, " polynomial deg %d, bar %e gam %e\n", pol.deg, pol.bar, pol.gam);
     }
     //-------------------- then call ChenLanNr
-    ierr = pEVSL_ChebLanNr(xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, 
-                           comm.comm_group, fstats);
+    ierr = pEVSL_ChebLanNr(pevsl, xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebLanNr error %d\n", ierr);
       return 1;
@@ -202,7 +201,7 @@ int main(int argc, char *argv[]) {
       }
     }
     /*--------------------- print stats */
-    pEVSL_StatsPrint(fstats, comm.comm_group);
+    pEVSL_StatsPrint(pevsl, fstats);
     /*-------------------- free within this slice */
     if (lam) free(lam);
     if (res) free(res);
@@ -221,12 +220,12 @@ int main(int argc, char *argv[]) {
   if (fstats) {
     fclose(fstats);
   }
-  FreeBSolMumps(&Bsol);
+  FreeBSolDirectData(Bsol);
   pEVSL_ParcsrFree(&A);
   pEVSL_ParcsrFree(&B);
   pEVSL_ParvecFree(&vinit);
   CommInfoFree(&comm);
-  pEVSL_Finish();
+  pEVSL_Finish(pevsl);
   MPI_Finalize();
 
   return 0;

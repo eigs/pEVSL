@@ -2,9 +2,7 @@
 
 include ../../makefile.in
 
-#FLAGS ?= -DUNIX -O3 -g -Wall 
-
-INCLUDES = -I../../INC -I../COMMON -I../../EXTERNAL/DIRECTSOL
+INCLUDES = -I../../INC -I../../TESTS/COMMON -I../../EXTERNAL/DIRECTSOL
 
 ifeq ($(INTEL), 1)
   OBJ_DIRSOL = ../../EXTERNAL/DIRECTSOL/pevsl_pardiso.o
@@ -15,12 +13,10 @@ else
 endif
 
 # Object files
-OBJS_CM = ../COMMON/comm.o ../COMMON/io.o ../COMMON/lapl.o
-OBJS_PN  = LapPLanN.o $(OBJS_CM) $(OBJ_DIRSOL)
+OBJS_CM = ../../TESTS/COMMON/comm.o ../../TESTS/COMMON/io.o ../../TESTS/COMMON/lapl.o
+OBJS  = test.o $(OBJS_CM) $(OBJ_DIRSOL)
 
 LIB = -L../../ -lpevsl 
-
-ALLEXE = 
 LIB_EXT = $(LIB_DIRSOL) -fopenmp $(LIBLAPACK) $(LIB0)
 
 # intel Fortran lib
@@ -31,15 +27,14 @@ LIB_EXT += -lmpifort
 endif
 
 # Rules
-default: LapPLanN.ex
+default: test.ex
 
 %.o : %.c
 	$(CC) $(FLAGS) $(INCLUDES) -o $@ -c $<
 
 # Exe
-## polynomial
-LapPLanN.ex: $(OBJS_PN) ../../libpevsl.a
-	$(LINK) -o LapPLanN.ex $(OBJS_PN) $(LIB) $(LIB_EXT)
+test.ex: $(OBJS) ../../libpevsl.a
+	$(LINK) -o test.ex $(OBJS) $(LIB) $(LIB_EXT)
 
 clean:
 	rm -f *.o *.ex

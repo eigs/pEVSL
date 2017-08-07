@@ -1,62 +1,140 @@
 #include "pevsl_int.h"
+#include "pevsl_itsol.h"
 
-/** global variables that hold results from EVSL
- * evsl_copy_result_f90 will copy results from these vars and reset them
- * */
-int pevsl_nev_computed=0, pevsl_n=0;
-double *pevsl_eigval_computed=NULL;
-pevsl_Parvec *pevsl_eigvec_computed=NULL;
+/** @file pevsl_f90.c
+ * FORTRAN interface of pEVSL:
+ * 1. We use C type uintptr_t to save C-points and pass them to Fortran.
+ *    This is an ``integer type capable of holding a value converted from 
+ *    a void pointer (i.e., void *) and then be converted back to that type 
+ *    with a value that compares equal to the original pointer.''.
+ *    So, it is of 32 bits or 64 bits depending on the platform.
+ *    On the Fortran side, there should exist a corresponding variable declared
+ *    to communicate. Typically, it can be INTEGER*4 or INTEGER*8
+ */
 
 /** @brief Fortran interface for pEVSL_Start */
-void PEVSL_FORT(pevsl_start)() {
-  pEVSL_Start();
+void PEVSL_FORT(pevsl_start)(MPI_Fint *Fcomm, uintptr_t *pevslf90) {
+
+  pevsl_Data *pevsl;
+  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
+  
+  pEVSL_Start(comm, &pevsl);
+
+  /* cast the pointer */
+  *pevslf90 = (uintptr_t) pevsl;
 }
 
 /** @brief Fortran interface for pEVSL_Finish */
-void PEVSL_FORT(pevsl_finish)() {
-  pEVSL_Finish();
+void PEVSL_FORT(pevsl_finish)(uintptr_t *pevslf90) {
+
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
+  pEVSL_Finish(pevsl);
+}
+
+/** @brief Fortran interface for pEVSL_SetAParcsr */
+void PEVSL_FORT(pevsl_seta_parcsr)(uintptr_t *pevslf90, uintptr_t *Af90) {
+  
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  pevsl_Parcsr *A = (pevsl_Parcsr *) (*Af90);
+
+  pEVSL_SetAParcsr(pevsl, A);
+}
+
+/** @brief Fortran interface for pEVSL_SetBParcsr */
+void PEVSL_FORT(pevsl_setb_parcsr)(uintptr_t *pevslf90, uintptr_t *Bf90) {
+  
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  pevsl_Parcsr *B = (pevsl_Parcsr *) (*Bf90);
+
+  pEVSL_SetBParcsr(pevsl, B);
 }
 
 /** @brief Fortran interface for pEVSL_SetProbSizes
+ * @param[in] pevslf90 : pevsl pointer
  * @param[in] N : global size of A
  * @param[in] n : local size of A
  * @param[in] nfirst : nfirst
  * @warning set nfirst < 0, if do not want to specify
  */
-void PEVSL_FORT(pevsl_setprobsizes)(int *N, int *n, int *nfirst) {
-  pEVSL_SetProbSizes(*N, *n, *nfirst);
+void PEVSL_FORT(pevsl_setprobsizes)(uintptr_t *pevslf90, int *N, int *n, int *nfirst) {
+  
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
+  pEVSL_SetProbSizes(pevsl, *N, *n, *nfirst);
 }
 
 /** @brief Fortran interface for pEVSL_SetAMatvec
+ * @param[in] pevslf90 : pevsl pointer
  * @param[in] func : function pointer 
  * @param[in] data : associated data
  */
-void PEVSL_FORT(pevsl_setamv)(void *func, void *data) {
-  pEVSL_SetAMatvec((MVFunc) func, data);
+void PEVSL_FORT(pevsl_setamv)(uintptr_t *pevslf90, void *func, void *data) {
+  
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
+  pEVSL_SetAMatvec(pevsl, (MVFunc) func, data);
 }
 
-/** @brief Fortran interface for pEVSL_SetAMatvec
+/** @brief Fortran interface for pEVSL_SetBMatvec
+ * @param[in] pevslf90 : pevsl pointer
  * @param[in] func : function pointer 
  * @param[in] data : associated data
  */
-void PEVSL_FORT(pevsl_setbmv)(void *func, void *data) {
-  pEVSL_SetBMatvec((MVFunc) func, data);
+void PEVSL_FORT(pevsl_setbmv)(uintptr_t *pevslf90, void *func, void *data) {
+  
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
+  pEVSL_SetBMatvec(pevsl, (MVFunc) func, data);
 }
 
 /** @brief Fortran interface for SetBsol */
-void PEVSL_FORT(pevsl_setbsol)(void *func, void *data) {
-  pEVSL_SetBSol((SVFunc) func, data);
+void PEVSL_FORT(pevsl_setbsol)(uintptr_t *pevslf90, void *func, void *data) {
+
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
+  pEVSL_SetBSol(pevsl, (SVFunc) func, data);
 }
 
+/** @brief Fortran interface for SetStdEig */
+void PEVSL_FORT(pevsl_set_stdeig)(uintptr_t *pevslf90) {
+
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
+  pEVSL_SetStdEig(pevsl);
+}
 
 /** @brief Fortran interface for SetGenEig */
-void PEVSL_FORT(pevsl_set_geneig)() {
-  pEVSL_SetGenEig();
+void PEVSL_FORT(pevsl_set_geneig)(uintptr_t *pevslf90) {
+
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
+  pEVSL_SetGenEig(pevsl);
 }
 
+
+/** @brief Fortran interface for ParcsrCreate and ParcsrSetup
+ * @param[in] nrow : number of rows    [global]
+ * @param[in] ncol : number of columns [global]
+ * @param[in] row_starts : row partitioning array [of size np + 1]
+ * @param[in] col_starts : column partitioning array [of size np + 1]
+ * @param[in] ia, ja, a  : local CSR matrix [NOTE: MUST be of C-index, starting with zero]
+ * @param[in] Fcomm      : MPI communicator
+ * @param[out] matf90    : matrix pointer
+ * */
 void PEVSL_FORT(pevsl_parcsrcreate)(int *nrow, int *ncol, int *row_starts, int *col_starts,
-                int *ia, int *ja, double *aa,
-                MPI_Fint *Fcomm, uintptr_t *matf90) {
+                                    int *ia, int *ja, double *aa, MPI_Fint *Fcomm, 
+                                    uintptr_t *matf90) {
+
   pevsl_Parcsr *mat;
   pevsl_Csr matloc;
   MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
@@ -77,133 +155,58 @@ void PEVSL_FORT(pevsl_parcsrcreate)(int *nrow, int *ncol, int *row_starts, int *
   *matf90 = (uintptr_t) mat;
 }
 
-/* perform matvec with Parcsr matrix */
-void PEVSL_FORT(pevsl_parcsrmatvec)(double *x, double *y, uintptr_t *matf90) {
-  /* cast pointer */
-  pevsl_Parcsr *mat = (pevsl_Parcsr *) (*matf90);
-  pEVSL_ParcsrMatvec0(x, y, (void *) mat);
-}
-
-void PEVSL_FORT(pevsl_seta_parcsr)(uintptr_t *Af90) {
-  /* cast pointer */
-  pevsl_Parcsr *A = (pevsl_Parcsr *) (*Af90);
-
-  pEVSL_SetAParcsr(A);
-}
-
-void PEVSL_FORT(pevsl_setb_parcsr)(uintptr_t *Bf90) {
-  /* cast pointer */
-  pevsl_Parcsr *B = (pevsl_Parcsr *) (*Bf90);
-
-  pEVSL_SetBParcsr(B);
-}
-
+/** @brief Fortran interface for ParcsrFree */
 void PEVSL_FORT(pevsl_parcsr_free)(uintptr_t *Af90) {
+
   /* cast pointer */
   pevsl_Parcsr *A = (pevsl_Parcsr *) (*Af90);
 
   pEVSL_ParcsrFree(A);
 }
 
-/*
-void PEVSL_FORT(pevsl_parveccreate)(int *N, int *n, MPI_Fint *Fcomm, uintptr_t *xf90) {
-  pevsl_Parvec *x;
-  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
-  PEVSL_MALLOC(x, 1, pevsl_Parvec);
-  pEVSL_ParvecCreate(*N, *n, 0, comm, x);
+/* @brief Fortran interface for ParcsrCreate and ParcsrMatvec0 */
+void PEVSL_FORT(pevsl_parcsrmatvec)(double *x, double *y, uintptr_t *matf90) {
+  /* cast pointer */
+  pevsl_Parcsr *mat = (pevsl_Parcsr *) (*matf90);
+
+  pEVSL_ParcsrMatvec0(x, y, (void *) mat);
+}
+
+/* @brief Fortran interface for B-Solve */
+void PEVSL_FORT(pevsl_bsv)(uintptr_t *pevslf90, double *b, double *x) {
+
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
   
-  *xf90 = (uintptr_t) x;
+  pevsl->Bsol->func(b, x, pevsl->Bsol->data);
 }
 
-void PEVSL_FORT(pevsl_parvecsetvals)(uintptr_t *xf90, double *vals) {
-  int i, n;
-  pevsl_Parvec *x = (pevsl_Parvec *) xf90;
-  n = x->n_local;
-  for (i=0; i<n; i++) {
-    x->data[i] = vals[i];
-  }
-}
-
-void PEVSL_FORT(pevsl_parvecgetvals)(uintptr_t *xf90, double *vals) {
-  int i, n;
-  pevsl_Parvec *x = (pevsl_Parvec *) xf90;
-  n = x->n_local;
-  for (i=0; i<n; i++) {
-    vals[i] = x->data[i];
-  }
-}
-
-void PEVSL_FORT(pevsl_parvecfree)(uintptr_t *xf90) {
-  pevsl_Parvec *x = (pevsl_Parvec *) xf90;
-  pEVSL_ParvecFree(x);
-  PEVSL_FREE(x);
-}
-
-void PEVSL_FORT(pevsl_amv)(double *x, double *y) {
-  pevsl_data.Amv->func(x, y, pevsl_data.Amv->data);
-}
-*/
-
-void PEVSL_FORT(pevsl_bsv)(double *b, double *x) {
-  pevsl_data.Bsol->func(b, x, pevsl_data.Bsol->data);
-}
-
-#if 0
-void PEVSL_FORT(pevsl_test)(MPI_Fint *Fcomm) {
-  int N, n, nfirst;
-  double nrmv, nrmy, nrmz;
-  pevsl_Parvec vinit, y, z;
-  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
-  N = pevsl_data.N;
-  n = pevsl_data.n;
-  nfirst = pevsl_data.nfirst;
-  /*------------------- Create parallel vector: random initial guess */
-  pEVSL_ParvecCreate(N, n, nfirst, comm, &vinit);
-  //pEVSL_ParvecRand(&vinit);
-  //pEVSL_ParvecSin(&vinit);
-  pEVSL_ParvecSetScalar(&vinit, 1.0);
-  pEVSL_ParvecDupl(&vinit, &y);
-  pEVSL_ParvecDupl(&vinit, &z);
-
-  pEVSL_ParvecNrm2(&vinit, &nrmv);
-  printf("norm v %.15e\n", nrmv);
-
-  pEVSL_MatvecA(&vinit, &y);
-  pEVSL_ParvecNrm2(&y, &nrmy);
-  printf("norm y %.15e\n", nrmy);
-
-  pEVSL_MatvecB(&vinit, &z);
-  pEVSL_ParvecNrm2(&z, &nrmz);
-  printf("norm z %.15e\n", nrmz);
-
-  pEVSL_SolveB(&vinit, &y);
-  pEVSL_ParvecNrm2(&y, &nrmy);
-  printf("norm y2 %.15e\n", nrmy);
-
-  //pEVSL_ParvecAxpy(-1.0, &vinit, &y);
-  //pEVSL_ParvecNrm2(&y, &nrmy);
-  //printf("norm y3 %.15e\n", nrmy);
-}
-#endif
 
 /** @brief Fortran interface for evsl_lanbounds 
+ * @param[in] pevslf90: pEVSL pointer
+ * @param[in] mlan: Krylov dimension
  * @param[in] nstpes: number of steps
+ * @param[in] tol: stopping tol
  * @param[out] lmin: lower bound
  * @param[out] lmax: upper bound
  * */
-void PEVSL_FORT(pevsl_lanbounds)(int *mlan, int *nsteps, double *lmin, 
-                                 double *lmax, MPI_Fint *Fcomm) {
+void PEVSL_FORT(pevsl_lanbounds)(uintptr_t *pevslf90, int *mlan, int *nsteps, double *tol,
+                                 double *lmin, double *lmax) {
   int N, n, nfirst;
   pevsl_Parvec vinit;
-  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
-  N = pevsl_data.N;
-  n = pevsl_data.n;
-  nfirst = pevsl_data.nfirst;
+  
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
+  N = pevsl->N;
+  n = pevsl->n;
+  nfirst = pevsl->nfirst;
+
   /*------------------- Create parallel vector: random initial guess */
-  pEVSL_ParvecCreate(N, n, nfirst, comm, &vinit);
+  pEVSL_ParvecCreate(N, n, nfirst, pevsl->comm, &vinit);
   pEVSL_ParvecRand(&vinit);
   /*------------------- Lanczos Bounds */
-  pEVSL_LanTrbounds(*mlan, *nsteps, 1e-8, &vinit, 1, lmin, lmax, comm, NULL);
+  pEVSL_LanTrbounds(pevsl, *mlan, *nsteps, 1e-8, &vinit, 1, lmin, lmax, NULL);
     
   pEVSL_ParvecFree(&vinit);
 }
@@ -244,92 +247,99 @@ void PEVSL_FORT(pevsl_freepol)(uintptr_t *polf90) {
 /** @brief Fortran interface for ChebLanNr
  *  the results will be saved in the internal variables
  */
-void PEVSL_FORT(pevsl_cheblannr)(double *xintv, int *max_its, double *tol, 
-                                 MPI_Fint *Fcomm, uintptr_t *polf90) {
+void PEVSL_FORT(pevsl_cheblannr)(uintptr_t *pevslf90, double *xintv, int *max_its, double *tol, 
+                                 uintptr_t *polf90) {
   int N, n, nfirst, nev2, ierr;
   double *lam, *res;
-  pevsl_Parvec *Y;
+  pevsl_Parvecs *Y;
   FILE *fstats = stdout;
   pevsl_Parvec vinit;
+  
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
  
-  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
-  N = pevsl_data.N;
-  n = pevsl_data.n;
-  nfirst = pevsl_data.nfirst;
+  N = pevsl->N;
+  n = pevsl->n;
+  nfirst = pevsl->nfirst;
   /*-------------------- zero out stats */
-  pEVSL_StatsReset();
+  pEVSL_StatsReset(pevsl);
   /*------------------- Create parallel vector: random initial guess */
-  pEVSL_ParvecCreate(N, n, nfirst, comm, &vinit);
+  pEVSL_ParvecCreate(N, n, nfirst, pevsl->comm, &vinit);
   pEVSL_ParvecRand(&vinit);
   /* cast pointer of pol*/
   pevsl_Polparams *pol = (pevsl_Polparams *) (*polf90);
   /* call ChebLanNr */ 
-  ierr = pEVSL_ChebLanNr(xintv, *max_its, *tol, &vinit, pol, &nev2, &lam, 
-                         &Y, &res, comm, fstats);
+  ierr = pEVSL_ChebLanNr(pevsl, xintv, *max_its, *tol, &vinit, pol, &nev2, &lam, &Y, &res, fstats);
 
   if (ierr) {
     printf("ChebLanNr error %d\n", ierr);
   }
+
   pEVSL_ParvecFree(&vinit);
   /*--------------------- print stats */
-  pEVSL_StatsPrint(fstats, comm);
+  pEVSL_StatsPrint(pevsl, fstats);
 
   if (res) {
-    free(res);
+    PEVSL_FREE(res);
   }
   /* save pointers to the global variables */
-  pevsl_nev_computed = nev2;
-  pevsl_n = n;
-  pevsl_eigval_computed = lam;
-  pevsl_eigvec_computed = Y;
+  pevsl->nev_computed = nev2;
+  pevsl->eval_computed = lam;
+  pevsl->evec_computed = Y;
 }
 
 /** @brief Get the number of last computed eigenvalues 
  */
-void PEVSL_FORT(pevsl_get_nev)(int *nev) {
-  *nev = pevsl_nev_computed;
+void PEVSL_FORT(pevsl_get_nev)(uintptr_t *pevslf90, int *nev) {
+  
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
+  *nev = pevsl->nev_computed;
 }
 
 /** @brief copy the computed eigenvalues and vectors
  * @warning: after this call the internal saved results will be freed
+ * @param[in] ld: leading dimension of vec [ld >= pevsl.n]
  */
-void PEVSL_FORT(pevsl_copy_result)(double *val, double *vec) {
+void PEVSL_FORT(pevsl_copy_result)(uintptr_t *pevslf90, double *val, double *vec, int *ld) {
   int i;
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
   /* copy eigenvalues */
-  memcpy(val, pevsl_eigval_computed, pevsl_nev_computed*sizeof(double));
+  memcpy(val, pevsl->eval_computed, pevsl->nev_computed*sizeof(double));
+  
   /* copy eigenvectors */
-  for (i=0; i<pevsl_nev_computed; i++) {
-    memcpy(vec+i*pevsl_n, pevsl_eigvec_computed[i].data, pevsl_n*sizeof(double));
+  for (i=0; i<pevsl->nev_computed; i++) {
+    double *dest = vec + i * (*ld);
+    double *src = pevsl->evec_computed->data + i * pevsl->evec_computed->ld;
+    memcpy(dest, src, pevsl->n*sizeof(double));
   }
-  /* reset global variables */
-  pevsl_nev_computed = 0;
-  pevsl_n = 0;
-  free(pevsl_eigval_computed);
-  pevsl_eigval_computed = NULL;
-  for (i=0; i<pevsl_nev_computed; i++) {
-    pEVSL_ParvecFree(&pevsl_eigvec_computed[i]);
-  }
-  free(pevsl_eigvec_computed);
-  pevsl_eigvec_computed = NULL;
+
+  /* reset pointers */
+  pevsl->nev_computed = 0;
+  PEVSL_FREE(pevsl->eval_computed);
+  pEVSL_ParvecsFree(pevsl->evec_computed);
+  PEVSL_FREE(pevsl->evec_computed);
 }
 
 void PEVSL_FORT(pevsl_setup_chebiter)(double *lmin, double *lmax, int *deg, 
-                                      uintptr_t *parcsrf90, MPI_Fint *Fcomm, 
-                                      uintptr_t *chebf90) {
+                                      uintptr_t *parcsrf90, uintptr_t *chebf90) {
   /* cast pointer of the matrix */
   pevsl_Parcsr *A = (pevsl_Parcsr *) (*parcsrf90);
-  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
-  Chebiter_Data *cheb;
-  PEVSL_MALLOC(cheb, 1, Chebiter_Data);
-  pEVSL_ChebIterSetup(*lmin, *lmax, *deg, A, comm, cheb);
+  void *cheb;
+  pEVSL_ChebIterSetup(*lmin, *lmax, *deg, A, &cheb);
   
   *chebf90 = (uintptr_t) cheb;
 }
 
 /** @brief Fortran interface for ChebIterSol */
 void PEVSL_FORT(pevsl_chebiter)(int *type, double *b, double *x, uintptr_t *chebf90) {
+  
   /* cast pointer */
-  Chebiter_Data *cheb = (Chebiter_Data *) (*chebf90);
+  void *cheb = (void *) (*chebf90);
+  
   if (*type == 1) {
     pEVSL_ChebIterSolv1(b, x, cheb);
   } else {
@@ -339,20 +349,63 @@ void PEVSL_FORT(pevsl_chebiter)(int *type, double *b, double *x, uintptr_t *cheb
 
 /** @brief Fortran interface for ChebIterFree */
 void PEVSL_FORT(pevsl_free_chebiterb)(uintptr_t *chebf90) {
+
   /* cast pointer */
-  Chebiter_Data *cheb = (Chebiter_Data *) (*chebf90);
+  void *cheb = (void *) (*chebf90);
+  
   pEVSL_ChebIterFree(cheb);
 }
 
 
 /** @brief Fortran interface for SetBsol with ChebIterSol */
-void PEVSL_FORT(pevsl_setbsol_chebiter)(int *type, void *data) {
+void PEVSL_FORT(pevsl_setbsol_chebiter)(uintptr_t *pevslf90, int *type, void *data) {
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
   if (*type == 1) {
-    pEVSL_SetBSol(pEVSL_ChebIterSolv1, data);
+    pEVSL_SetBSol(pevsl, pEVSL_ChebIterSolv1, data);
   } else {
-    pEVSL_SetBSol(pEVSL_ChebIterSolv2, data);
+    pEVSL_SetBSol(pevsl, pEVSL_ChebIterSolv2, data);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #if 0
 void PEVSL_FORT(pevsl_testchebiterb)(uintptr_t *chebf90, MPI_Fint *Fcomm) {
@@ -392,5 +445,42 @@ void PEVSL_FORT(pevsl_testchebiterb)(uintptr_t *chebf90, MPI_Fint *Fcomm) {
   pEVSL_ParvecNrm2(&x, &err_x);
 
   printf("||res|| %e, ||err|| %e\n", err_r, err_x); 
+}
+
+void PEVSL_FORT(pevsl_parveccreate)(int *N, int *n, MPI_Fint *Fcomm, uintptr_t *xf90) {
+  pevsl_Parvec *x;
+  MPI_Comm comm = MPI_Comm_f2c(*Fcomm);
+  PEVSL_MALLOC(x, 1, pevsl_Parvec);
+  pEVSL_ParvecCreate(*N, *n, 0, comm, x);
+  
+  *xf90 = (uintptr_t) x;
+}
+
+void PEVSL_FORT(pevsl_parvecsetvals)(uintptr_t *xf90, double *vals) {
+  int i, n;
+  pevsl_Parvec *x = (pevsl_Parvec *) xf90;
+  n = x->n_local;
+  for (i=0; i<n; i++) {
+    x->data[i] = vals[i];
+  }
+}
+
+void PEVSL_FORT(pevsl_parvecgetvals)(uintptr_t *xf90, double *vals) {
+  int i, n;
+  pevsl_Parvec *x = (pevsl_Parvec *) xf90;
+  n = x->n_local;
+  for (i=0; i<n; i++) {
+    vals[i] = x->data[i];
+  }
+}
+
+void PEVSL_FORT(pevsl_parvecfree)(uintptr_t *xf90) {
+  pevsl_Parvec *x = (pevsl_Parvec *) xf90;
+  pEVSL_ParvecFree(x);
+  PEVSL_FREE(x);
+}
+
+void PEVSL_FORT(pevsl_amv)(double *x, double *y) {
+  pevsl_data.Amv->func(x, y, pevsl_data.Amv->data);
 }
 #endif

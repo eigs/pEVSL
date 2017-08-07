@@ -43,6 +43,8 @@ int main(int argc, char *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   /*-------------------- matrix A: parallel csr format */    
   pevsl_Parcsr A;
+  /*-------------------- instance of pEVSL */
+  pevsl_Data *pevsl;
   /*-------------------- default values */
   nx = 16;
   ny = 16;
@@ -98,10 +100,11 @@ int main(int argc, char *argv[]) {
   // [Important]: the last arg is the MPI_Comm that this matrix will reside on
   // so A is defined on each group
   ParcsrLaplace(&A, nx, ny, nz, NULL, comm.comm_group);
-  /*-------------------- start pEVSL */
-  pEVSL_Start(argc, argv);
+  /*-------------------- start pEVSL 
+   * Create an instance of pEVSL on the GROUP communicator */
+  pEVSL_Start(comm.comm_group, &pevsl);
   /*-------------------- set matrix A */
-  pEVSL_SetAParcsr(&A);
+  pEVSL_SetAParcsr(pevsl, &A);
   /*-------------------- call DOS */
   mu = (double *) malloc((Mdeg+1)*sizeof(double));
   sli = (double *) malloc((nslices+1)*sizeof(double));
@@ -110,12 +113,6 @@ int main(int argc, char *argv[]) {
   /*------------------- Create parallel vector: random initial guess */
   pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, comm.comm_group, &vinit);
   pEVSL_ParvecRand(&vinit);
-
-  //double ll, mm;
-  //pEVSL_LanTrbounds(50, 200, 1e-10, &vinit, 1, &ll, &mm, comm.comm_group, NULL);
-  //printf("lmin = %.15e, lmax = %.15e\n", ll, mm);
-  //exit(0);
-
   /*------------------- For each slice call ChebLanr */
   for (sl=comm.group_id; sl<nslices; sl+=comm.ngroups) {
     int nev2, *ind, nev_ex;
@@ -147,8 +144,7 @@ int main(int argc, char *argv[]) {
       fprintf(fstats, " polynomial deg %d, bar %e gam %e\n", pol.deg, pol.bar, pol.gam);
     }
     //-------------------- then call ChenLanNr    
-    ierr = pEVSL_ChebLanNr(xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, 
-                           comm.comm_group, fstats);
+    ierr = pEVSL_ChebLanNr(pevsl, xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, fstats);
     if (ierr) {
       printf("ChebLanNr error %d\n", ierr);
       return 1;
@@ -212,7 +208,7 @@ int main(int argc, char *argv[]) {
 
   CommInfoFree(&comm);
 
-  pEVSL_Finish();
+  pEVSL_Finish(pevsl);
 
   MPI_Finalize();
 

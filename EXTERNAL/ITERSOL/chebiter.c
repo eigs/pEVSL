@@ -1,20 +1,63 @@
 #include "pevsl_int.h"
+#include "pevsl_itsol.h"
 
-//#define SAVE_CONV_HIST
+/*!
+ * if want to save convergence history in Cheb iters
+ */ 
+#define SAVE_CONV_HIST 0
 
-/** @brief Solver function to setup Chebyshev iterations for a matrix A
+/*!
+ * @brief data needed for Chebyshev iterations
+ *
+ */
+typedef struct _Chebiter_Data {
+  /* eigenvalue bounds of the matrix */
+  double lb, ub;
+  /* polynomial degree */
+  int deg;
+  /* global/local sizes and nfirst */
+  int N, n, nfirst;
+  /* matvec function and data */
+  pevsl_Matvec *mv;
+  /* work space */
+  pevsl_Parvec *w, *r, *p;
+  /* results */
+#if SAVE_CONV_HIST
+  double* res;
+#endif
+  /* communicator */
+  MPI_Comm comm;
+} Chebiter_Data;
+
+/** @brief Return the residuals in Chebyshev iterations
+ *
+ * */
+double* pEVSL_ChebIterGetRes(void *data) {
+#if SAVE_CONV_HIST
+  Chebiter_Data *cheb = (Chebiter_Data *) data;
+  return (cheb->res);
+#else
+  return NULL;
+#endif
+}
+
+/** @brief Setup Chebyshev iterations for a Parcsr matrix A for
+ *         solving linear systems
  *
  * */
 int pEVSL_ChebIterSetup(double lmin, double lmax, int deg, pevsl_Parcsr *A, 
-                        MPI_Comm comm, Chebiter_Data *cheb) {
+                        void **data) {
+  Chebiter_Data *cheb;
+  PEVSL_MALLOC(cheb, 1, Chebiter_Data);
   pevsl_Parvec *w, *r, *p;
   PEVSL_MALLOC(w, 1, pevsl_Parvec);
   PEVSL_MALLOC(r, 1, pevsl_Parvec);
   PEVSL_MALLOC(p, 1, pevsl_Parvec);
-  pEVSL_ParvecCreate(A->ncol_global, A->ncol_local, A->first_col, comm, w);
+  pEVSL_ParvecCreate(A->ncol_global, A->ncol_local, A->first_col, A->comm, w);
   pEVSL_ParvecDupl(w, r);
   pEVSL_ParvecDupl(w, p);
-  /* save the results */
+
+  /* save the solver settings */
   deg = PEVSL_MAX(deg, 0);
   cheb->lb  = lmin;
   cheb->ub  = lmax;
@@ -30,26 +73,25 @@ int pEVSL_ChebIterSetup(double lmin, double lmax, int deg, pevsl_Parcsr *A,
   cheb->r = r;
   cheb->p = p;
 
-#ifdef SAVE_CONV_HIST
+#if SAVE_CONV_HIST
   PEVSL_CALLOC(cheb->res, deg+1, double);
-#else
-  cheb->res = NULL;
 #endif
-
-  cheb->comm = comm;
+  cheb->comm = A->comm;
+  *data = (void *) cheb;
 
   return 0;
 }
 
-/** @brief Solver function with Chebyshev iterations
- *
- * */
+/** @brief Solve function for Chebyshev iterations [Version 1]
+ * ``Templates for the Solution of Algebraic Eigenvalue Problems: 
+     a Practical Guide''
+ */
 void pEVSL_ChebIterSolv1(double *db, double *dx, void *data) {
   int i;
   /* Cheb sol data */
   Chebiter_Data *Chebdata = (Chebiter_Data *) data;
   double d, c, alp=0.0, bet, t;
-#ifdef SAVE_CONV_HIST
+#if SAVE_CONV_HIST
   double norm_r0, norm_r;
   double *res = Chebdata->res;
 #endif
@@ -75,7 +117,7 @@ void pEVSL_ChebIterSolv1(double *db, double *dx, void *data) {
   pEVSL_ParvecCreateShell(N, n, nfirst, comm, &b, db);
   pEVSL_ParvecCreateShell(N, n, nfirst, comm, &x, dx);
   /* residual norm 0 */
-#ifdef SAVE_CONV_HIST
+#if SAVE_CONV_HIST
   pEVSL_ParvecNrm2(&b, &norm_r0);
   res[0] = norm_r0;
 #endif
@@ -95,7 +137,7 @@ void pEVSL_ChebIterSolv1(double *db, double *dx, void *data) {
   pEVSL_ParvecAxpy(-1.0, w, r);
   /* main iteration */
   for (i=1; i<deg; i++) {
-#ifdef SAVE_CONV_HIST
+#if SAVE_CONV_HIST
     pEVSL_ParvecNrm2(r, &norm_r);
     res[i] = norm_r;
 #endif
@@ -114,21 +156,23 @@ void pEVSL_ChebIterSolv1(double *db, double *dx, void *data) {
     pEVSL_ParvecAxpy(-1.0, w, r);
   }
 
-#ifdef SAVE_CONV_HIST
+#if SAVE_CONV_HIST
   pEVSL_ParvecNrm2(r, &norm_r);
   res[deg] = norm_r;
 #endif
 }
 
-/** @brief Solver function of B with Chebyshev iterations
- * ``Iterative methods for sparse linear systems (2nd edition)'', Page 399
- * */
+
+/** @brief Solve function for Chebyshev iterations [Version 2]
+ * Y. Saad, ``Iterative methods for sparse linear systems (2nd edition)'', 
+ * Page 399
+ */
 void pEVSL_ChebIterSolv2(double *db, double *dx, void *data) {
   int i;
   /* Cheb sol data */
   Chebiter_Data *Chebdata = (Chebiter_Data *) data;
   double theta, delta, alpha, beta, sigma, rho, rho1;
-#ifdef SAVE_CONV_HIST
+#if SAVE_CONV_HIST
   double norm_r0, norm_r;
   double *res = Chebdata->res;
 #endif
@@ -165,7 +209,7 @@ void pEVSL_ChebIterSolv2(double *db, double *dx, void *data) {
   pEVSL_ParvecCopy(r, d);
   pEVSL_ParvecScal(d, 1.0/theta);
   /* main iterations */
-#ifdef SAVE_CONV_HIST
+#if SAVE_CONV_HIST
   pEVSL_ParvecNrm2(r, &norm_r0);
   res[0] = norm_r0;
 #endif
@@ -183,25 +227,25 @@ void pEVSL_ChebIterSolv2(double *db, double *dx, void *data) {
     pEVSL_ParvecAxpy(2.0*rho1/delta, r, d);
     /* update rho */
     rho = rho1;
-#ifdef SAVE_CONV_HIST
+#if SAVE_CONV_HIST
     pEVSL_ParvecNrm2(r, &norm_r);
     res[i+1] = norm_r;
 #endif
   }
 }
 
-void pEVSL_ChebIterFree(Chebiter_Data *data) {
+void pEVSL_ChebIterFree(void *vdata) {
+  Chebiter_Data *data = (Chebiter_Data *) vdata;
   pEVSL_ParvecFree(data->w);
   pEVSL_ParvecFree(data->r);
   pEVSL_ParvecFree(data->p);
   PEVSL_FREE(data->w);
   PEVSL_FREE(data->r);
   PEVSL_FREE(data->p);
-  if (data->mv) {
-    PEVSL_FREE(data->mv);
-  }
-  if (data->res) {
-    PEVSL_FREE(data->res);
-  }
+  PEVSL_FREE(data->mv);
+#if SAVE_CONV_HIST
+  PEVSL_FREE(data->res);
+#endif
+  PEVSL_FREE(vdata);
 }
 

@@ -1,5 +1,12 @@
+INTEL = 1
+
 # Compilers
+ifeq ($(INTEL), 1)
+MKLROOT = /opt/intel/mkl
+CC = mpiicc
+else
 CC = mpicc
+endif
 LINK = $(CC)
 
 # Common flags
@@ -14,7 +21,10 @@ OBJ_TIME = timing.o
 AR = ar rv
 RANLIB = ranlib
 
-LIB0 = -lgfortran -lrt -lm
-#LIBLAPACK = -llapack -lblas
+ifeq ($(INTEL), 1)
+FLAGS += -DUSE_MKL
+LIBLAPACK =  -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_intel_thread.a ${MKLROOT}/lib/intel64/libmkl_core.a ${MKLROOT}/lib/intel64/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group -liomp5 -lpthread -lm -ldl
+else
 LIBLAPACK = /home/li50/workspace/OpenBLAS/libopenblas.a -lpthread
-
+LIB0 = -lgfortran -lm
+endif

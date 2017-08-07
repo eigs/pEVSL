@@ -50,13 +50,15 @@
  * @warning memory allocation for Wo/lamo/reso within this function 
  *
  * ------------------------------------------------------------ */
-int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
-                    pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvecs **Wo, 
-                    double **reso, MPI_Comm comm, FILE *fstats) {
+int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol, 
+                    pevsl_Parvec *vinit, pevsl_Polparams *pol, int *nevOut, 
+                    double **lamo, pevsl_Parvecs **Wo, 
+                    double **reso, FILE *fstats) {
+
   //-------------------- to report timings/
   double tall, tm1 = 0.0, tt;
   tall = pEVSL_Wtime();
-  const int ifGenEv = pevsl_data.ifGenEv;
+  const int ifGenEv = pevsl->ifGenEv;
   double tr0, tr1;
   double *y, flami; 
   int i, k, kdim=0, rank;
@@ -66,6 +68,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     do_print = 0;
   }
   /* MPI communicator */
+  MPI_Comm comm = pevsl->comm;
   /*
   MPI_Comm_compare(comm, vinit->comm, &comp);
   if (comp != MPI_IDENT) {
@@ -80,7 +83,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   int cycle = 20; 
   /* size of the matrix. N: global size */
   int N;
-  N = pevsl_data.N;
+  N = pevsl->N;
   /* max num of its */
   maxit = PEVSL_MIN(N, maxit);
   /*-------------------- polynomial filter  approximates the delta
@@ -165,7 +168,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
 #if FILTER_VINIT
   /*-------------------- compute w = p[(A-cc)/dd] * v */
   /*-------------------- Filter the initial vector */
-  pEVSL_ChebAv(pol, vinit, v, wk);
+  pEVSL_ChebAv(pevsl, pol, vinit, v, wk);
   pEVSL_ParvecDupl(vinit, vrand);
 #else
   /*-------------------- copy initial vector to V(:,1) */
@@ -177,7 +180,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     /* z references the 1st columns of Z */
     pEVSL_ParvecsGetParvecShell(Z, 0, z);
     /* B norm */
-    pEVSL_MatvecB(v, z);
+    pEVSL_MatvecB(pevsl, v, z);
     pEVSL_ParvecDot(v, z, &t);
     t = 1.0 / sqrt(t);
     pEVSL_ParvecScal(z, t);
@@ -212,7 +215,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     pEVSL_ParvecsGetParvecShell(Z, k+1, znew);
     /*-------------------- compute w = p[(A-cc)/dd] * v */
     /*-------------------- NOTE: z is used!!! [TODO: FIX ME] */
-    pEVSL_ChebAv(pol, z, znew, wk);
+    pEVSL_ChebAv(pevsl, pol, z, znew, wk);
     /*------------------ znew = znew - beta*zold */
     if (k > 0) {
       pEVSL_ParvecAxpy(-beta, zold, znew);
@@ -229,7 +232,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
       /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
       CGS_DGKS2(k+1, NGS_MAX, Z, V, znew, warr);
       /* vnew = B \ znew */
-      pEVSL_SolveB(znew, vnew);
+      pEVSL_SolveB(pevsl, znew, vnew);
       /*-------------------- beta = (vnew, znew)^{1/2} */
       pEVSL_ParvecDot(vnew, znew, &beta);
       beta = sqrt(beta);
@@ -249,14 +252,14 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
       /*------------------ generate a new init vector */
       pEVSL_ParvecRand(vrand);
       /*------------------  Filter the initial vector*/
-      pEVSL_ChebAv(pol, vrand, vnew, wk);
+      pEVSL_ChebAv(pevsl, pol, vrand, vnew, wk);
 #else
       pEVSL_ParvecRand(vnew);
 #endif
       if (ifGenEv) {
         /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
         CGS_DGKS2(k+1, NGS_MAX, V, Z, vnew, warr);
-        pEVSL_MatvecB(vnew, znew);
+        pEVSL_MatvecB(pevsl, vnew, znew);
         pEVSL_ParvecDot(vnew, znew, &beta);
         beta = sqrt(beta);
         /*-------------------- vnew = vnew / beta */
@@ -362,7 +365,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
     /*-------------------- normalize u */
     if (ifGenEv) {
       /* B-norm, w2 = B*u */
-      pEVSL_MatvecB(u, w2);
+      pEVSL_MatvecB(pevsl, u, w2);
       pEVSL_ParvecDot(u, w2, &t);
       t = sqrt(t); /* should be one */
     } else {
@@ -382,7 +385,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
       pEVSL_ParvecScal(w2, t);
     }
     /*-------------------- w = A*u */
-    pEVSL_MatvecA(u, wk);
+    pEVSL_MatvecA(pevsl, u, wk);
     /*-------------------- Ritz val: t = (u'*w)/(u'*u)
                                      t = (u'*w)/(u'*B*u) */
     pEVSL_ParvecDot(wk, u, &t);
@@ -435,7 +438,7 @@ int pEVSL_ChebLanNr(double *intv, int maxit, double tol, pevsl_Parvec *vinit,
   PEVSL_FREE(warr);
   /*-------------------- record stats */
   tall = pEVSL_Wtime() - tall;
-  pevsl_stat.t_solver += tall;
+  pevsl->stats->t_solver += tall;
 
   return 0;
 }
