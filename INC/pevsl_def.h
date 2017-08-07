@@ -68,7 +68,13 @@
     base = NULL; \
 }
 
-
+/*! These two MACROS are for running some code sequentially within an MPI_COMM
+    PEVSL_SEQ_BEGIN(MPI_COMM);
+    ...
+    some code
+    ...
+    PEVSL_SEQ_END(MPI_COMM);
+*/    
 #define PEVSL_SEQ_BEGIN(MPI_COMM) { \
     int size, rank, __i; \
     MPI_Barrier(MPI_COMM); \
