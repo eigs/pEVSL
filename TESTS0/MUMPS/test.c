@@ -42,12 +42,13 @@ int main(int argc, char *argv[]) {
    *                     user input from command line */
   flg = findarg("help", NA, NULL, argc, argv);
   if (flg && !rank) {
-    printf("Usage: ./test -nx [int] -ny [int] -nz [int]\n");
+    printf("Usage: ./test -nx [int] -ny [int] -nz [int] -ngroups [int]\n");
     return 0;
   }
   flg = findarg("nx", INT, &nx, argc, argv);
   flg = findarg("ny", INT, &ny, argc, argv);
   flg = findarg("nz", INT, &nz, argc, argv);
+  flg = findarg("ngroups", INT, &ngroups, argc, argv);
   n = nx * ny * nz;
   /*-------------------- Create communicators for groups, group leaders */
   CommInfoCreate(&comm, MPI_COMM_WORLD, ngroups);

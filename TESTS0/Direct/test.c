@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
    *                     user input from command line */
   flg = findarg("help", NA, NULL, argc, argv);
   if (flg && !rank) {
-    printf("Usage: ./test -nx [int] -ny [int] -nz [int] -nslices [int] -a [double] -b [double]\n");
+    printf("Usage: ./test -nx [int] -ny [int] -nz [int] -nslices [int] -ngroups [int] -a [double] -b [double]\n");
     return 0;
   }
   flg = findarg("nx", INT, &nx, argc, argv);

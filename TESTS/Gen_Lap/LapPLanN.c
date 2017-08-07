@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
    *                     user input from command line */
   flg = findarg("help", NA, NULL, argc, argv);
   if (flg && !rank) {
-    printf("Usage: ./test -nx [int] -ny [int] -nz [int] -nslices [int] -a [double] -b [double]\n");
+    printf("Usage: ./test -nx [int] -ny [int] -nz [int] -nslices [int] -ngroups [int] -a [double] -b [double]\n");
     return 0;
   }
   flg = findarg("nx", INT, &nx, argc, argv);
@@ -70,6 +70,7 @@ int main(int argc, char *argv[]) {
   flg = findarg("a", DOUBLE, &a, argc, argv);
   flg = findarg("b", DOUBLE, &b, argc, argv);
   flg = findarg("nslices", INT, &nslices, argc, argv);
+  flg = findarg("ngroups", INT, &ngroups, argc, argv);
   /*-------------------- matrix size */
   n = nx * ny * nz;
   /*-------------------- stopping tol */
