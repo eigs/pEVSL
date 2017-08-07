@@ -1,0 +1,9 @@
+TESTS0 contains test programs for the functions in the EXTERNAL directory
+
+Chebiter: Chebyshev iterations for solving linear systems
+
+Direct: parallel direct solver used in pEVSL
+
+MUMPS: the MUMPS solver
+
+Matvec: Matrix-vector product with the parallel CSR (Parcsr) type
