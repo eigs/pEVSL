@@ -192,7 +192,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
         pEVSL_ParvecRand(vnew);
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-          CGS_DGKS2(k, NGS_MAX, V, Z, vnew, warr);          
+          CGS_DGKS2(pevsl, k, NGS_MAX, V, Z, vnew, warr);          
           pEVSL_MatvecB(pevsl, vnew, znew);
           pEVSL_ParvecDot(vnew, znew, &beta);
           beta = sqrt(beta);         
@@ -203,7 +203,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
         } else {
           /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
           /*   beta = norm(w) */
-          CGS_DGKS(k, NGS_MAX, V, vnew, &beta, warr);
+          CGS_DGKS(pevsl, k, NGS_MAX, V, vnew, &beta, warr);
           double ibeta = 1.0 / beta;
           pEVSL_ParvecScal(vnew, ibeta);
           beta = 0.0;
@@ -258,7 +258,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
       /*-------------------- FULL reortho to all previous Lan vectors */
       if (ifGenEv) {
         /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
-        CGS_DGKS2(k, NGS_MAX, Z, V, znew, warr);
+        CGS_DGKS2(pevsl, k, NGS_MAX, Z, V, znew, warr);
         /* vnew = B \ znew */
         pEVSL_SolveB(pevsl, znew, vnew);
         /*-------------------- beta = (vnew, znew)^{1/2} */
@@ -267,7 +267,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
       } else {
         /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
         /*   beta = norm(w) */
-        CGS_DGKS(k, NGS_MAX, V, vnew, &beta, warr);
+        CGS_DGKS(pevsl, k, NGS_MAX, V, vnew, &beta, warr);
       }
       wn += 2.0 * beta;
       nwn += 3;
@@ -282,7 +282,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
         pEVSL_ParvecRand(vnew);
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-          CGS_DGKS2(k, NGS_MAX, V, Z, vnew, warr);          
+          CGS_DGKS2(pevsl, k, NGS_MAX, V, Z, vnew, warr);          
           pEVSL_MatvecB(pevsl, vnew, znew);
           pEVSL_ParvecDot(vnew, znew, &beta);
           beta = sqrt(beta); 
@@ -293,7 +293,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
         } else {
           /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
           /*   beta = norm(w) */
-          CGS_DGKS(k, NGS_MAX, V, vnew, &beta, warr);          
+          CGS_DGKS(pevsl, k, NGS_MAX, V, vnew, &beta, warr);          
           double ibeta = 1.0 / beta;
           pEVSL_ParvecScal(vnew, ibeta);
           beta = 0.0;
@@ -314,7 +314,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
 
     /*-------------------- solve eigen-problem for T(1:k,1:k)
                            vals in Rval, vecs in EvecT */
-    SymEigenSolver(k, T, lanm1, EvecT, lanm1, Rval);
+    SymEigenSolver(pevsl, k, T, lanm1, EvecT, lanm1, Rval);
 
     /*-------------------- Rval is in ascending order */
     /*-------------------- Rval[0] is smallest, Rval[k-1] is largest */

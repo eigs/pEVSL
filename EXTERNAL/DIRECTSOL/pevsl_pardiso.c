@@ -28,6 +28,7 @@ typedef struct _BSolDataDirect {
  * @param B      parcsr matrix B
  * */
 int SetupBSolDirect(pevsl_Parcsr *B, void **data) {
+
   double tms = pEVSL_Wtime();
 
   int i, rank, size;
@@ -145,6 +146,7 @@ int SetupBSolDirect(pevsl_Parcsr *B, void **data) {
  *
  * */
 void BSolDirect(double *b, double *x, void *data) {
+
   BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
 
   MKL_INT maxfct = 1;
@@ -176,9 +178,46 @@ void BSolDirect(double *b, double *x, void *data) {
   }
 }
 
+/** @brief Solver function of B with MUMPS
+ *
+ * */
+void LTSolDirect(double *b, double *x, void *data) {
+ 
+  BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
+
+  MKL_INT maxfct = 1;
+  MKL_INT mnum = 1;
+  MKL_INT mtype = 2;       /* Real SPD matrix */
+  MKL_INT msglvl = 0;
+  MKL_INT error = 0;
+  /* Integer dummy. */
+  MKL_INT idum;
+  /* Number of right hand sides. */
+  MKL_INT nrhs = 1;
+ 
+  MKL_INT n = Bsol_data->n;
+  pevsl_Csr *U = &Bsol_data->U;
+  MKL_INT *ia = U->ia;
+  MKL_INT *ja = U->ja;
+  double  *a  = U->a;
+  MPI_Fint commf = Bsol_data->commf;
+
+  /* --------------------------------------------- */
+  /* .. Back substitution and iterative refinement.*/
+  /* --------------------------------------------- */
+  MKL_INT phase = 333;
+  cluster_sparse_solver(Bsol_data->pt, &maxfct, &mnum, &mtype, &phase,
+                        &n, a, ia, ja, &idum, &nrhs, Bsol_data->iparm, 
+                        &msglvl, b, x, &commf, &error);
+  if ( error != 0 ) {
+    PEVSL_ABORT(MPI_COMM_WORLD, error, "\nERROR during solution\n");
+  }
+}
+
 /** @brief Free the factorization of B with Pardiso
  * */
 void FreeBSolDirectData(void *data) {
+
   BSolDataDirect *Bsol_data = (BSolDataDirect *) data;
 
   MKL_INT maxfct = 1;

@@ -101,7 +101,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
   double bb = intv[1];
   int deg = pol->deg;
   if (do_print) {
-    pEVSL_fprintf0(rank, fstats, "intv:[%e, %e, %e, %e]\n", intv[0], intv[1], intv[2], intv[3]);
+    pEVSL_fprintf0(rank, fstats, " intv:[%e, %e, %e, %e]\n", intv[0], intv[1], intv[2], intv[3]);
     pEVSL_fprintf0(rank, fstats, " ** Cheb Poly of deg = %d, gam = %.15e, bar: %.15e\n", 
                    deg, gamB, bar);
   }
@@ -230,7 +230,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
     /*-------------------- FULL reortho to all previous Lan vectors */
     if (ifGenEv) {
       /* znew = znew - Z(:,1:k)*V(:,1:k)'*znew */
-      CGS_DGKS2(k+1, NGS_MAX, Z, V, znew, warr);
+      CGS_DGKS2(pevsl, k+1, NGS_MAX, Z, V, znew, warr);
       /* vnew = B \ znew */
       pEVSL_SolveB(pevsl, znew, vnew);
       /*-------------------- beta = (vnew, znew)^{1/2} */
@@ -239,7 +239,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
     } else {
       /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
       /* beta = norm(vnew) */
-      CGS_DGKS(k+1, NGS_MAX, V, vnew, &beta, warr);
+      CGS_DGKS(pevsl, k+1, NGS_MAX, V, vnew, &beta, warr);
     }
     wn += 2.0 * beta;
     nwn += 3;
@@ -258,7 +258,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
 #endif
       if (ifGenEv) {
         /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-        CGS_DGKS2(k+1, NGS_MAX, V, Z, vnew, warr);
+        CGS_DGKS2(pevsl, k+1, NGS_MAX, V, Z, vnew, warr);
         pEVSL_MatvecB(pevsl, vnew, znew);
         pEVSL_ParvecDot(vnew, znew, &beta);
         beta = sqrt(beta);
@@ -271,7 +271,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
       } else {
         /* vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
         /* beta = norm(vnew) */
-        CGS_DGKS(k+1, NGS_MAX, V, vnew, &beta, warr);
+        CGS_DGKS(pevsl, k+1, NGS_MAX, V, vnew, &beta, warr);
         /*-------------------- vnew = vnew / beta */
         t = 1.0 / beta;
         pEVSL_ParvecScal(vnew, t);
@@ -297,12 +297,12 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
     kdim = k+1;
 #if 1
     /*-------------------- THIS uses dsetv, do not need eig vector */    
-    SymmTridEig(EvalT, NULL, kdim, dT, eT);
+    SymmTridEig(pevsl, EvalT, NULL, kdim, dT, eT);
     count = kdim;
 #else
     /*-------------------- THIS uses dstemr */
     double vl = bar - DBL_EPSILON, vu = 2.0;  /* needed by SymmTridEigS */
-    SymmTridEigS(EvalT, EvecT, kdim, vl, vu, &count, dT, eT);
+    SymmTridEigS(pevsl, EvalT, EvecT, kdim, vl, vu, &count, dT, eT);
 #endif
     /*-------------------- restricted trace: used for convergence test */
     tr1 = 0;  
@@ -320,7 +320,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
     }
 
     if (do_print) {
-      pEVSL_fprintf0(rank, fstats, "k %4d:   nconv %4d  tr1 %21.15e\n",
+      pEVSL_fprintf0(rank, fstats, "  k %4d:   nconv %4d  tr1 %21.15e\n",
                      k, nconv,tr1);
     }
     /* -------------------- simple test because all eigenvalues
@@ -338,7 +338,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
   /*-------------------- compute eig vals and vector */
   size_t kdim_l = kdim; /* just in case if kdim is > 65K */
   PEVSL_MALLOC(EvecT, kdim_l*kdim_l, double); // Eigen vectors of T
-  SymmTridEig(EvalT, EvecT, kdim, dT, eT);
+  SymmTridEig(pevsl, EvalT, EvecT, kdim, dT, eT);
   
   tt = pEVSL_Wtime();
   /*-------------------- done == compute Ritz vectors */
@@ -436,9 +436,12 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
     PEVSL_FREE(Z);
   }
   PEVSL_FREE(warr);
+
   /*-------------------- record stats */
   tall = pEVSL_Wtime() - tall;
-  pevsl->stats->t_solver += tall;
+
+  pevsl->stats->t_iter = tall;
+  pevsl->stats->t_ritz = tm1;
 
   return 0;
 }

@@ -20,15 +20,12 @@ int pEVSL_Start(MPI_Comm comm, pevsl_Data **data) {
   pevsl_data->Bsol    = NULL;
   pevsl_data->LTsol   = NULL;
 
-#ifdef PEVSL_DEBUG
-  srand(0);
-#else
-  /* in the non-debug mode, use MPI_COMM_WORLD rank as rand seed
-   * for parallel random vectors */
+  /* Use MPI_COMM_WORLD rank as rand seed,
+   * so each proc will have a different seed,
+   * cf. parvec.c: pEVSL_ParvecRand */
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   srand(rank);
-#endif
 
   /* rest stats */
   PEVSL_MALLOC(pevsl_data->stats, 1, pevsl_Stat);
@@ -165,6 +162,18 @@ int pEVSL_SetBSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
   return 0;
 }
 
+/**
+ * @brief Set the solve routine and the associated data for LT
+ * */
+int pEVSL_SetLTSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
+  if (!pevsl_data->LTsol) {
+    PEVSL_CALLOC(pevsl_data->LTsol, 1, pevsl_Ltsol);
+  }
+  pevsl_data->LTsol->func = func;
+  pevsl_data->LTsol->data = data;
+
+  return 0;
+}
 
 /**
  * @brief Set the problem to standard eigenvalue problem

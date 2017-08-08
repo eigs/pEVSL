@@ -21,8 +21,11 @@
  *  is float)
  * --------------------------------------------------------------------- */
 
-int SymmTridEig(double *eigVal, double *eigVec, int n, 
+int SymmTridEig(pevsl_Data *pevsl,
+                double *eigVal, double *eigVec, int n, 
                 const double *diag, const double *sdiag) {
+
+  double tms = pEVSL_Wtime();
   // compute eigenvalues and eigenvectors or eigvalues only
   char jobz = eigVec ? 'V' : 'N'; 
   int nn = n;
@@ -49,6 +52,10 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
   if (info) {
     printf("DSTEV ERROR: INFO %d\n", info);
   }
+    
+  double tme = pEVSL_Wtime();
+  pevsl->stats->t_eig += tme - tms;
+
   // return info
   return info;
 }
@@ -72,8 +79,11 @@ int SymmTridEig(double *eigVal, double *eigVec, int n,
  *  routine  computes selected  eigenvalues/vectors as  specified by  a
  *  range of values. This is a wrapper to the LAPACK routine DSTEMR().
  * ----------------------------------------------------------------------- */
-int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
+int SymmTridEigS(pevsl_Data *pevsl,
+                 double *eigVal, double *eigVec, int n, double vl, double vu,
                  int *nevO, const double *diag, const double *sdiag) {
+  
+  double tms = pEVSL_Wtime();
   char jobz = 'V';  // compute eigenvalues and eigenvectors
   char range = 'V'; // compute eigenvalues in an interval
 
@@ -123,7 +133,10 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
   PEVSL_FREE(work);
   PEVSL_FREE(iwork);
   PEVSL_FREE(isuppz);
-  //
+  
+  double tme = pEVSL_Wtime();
+  pevsl->stats->t_eig += tme - tms;
+  
   return info;
 }
 
@@ -131,7 +144,10 @@ int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
 /**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  *     @brief interface to   LAPACK SYMMETRIC EIGEN-SOLVER 
  *- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) {
+void SymEigenSolver(pevsl_Data *pevsl,
+                    int n, double *A, int lda, double *Q, int ldq, double *lam) {
+  
+  double tms = pEVSL_Wtime();
   /* compute eigenvalues/vectors of A that n x n, symmetric
    * eigenvalues saved in lam: the eigenvalues in ascending order
    * eigenvectors saved in Q */
@@ -162,14 +178,22 @@ void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam) 
     exit(0);
   }
   PEVSL_FREE(work);
+  
+  double tme = pEVSL_Wtime();
+  pevsl->stats->t_eig += tme - tms;
 }
 
 
 /**
   * @brief Classical GS reortho with Daniel, Gragg, Kaufman, Stewart test 
  **/
-void CGS_DGKS(int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v, 
+void CGS_DGKS(pevsl_Data *pevsl,
+              int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v, 
               double *nrmv, double *w) {
+
+
+  double tms = pEVSL_Wtime();
+  
   double eta = 1.0 / sqrt(2.0);
   double old_nrm, new_nrm;
   int i;
@@ -189,6 +213,9 @@ void CGS_DGKS(int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v,
   if (nrmv) {
     *nrmv = new_nrm;
   }
+
+  double tme = pEVSL_Wtime();
+  pevsl->stats->t_reorth += tme - tms;
 }
 
 /**
@@ -196,8 +223,12 @@ void CGS_DGKS(int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v,
  * used in generalized ev problems
  * vnew = v - (v, z_j)*v_j, for j=1,2,...
  **/
-void CGS_DGKS2(int k, int i_max, pevsl_Parvecs *V, pevsl_Parvecs *Z, pevsl_Parvec *v,
+void CGS_DGKS2(pevsl_Data *pevsl,
+               int k, int i_max, pevsl_Parvecs *V, pevsl_Parvecs *Z, pevsl_Parvec *v,
                double *w) {
+  
+  double tms = pEVSL_Wtime();
+  
   int i;
   for (i=0; i<i_max; i++) {
     /* w = Z^T * v */
@@ -205,5 +236,8 @@ void CGS_DGKS2(int k, int i_max, pevsl_Parvecs *V, pevsl_Parvecs *Z, pevsl_Parve
     /* v = v - V *w */
     pEVSL_ParvecsGemv(-1.0, V, k, w, 1.0, v);
   }
+
+  double tme = pEVSL_Wtime();
+  pevsl->stats->t_reorth += tme - tms;
 }
 

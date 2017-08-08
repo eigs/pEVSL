@@ -27,20 +27,21 @@ int pEVSL_ChebAv(pevsl_Data *pevsl, pevsl_Polparams *pol, pevsl_Parvec *v, pevsl
 int dampcf(int m, int damping, double *jac);
 
 /* miscla.c */
-int SymmTridEig(double *eigVal, double *eigVec, int n, const double *diag, const double *sdiag);
-int SymmTridEigS(double *eigVal, double *eigVec, int n, double vl, double vu,
-                 int *nevO, const double *diag, const double *sdiag);
-void SymEigenSolver(int n, double *A, int lda, double *Q, int ldq, double *lam);
-void CGS_DGKS(int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v, double *nrmv, double *w);
-void CGS_DGKS2(int k, int i_max, pevsl_Parvecs *V, pevsl_Parvecs *Z, pevsl_Parvec *v,
-               double *w);
+int SymmTridEig(pevsl_Data *pevsl, double *eigVal, double *eigVec, int n, const double *diag, const double *sdiag);
+
+int SymmTridEigS(pevsl_Data *pevsl, double *eigVal, double *eigVec, int n, double vl, double vu, int *nevO, const double *diag, const double *sdiag);
+
+void SymEigenSolver(pevsl_Data *pevsl, int n, double *A, int lda, double *Q, int ldq, double *lam);
+
+void CGS_DGKS(pevsl_Data *pevsl, int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v, double *nrmv, double *w);
+
+void CGS_DGKS2(pevsl_Data *pevsl, int k, int i_max, pevsl_Parvecs *V, pevsl_Parvecs *Z, pevsl_Parvec *v, double *w);
 
 /* parcsrmv.c */
 void pEVSL_ParcsrMatvec0(double *x, double *y, void *data);
 
 /* utils.c */
 int pEVSL_BinarySearchInterval(int *x, int n, int key);
-double pEVSL_Wtime();
 
 /*------------------- inline functions */
 /** 

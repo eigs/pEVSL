@@ -141,6 +141,12 @@ void BSolDirect(double *b, double *x, void *data) {
                MPI_DOUBLE, 0, comm);
 }
 
+/** @brief Solver function of B with MUMPS
+ *
+ * */
+void LTSolDirect(double *b, double *x, void *data) {
+  PEVSL_ABORT(MPI_COMM_WORLD, PEVSL_NOT_IMPLEMENT, "MUMPS LT-SOL NOT IMPLEMENTED!");
+}
 
 /** @brief Free the factorization of B with MUMPS
  *

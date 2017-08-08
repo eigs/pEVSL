@@ -18,13 +18,22 @@
  *                 that must be cut (sliced) into n_int  sub-intervals \n
  *                 [intv[2],intv[3]] is the global interval of eigenvalues 
  *                 it must contain all eigenvalues of A \n
- * @param[out] mu   array of Chebyshev coefficients 
+ * @param[int] ngroups : number of groups
+ * @param[int] groupid : rank of this group
+ * @param[int] gl_comm : group-leader communicator
+ *             pEVSL_Kpmdos can be ran with multiple groups of procs, where in
+ *             each group, there is a pEVSL instance. In this case, provide a
+ *             MPI_Comm of the group-leaders (with group rank 0). Results will
+ *             computed collectively.
+ *             Otherwise, set 
+ *             ngroups = 1, groupid = 0, and gl_comm := MPI_COMM_NULL
+ * @param[out] mu   array of Chebyshev coefficients [of size Mdeg+1]
  * @param[out] ecnt estimated num of eigenvalues in the interval of interest
  *
  *----------------------------------------------------------------------*/
 
 int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *intv,
-                 MPI_Comm gl_comm, double *mu, double *ecnt) {
+                 int ngroups, int groupid, MPI_Comm gl_comm, double *mu, double *ecnt) {
   
   const int ifGenEv = pevsl->ifGenEv;
   /*-------------------- MPI comm of this instance of pEVSL */
@@ -32,6 +41,9 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
   int N = pevsl->N;
   int n = pevsl->n;
   int nfirst = pevsl->nfirst;
+
+  int rank;
+  MPI_Comm_rank(comm, &rank);
 
   /*-------------------- parvec needed */
   pevsl_Parvec parvec[5], *v, *vkm1, *vk, *vkp1, *w = NULL, *tmp;
@@ -50,7 +62,7 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
   }
   
   double *jac, ctr, wid, scal, t, tcnt, beta1, beta2, aa, bb;
-  int k, k1, m, mdegp1, one=1;
+  int k, k1, m, mdegp1, one=1, vec_start, vec_end;
 
   PEVSL_MALLOC(jac, Mdeg+1, double);
   /*-------------------- check if the interval is valid */
@@ -77,8 +89,16 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
   memset(mu, 0, (Mdeg+1)*sizeof(double));
   /*-------------------- tcnt: total count */
   tcnt = 0.0;
-  /*-------------------- for random loop */
-  for (m=0; m<nvec; m++) {
+  /*-------------------- if we have more than one groups, 
+   *                     partition nvecs among groups */
+  if (ngroups > 1) {
+    pEVSL_Part1d(nvec, ngroups, &groupid, &vec_start, &vec_end, 1);
+  } else {
+    vec_start = 0;
+    vec_end = nvec;
+  }
+  /*-------------------- random vectors loop */
+  for (m = vec_start; m < vec_end; m++) {
     if (ifGenEv) {
       /* unit 2-norm v */
       pEVSL_ParvecRand(v);
@@ -118,7 +138,7 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
       pEVSL_ParvecAxpy(-ctr, vk, vkp1);
       pEVSL_ParvecScal(vkp1, scal);
       pEVSL_ParvecAxpy(-1.0, vkm1, vkp1);
-      //-------------------- rotate pointers to exchange vectors
+      /*-------------------- rotate pointers to exchange vectors */
       tmp = vkm1;
       vkm1 = vk;
       vk = vkp1;
@@ -126,19 +146,39 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
       /*-------------------- accumulate dot products for DOS expansion */
       k1 = k+1;
       pEVSL_ParvecDot(vk, v, &t);
-      t *= 2*jac[k1];
+      t *= 2.0 * jac[k1];
       mu[k1] += t;
       /*-------------------- for eig. counts */
       tcnt -= t*(sin(k1*beta2)-sin(k1*beta1))/k1;  
     }
+  } /* the end of random vectors loop */
+
+  /* if we have more than one group */
+  if (ngroups > 1) {
+    double *mu_global, tcnt_global;
+    PEVSL_MALLOC(mu_global, Mdeg+1, double);
+    /* Sum of all partial results: the group leaders first do an All-reduce. 
+       Then, group leaders will do broadcasts
+     */
+    if (rank == 0) {
+      MPI_Allreduce(mu, mu_global, Mdeg+1, MPI_DOUBLE, MPI_SUM, gl_comm);
+      MPI_Allreduce(&tcnt, &tcnt_global, 1, MPI_DOUBLE, MPI_SUM, gl_comm);
+    }
+    MPI_Bcast(mu_global, Mdeg+1, MPI_DOUBLE, 0, comm);
+    MPI_Bcast(&tcnt_global, 1, MPI_DOUBLE, 0, comm);
+
+    tcnt = tcnt_global;
+    memcpy(mu, mu_global, (Mdeg+1)*sizeof(double));
+    PEVSL_FREE(mu_global);
   }
+
   /*-------------------- change of interval + scaling in formula */
   t = 1.0 /(((double)nvec)*PI);
   mdegp1 = Mdeg+1;
   DSCAL(&mdegp1, &t, mu, &one);
   tcnt *= t * ((double) N);
   *ecnt = tcnt;
-  /*-------------------- dealloc memory  */
+  /*-------------------- dealloc memory */
   pEVSL_ParvecFree(&parvec[0]);
   pEVSL_ParvecFree(&parvec[1]);
   pEVSL_ParvecFree(&parvec[2]);

@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
-  double *xdos, *ydos, tm;
+  double tm;
   /*-------------------- communicator struct, which contains all the communicators */
   CommInfo comm;
   pevsl_Parvec vinit;
@@ -48,11 +48,11 @@ int main(int argc, char *argv[]) {
   /*-------------------- default values */
   nx = 16;
   ny = 16;
-  nz = 16;
+  nz = 20;
   a  = 0.4;
-  b  = 0.5;
-  nslices = 1;
-  ngroups = 1;
+  b  = 0.8;
+  nslices = 4;
+  ngroups = 2;
   /*-----------------------------------------------------------------------
    *-------------------- reset some default values from command line  
    *                     user input from command line */
@@ -110,44 +110,81 @@ int main(int argc, char *argv[]) {
   Mdeg = 300;
   nvec = 60;
   mu = (double *) malloc((Mdeg+1)*sizeof(double));
-  ierr = pEVSL_Kpmdos(pevsl, Mdeg, 1, nvec, xintv, comm.comm_group_leader, mu, &ecount);
-
-printf("ecount %f\n", ecount);
-exit(0);
-
+  tm = pEVSL_Wtime();
+  ierr = pEVSL_Kpmdos(pevsl, Mdeg, 1, nvec, xintv, comm.ngroups, comm.group_id,
+                      comm.comm_group_leader, mu, &ecount);
+  tm = pEVSL_Wtime() - tm;
+  if (ierr) {
+    printf("kpmdos error %d\n", ierr);
+    return 1;
+  }
+  if (comm.group_rank == 0) {
+    fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n", tm);
+    fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
+  }
+  /*-------------------- call Spslicer to slice the spectrum */
+  npts = 10 * ecount;
   sli = (double *) malloc((nslices+1)*sizeof(double));
-  /*------------------- trivial */
-  linspace(a, b, nslices+1, sli);      
+  if (comm.group_rank == 0) {
+    fprintf(fstats, " DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n", Mdeg, nvec, npts);
+  }
+  ierr = pEVSL_Spslicer(sli, mu, Mdeg, xintv, nslices,  npts);
+  /*-------------------- slicing done */
+  if (ierr) {
+    printf("spslicer error %d\n", ierr);
+    return 1;
+  }
+  if (comm.group_rank == 0) {
+    fprintf(fstats, "====================  SLICES FOUND  ====================\n");
+    for (j=0; j<nslices;j++) {
+      fprintf(fstats, " %2d: [% .15e , % .15e]\n", j+1, sli[j],sli[j+1]);
+    }
+    fprintf(fstats, "========================================================\n");
+  }
+  /*--------------------- print stats */
+  pEVSL_StatsPrint(pevsl, fstats);
+  /*-------------------- # eigs per slice */
+  ev_int = (int) (1 + ecount / ((double) nslices));
   /*------------------- Create parallel vector: random initial guess */
   pEVSL_ParvecCreate(A.ncol_global, A.ncol_local, A.first_col, comm.comm_group, &vinit);
   pEVSL_ParvecRand(&vinit);
-  /*------------------- For each slice call ChebLanr */
+
+  /*------------------- For each slice call ChebLanr, each group pick one slice */
   for (sl=comm.group_id; sl<nslices; sl+=comm.ngroups) {
     int nev2, *ind, nev_ex;
     double *lam, *res, *lam_ex, ai, bi;
     pevsl_Parvecs *Y;
     /*-------------------- */
+    pEVSL_StatsReset(pevsl);
     ai = sli[sl];
     bi = sli[sl+1];
-    mlan = min(500, n);
-    xintv[0] = ai;  
-    xintv[1] = bi;  
-    xintv[2] = lmin;  
-    xintv[3] = lmax;
+    /*-------------------- approximate number of eigenvalues wanted */
+    nev = ev_int+2;
+    /*-------------------- Dimension of Krylov subspace */
+    mlan = max(5*nev, 300);
+    mlan = min(mlan, n);
+    /*-------------------- Interval */
+    xintv[0] = ai;    xintv[1] = bi;  
+    xintv[2] = lmin;  xintv[3] = lmax;
     //-------------------- set up default parameters for pol.      
     pEVSL_SetPolDef(&pol);
     //-------------------- this is to show how you can reset some of the
     //                     parameters to determine the filter polynomial
-    pol.damping = 1;
+    pol.damping = 2;
     //-------------------- use a stricter requirement for polynomial
-    pol.thresh_int = 0.5;
-    pol.thresh_ext = 0.15;
-    pol.max_deg  = 500;
+    pol.thresh_int = 0.8;
+    pol.thresh_ext = 0.2;
+    pol.max_deg  = 3000;
+    // pol.deg = 20 //<< this will force this exact degree . not recommended
+    //                   it is better to change the values of the thresholds
+    //                   pol.thresh_ext and plot.thresh_int
     //-------------------- Now determine polymomial to use
     pEVSL_FindPol(xintv, &pol);
+
     if (comm.group_rank == 0) {
+      fprintf(fstats, "\n");
       fprintf(fstats, " ======================================================\n");
-      fprintf(fstats, " subinterval: [%.4e , %.4e]\n", ai, bi);
+      fprintf(fstats, " subinterval %3d: [%.4e , %.4e]\n", sl, ai, bi);
       fprintf(fstats, " ======================================================\n");
       fprintf(fstats, " polynomial deg %d, bar %e gam %e\n", pol.deg, pol.bar, pol.gam);
     }
@@ -200,24 +237,30 @@ exit(0);
       free(lam_ex);
     }
     /*-------------------- free within this slice */
-    if (lam) free(lam);
-    if (res) free(res);
+    if (lam) { free(lam); }
+    if (Y) {
+      pEVSL_ParvecsFree(Y);
+      free(Y);
+    }
+    if (res) { free(res); }
     pEVSL_FreePol(&pol);
     free(ind);
-    pEVSL_ParvecsFree(Y);
-    free(Y);
+    /*--------------------- print stats */
+    pEVSL_StatsPrint(pevsl, fstats);
   } /* for (sl=0 */
   
-  if (fstats) fclose(fstats);
+  /*--------------------- done */
+  if (fstats) {
+    fclose(fstats);
+  }
   free(sli);
   free(mu);
+
   pEVSL_ParcsrFree(&A);
   pEVSL_ParvecFree(&vinit);
-
   CommInfoFree(&comm);
-
+ 
   pEVSL_Finish(pevsl);
-
   MPI_Finalize();
 
   return 0;

@@ -491,6 +491,8 @@ int pEVSL_ChebAv(pevsl_Data      *pevsl,
                  pevsl_Parvec    *v, 
                  pevsl_Parvec    *y, 
                  pevsl_Parvec    *w) {
+
+  double tt = pEVSL_Wtime();
   /*-------------------- unpack pol */
   double *mu = pol->mu;
   double dd = pol->dd;
@@ -527,17 +529,24 @@ int pEVSL_ChebAv(pevsl_Data      *pevsl,
       pEVSL_MatvecA(pevsl, vk, vkp1);
     }
 
+    double ts = pEVSL_Wtime();
+
     pEVSL_ParvecAxpy(-cc, vk, vkp1);
     pEVSL_ParvecScal(vkp1, t);
     pEVSL_ParvecAxpy(-1.0, vkm1, vkp1);
     pEVSL_ParvecAxpy(s, vkp1, y);
-        
+    
+    pevsl->stats->t_sth += pEVSL_Wtime() - ts;
+    
     /*-------------------- next: rotate vectors via pointer exchange */
     tmp = vkm1;
     vkm1 = vk;
     vk = vkp1;
     vkp1 = tmp;
   }
+
+  pevsl->stats->n_polAv ++;
+  pevsl->stats->t_polAv += pEVSL_Wtime() - tt;
 
   return 0;
 }

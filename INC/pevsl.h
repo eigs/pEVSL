@@ -15,7 +15,7 @@ void pEVSL_FreePol(pevsl_Polparams *pol);
 
 /* kpmdos.c */
 int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *intv,
-                 MPI_Comm gl_comm, double *mu, double *ecnt);
+                 int ngroups, int groupid, MPI_Comm gl_comm, double *mu, double *ecnt);
 
 /* lantrbnd.c */
 int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol, 
@@ -31,6 +31,7 @@ int pEVSL_SetBParcsr  (pevsl_Data *pevsl_data, pevsl_Parcsr *B);
 int pEVSL_SetAMatvec  (pevsl_Data *pevsl_data, MVFunc func, void *data);
 int pEVSL_SetBMatvec  (pevsl_Data *pevsl_data, MVFunc func, void *data);
 int pEVSL_SetBSol     (pevsl_Data *pevsl_data, SVFunc func, void *data);
+int pEVSL_SetLTSol    (pevsl_Data *pevsl_data, SVFunc func, void *data);
 int pEVSL_SetStdEig   (pevsl_Data *pevsl_data);
 int pEVSL_SetGenEig   (pevsl_Data *pevsl_data);
 
@@ -106,11 +107,15 @@ void pEVSL_LinSpace(double a, double b, int num, double *arr);
 void pEVSL_Part1d(int len, int pnum, int *idx, int *j1, int *j2, int job);
 int  pEVSL_BinarySearch(int *x, int n, int key);
 void pEVSL_Vecset(int n, double t, double *v);
+double pEVSL_Wtime();
 
 /* vector.c */
 void linspace(double a, double b, int num, double *arr);
 void vecset(int n, double t, double *v);
 void sort_double(int n, double *v, int *ind);
+
+/* spslicer.c */
+int pEVSL_Spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts);
 
 /* stats.c */
 void pEVSL_StatsReset(pevsl_Data *pevsl);

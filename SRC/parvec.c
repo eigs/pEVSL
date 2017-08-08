@@ -39,16 +39,29 @@ void pEVSL_ParvecFree(pevsl_Parvec *x) {
   PEVSL_FREE(x->data);
 }
 
+
 /*!
- * @brief generate a random parallel vector
+ * @brief generate a random parallel vector, each element in [-1,1]
  */
 void pEVSL_ParvecRand(pevsl_Parvec *x) {
   int i;
   double t = ((double) RAND_MAX) / 2.0;
-#ifdef PEVSL_DEBUG
-  /* in debug mode, parallel random vector is generated in a way such that
-   * it is the sames as sequential vector. In this case, it is also independent
-   * of number of MPI ranks.
+  for (i=0; i<x->n_local; i++) {
+    double z = (rand() - t) / t;
+    x->data[i] = z;
+  }
+}
+
+
+/*!
+ * @brief generate a random parallel vector
+ */
+void pEVSL_ParvecRand2(pevsl_Parvec *x) {
+  int i;
+  double t = ((double) RAND_MAX) / 2.0;
+  /* parallel random vector is generated in a way such that
+   * it is the sames as sequential vector with the same starting seed
+   * In this case, it is also independent of number of MPI ranks.
    * [NOT scalable] ONLY for DEBUG
    */
   int np, rank, *nlocal_all, nfirst;
@@ -74,13 +87,8 @@ void pEVSL_ParvecRand(pevsl_Parvec *x) {
       x->data[i-nfirst] = z;
     }
   }
-#else
-  for (i=0; i<x->n_local; i++) {
-    double z = (rand() - t) / t;
-    x->data[i] = z;
-  }
-#endif
 }
+
 
 void pEVSL_ParvecDot(pevsl_Parvec *x, pevsl_Parvec *y, double *t) {
   PEVSL_CHKERR(x->n_global != y->n_global);
