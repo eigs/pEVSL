@@ -229,10 +229,14 @@ int main(int argc, char *argv[]) {
     if (comm.group_rank == 0) {
       fprintf(fstats, " [Group %d]: number of eigenvalues found: %d\n", 
               comm.group_id, nev2);
+      PEVSL_SEQ_BEGIN(comm.comm_group_leader);
       if (fstats != stdout) {
+        fprintf(stdout, " ======================================================\n");
+        fprintf(stdout, " subinterval %3d: [%.4e , %.4e]\n", sl, ai, bi);
         fprintf(stdout, " [Group %d]: number of eigenvalues found: %d\n",
                 comm.group_id, nev2);
       }
+      PEVSL_SEQ_END(comm.comm_group_leader);
       /* print eigenvalues */
       fprintf(fstats, "     Eigenvalues in [a, b]\n");
       fprintf(fstats, "     Computed [%d]       ||Res||\n", nev2);

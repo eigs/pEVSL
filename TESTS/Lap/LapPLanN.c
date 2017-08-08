@@ -205,10 +205,14 @@ int main(int argc, char *argv[]) {
       ExactEigLap3(nx, ny, nz, ai, bi, &nev_ex, &lam_ex);
       fprintf(fstats, " [Group %d]: number of eigenvalues: %d, found: %d\n", 
               comm.group_id, nev_ex, nev2);
+      PEVSL_SEQ_BEGIN(comm.comm_group_leader);
       if (fstats != stdout) {
+        fprintf(stdout, " ======================================================\n");
+        fprintf(stdout, " subinterval %3d: [%.4e , %.4e]\n", sl, ai, bi);
         fprintf(stdout, " [Group %d]: number of eigenvalues: %d, found: %d\n",
                 comm.group_id, nev_ex, nev2);
       } 
+      PEVSL_SEQ_END(comm.comm_group_leader);
       /* print eigenvalues */
       fprintf(fstats, "                                   Eigenvalues in [a, b]\n");
       fprintf(fstats, "     Computed [%d]       ||Res||              Exact [%d]", nev2, nev_ex);
