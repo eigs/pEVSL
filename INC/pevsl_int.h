@@ -24,6 +24,7 @@
 
 /* chebpol.c */
 int pEVSL_ChebAv(pevsl_Data *pevsl, pevsl_Polparams *pol, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_Parvec *w);
+int dampcf(int m, int damping, double *jac);
 
 /* miscla.c */
 int SymmTridEig(double *eigVal, double *eigVec, int n, const double *diag, const double *sdiag);
@@ -47,6 +48,7 @@ double pEVSL_Wtime();
  * 
  * */
 static inline void pEVSL_fprintf0(int rank, FILE *fp, const char *format, ...) {
+
   if (rank) {
     return;
   }
@@ -63,6 +65,7 @@ static inline void pEVSL_fprintf0(int rank, FILE *fp, const char *format, ...) {
 static inline void pEVSL_MatvecA(pevsl_Data   *pevsl_data, 
                                  pevsl_Parvec *x, 
                                  pevsl_Parvec *y) {
+
   PEVSL_CHKERR(!pevsl_data->Amv);
      
   PEVSL_CHKERR(pevsl_data->N != x->n_global);
@@ -89,6 +92,7 @@ static inline void pEVSL_MatvecA(pevsl_Data   *pevsl_data,
 static inline void pEVSL_MatvecB(pevsl_Data   *pevsl_data,
                                  pevsl_Parvec *x, 
                                  pevsl_Parvec *y) {
+
   PEVSL_CHKERR(!pevsl_data->Bmv);
   
   PEVSL_CHKERR(pevsl_data->N != x->n_global);
@@ -114,6 +118,7 @@ static inline void pEVSL_MatvecB(pevsl_Data   *pevsl_data,
 static inline void pEVSL_SolveB(pevsl_Data   *pevsl_data,
                                 pevsl_Parvec *x, 
                                 pevsl_Parvec *y) {
+
   PEVSL_CHKERR(!pevsl_data->Bsol);
  
   PEVSL_CHKERR(pevsl_data->N != x->n_global);
@@ -130,6 +135,32 @@ static inline void pEVSL_SolveB(pevsl_Data   *pevsl_data,
   double tme = pEVSL_Wtime();
   pevsl_data->stats->t_svB += tme - tms;
   pevsl_data->stats->n_svB ++;
+}
+
+/**
+* @brief y = LT \ x or y = SQRT(B) \ x
+* This is the solve function for the matrix B in pevsl_Data
+*/
+static inline void pEVSL_SolveLT(pevsl_Data   *pevsl_data,
+                                 pevsl_Parvec *x, 
+                                 pevsl_Parvec *y) {
+
+  PEVSL_CHKERR(!pevsl_data->LTsol);
+ 
+  PEVSL_CHKERR(pevsl_data->N != x->n_global);
+  PEVSL_CHKERR(pevsl_data->n != x->n_local);
+  PEVSL_CHKERR(pevsl_data->nfirst != x->n_first);
+  PEVSL_CHKERR(pevsl_data->N != y->n_global);
+  PEVSL_CHKERR(pevsl_data->n != y->n_local);
+  PEVSL_CHKERR(pevsl_data->nfirst != y->n_first);
+
+  double tms = pEVSL_Wtime();
+  
+  pevsl_data->LTsol->func(x->data, y->data, pevsl_data->Bsol->data);
+  
+  double tme = pEVSL_Wtime();
+  pevsl_data->stats->t_svLT += tme - tms;
+  pevsl_data->stats->n_svLT ++;
 }
 
 /**

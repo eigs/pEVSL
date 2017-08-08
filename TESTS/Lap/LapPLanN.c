@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
-  double *xdos, *ydos;
+  double *xdos, *ydos, tm;
   /*-------------------- communicator struct, which contains all the communicators */
   CommInfo comm;
   pevsl_Parvec vinit;
@@ -107,7 +107,14 @@ int main(int argc, char *argv[]) {
   /*-------------------- set matrix A */
   pEVSL_SetAParcsr(pevsl, &A);
   /*-------------------- call DOS */
+  Mdeg = 300;
+  nvec = 60;
   mu = (double *) malloc((Mdeg+1)*sizeof(double));
+  ierr = pEVSL_Kpmdos(pevsl, Mdeg, 1, nvec, xintv, comm.comm_group_leader, mu, &ecount);
+
+printf("ecount %f\n", ecount);
+exit(0);
+
   sli = (double *) malloc((nslices+1)*sizeof(double));
   /*------------------- trivial */
   linspace(a, b, nslices+1, sli);      

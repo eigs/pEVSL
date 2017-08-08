@@ -246,9 +246,11 @@ typedef struct _pevsl_Stat {
   double t_mvA;
   double t_mvB;
   double t_svB;
+  double t_svLT;
   size_t n_mvA;
   size_t n_mvB;
   size_t n_svB;
+  size_t n_svLT;
   /* memory */
   size_t alloced;
   size_t alloced_total;

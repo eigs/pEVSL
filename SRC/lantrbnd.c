@@ -27,15 +27,9 @@
  * @return Returns 0 on success 
  *
  **/
-int pEVSL_LanTrbounds(pevsl_Data   *pevsl, 
-                      int           lanm, 
-                      int           maxit,
-                      double        tol, 
-                      pevsl_Parvec *vinit,
-                      int           bndtype,
-                      double       *lammin, 
-                      double       *lammax, 
-                      FILE         *fstats) {
+int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol, 
+                      pevsl_Parvec *vinit, int bndtype,
+                      double *lammin, double *lammax, FILE *fstats) {
 
   double tms = pEVSL_Wtime();
   const int ifGenEv = pevsl->ifGenEv;

@@ -10,7 +10,7 @@
  * @param[out] jac  output array of dampened coefficients
  * @return 0
  **/
-int dampcf(int m, int damping, double *jac){
+int dampcf(int m, int damping, double *jac) {
   double thetJ = 0.0, thetL = 0.0, a1 = 0.0, a2 = 0.0, dm = (double) m;
   int k, k1;
   if (damping==1){

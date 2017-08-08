@@ -13,6 +13,10 @@ void pEVSL_SetPolDef(pevsl_Polparams *pol);
 int  pEVSL_FindPol(double *intv, pevsl_Polparams *pol);
 void pEVSL_FreePol(pevsl_Polparams *pol);
 
+/* kpmdos.c */
+int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *intv,
+                 MPI_Comm gl_comm, double *mu, double *ecnt);
+
 /* lantrbnd.c */
 int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol, 
                       pevsl_Parvec *vinit, int bndtype, double *lammin, 
