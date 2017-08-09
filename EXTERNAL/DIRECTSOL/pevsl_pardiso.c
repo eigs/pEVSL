@@ -158,13 +158,15 @@ int SetupBSolDirect(pevsl_Parcsr *B, void **data) {
   /*--------------- D^{-1} */
   DSolDirect(allones, dsqrinv, (void *) Bsol_data);
   /*--------------- D^{-1/2} */
+  /*
   for (i = 0; i < nlocal; i++) {
     printf("%e\n", dsqrinv[i]);
   }
   exit(0);
+  */
   for (i = 0; i < nlocal; i++) {
     PEVSL_CHKERR(dsqrinv[i] < 0.0);
-    //dsqrinv[i] = sqrt(dsqrinv[i]);
+    dsqrinv[i] = sqrt(dsqrinv[i]);
   }
   Bsol_data->dsqrinv = dsqrinv;
 
@@ -242,7 +244,7 @@ void LTSolDirect(double *b, double *x, void *data) {
   double *w = Bsol_data->work, *d = Bsol_data->dsqrinv;
   int i;
   for (i = 0; i < Bsol_data->nlocal; i++) {
-    w[i] = 1.0 / d[i] * b[i];
+    w[i] = d[i] * b[i];
   }
   /* --------------------------------------------- */
   /* .. Back substitution and iterative refinement.*/
