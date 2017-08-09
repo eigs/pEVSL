@@ -313,7 +313,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
     nconv = 0;
     for (i=0; i<count; i++) {
       flami = EvalT[i];
-      if (flami + DBL_EPSILON >= bar) {
+      if (flami + 5*DBL_EPSILON >= bar) {
         tr1+= flami;
         nconv++;
       }

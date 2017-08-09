@@ -15,6 +15,7 @@
 int  SetupBSolDirect(pevsl_Parcsr *B, void **data);
 void BSolDirect(double *b, double *x, void *data);
 void LTSolDirect(double *b, double *x, void *data);
+void DSolDirect(double *b, double *x, void *data);
 void FreeBSolDirectData(void *data);
 
 #endif
