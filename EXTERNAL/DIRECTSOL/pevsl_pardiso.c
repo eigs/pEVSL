@@ -19,10 +19,6 @@ typedef struct _BSolDataDirect {
   int n, nlocal;
   /* upper triangular part of B */
   pevsl_Csr U;
-  /* if B=LDL^T, save D^{-1/2} */
-  double *dsqrinv;
-  /* work array */
-  double *work;
   /* Fortran MPI communicator */
   MPI_Fint commf;
 } BSolDataDirect;
@@ -144,9 +140,11 @@ int SetupBSolDirect(pevsl_Parcsr *B, void **data) {
   }
   
 
-  /* -------------------------------------------------------------------- */
-  /* Pardiso may do LDL factorization, so we have to save D^{-1/2} */
-  /* -------------------------------------------------------------------- */
+#if 0
+  /* ------------------------------------------------------------------- */
+  /* Pardiso may do LDL factorization for B with Bunch-Kaufman pivoting  */
+  /* If this happens, we will not have a solver for L^T. B=L*L^T         */
+  /* ------------------------------------------------------------------- */
   int nlocal = B->nrow_local;
   double *allones, *dsqrinv, *work;
   PEVSL_MALLOC(allones, nlocal, double);
@@ -155,25 +153,17 @@ int SetupBSolDirect(pevsl_Parcsr *B, void **data) {
   for (i = 0; i < nlocal; i++) {
     allones[i] = 1.0;
   }
-  /*--------------- D^{-1} */
+  /*--------------- D^{-1} * e */
   DSolDirect(allones, dsqrinv, (void *) Bsol_data);
-  /*--------------- D^{-1/2} */
+  /*--------------- Are they all ones? */
   /*
   for (i = 0; i < nlocal; i++) {
     printf("%e\n", dsqrinv[i]);
   }
   exit(0);
   */
-  for (i = 0; i < nlocal; i++) {
-    PEVSL_CHKERR(dsqrinv[i] < 0.0);
-    dsqrinv[i] = sqrt(dsqrinv[i]);
-  }
-  Bsol_data->dsqrinv = dsqrinv;
-
-  PEVSL_MALLOC(work, nlocal, double);
-  Bsol_data->work = work;
-
   PEVSL_FREE(allones);
+#endif
 
   *data = (void *) Bsol_data;
   
@@ -240,19 +230,13 @@ void LTSolDirect(double *b, double *x, void *data) {
   double  *a  = U->a;
   MPI_Fint commf = Bsol_data->commf;
 
-  /*----------------- w = D^{-1/2}*b */
-  double *w = Bsol_data->work, *d = Bsol_data->dsqrinv;
-  int i;
-  for (i = 0; i < Bsol_data->nlocal; i++) {
-    w[i] = d[i] * b[i];
-  }
   /* --------------------------------------------- */
   /* .. Back substitution and iterative refinement.*/
   /* --------------------------------------------- */
   MKL_INT phase = 333;
   cluster_sparse_solver(Bsol_data->pt, &maxfct, &mnum, &mtype, &phase,
                         &n, a, ia, ja, &idum, &nrhs, Bsol_data->iparm, 
-                        &msglvl, w, x, &commf, &error);
+                        &msglvl, b, x, &commf, &error);
   if ( error != 0 ) {
     PEVSL_ABORT(MPI_COMM_WORLD, error, "\nERROR during solution\n");
   }
@@ -294,8 +278,6 @@ void FreeBSolDirectData(void *data) {
   }
 
   pEVSL_FreeCsr(U);
-  PEVSL_FREE(Bsol_data->work);
-  PEVSL_FREE(Bsol_data->dsqrinv);
   PEVSL_FREE(data);
 }
 
