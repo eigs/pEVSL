@@ -411,7 +411,7 @@ void PEVSL_FORT(pevsl_setltsol_lspol)(uintptr_t *pevslf90, uintptr_t *lspolf90) 
 
 
 void PEVSL_FORT(pevsl_kpmdos1)(uintptr_t *pevslf90, int *Mdeg, int *damping, int *nvec,
-                              double *intv, double *ecnt) {
+                              double *intv, double *mu, double *ecnt) {
   /* cast pointer */
   pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
   
