@@ -158,7 +158,7 @@ static inline void pEVSL_SolveLT(pevsl_Data   *pevsl_data,
 
   double tms = pEVSL_Wtime();
   
-  pevsl_data->LTsol->func(x->data, y->data, pevsl_data->Bsol->data);
+  pevsl_data->LTsol->func(x->data, y->data, pevsl_data->LTsol->data);
   
   double tme = pEVSL_Wtime();
   pevsl_data->stats->t_svLT += tme - tms;

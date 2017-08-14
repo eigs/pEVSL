@@ -223,7 +223,7 @@ static inline int pnav(double *mu, const int m, const double cc, const double dd
   pevsl_Parvec *vkp1 = &w[1];
   pevsl_Parvec *vkm1 = &w[2];
   /*-------------------- */
-  int k, i;
+  int k;
   double t, s;
   pevsl_Parvec *tmp;
   const double t1 = 1.0 / dd;
