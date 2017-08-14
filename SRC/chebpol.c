@@ -513,7 +513,7 @@ int pEVSL_ChebAv(pevsl_Data      *pevsl,
   pevsl_Parvec *tmp;
   /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
   pEVSL_ParvecCopy(v, vk);
-  pEVSL_ParvecSetZero(vkm1);
+  /* pEVSL_ParvecSetZero(vkm1); */
   /*-------------------- special case: k == 0 */
   s = mu[0];
   pEVSL_ParvecCopy(vk, y);
@@ -537,7 +537,9 @@ int pEVSL_ChebAv(pevsl_Data      *pevsl,
 
     pEVSL_ParvecAxpy(-cc, vk, vkp1);
     pEVSL_ParvecScal(vkp1, t);
-    pEVSL_ParvecAxpy(-1.0, vkm1, vkp1);
+    if (k > 1) {
+      pEVSL_ParvecAxpy(-1.0, vkm1, vkp1);
+    }
     pEVSL_ParvecAxpy(s, vkp1, y);
     
     pevsl->stats->t_sth += pEVSL_Wtime() - ts;

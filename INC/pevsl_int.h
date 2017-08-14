@@ -25,6 +25,7 @@
 /* chebpol.c */
 int pEVSL_ChebAv(pevsl_Data *pevsl, pevsl_Polparams *pol, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_Parvec *w);
 int dampcf(int m, int damping, double *jac);
+int chebxPltd(int m, double *mu, int npts, double *xi, double *yi);
 
 /* miscla.c */
 int SymmTridEig(pevsl_Data *pevsl, double *eigVal, double *eigVec, int n, const double *diag, const double *sdiag);

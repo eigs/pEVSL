@@ -21,6 +21,13 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
 int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol, 
                       pevsl_Parvec *vinit, int bndtype, double *lammin, 
                       double *lammax, FILE *fstats);
+/* lspolapprox.c */
+void pEVSL_SetupLSPolSqrt(int max_deg, double tol, double lmin, double lmax, 
+                          pevsl_Parcsr *B, void **vdata);
+
+void pEVSL_LSPolSol(double *db, double *dx, void *data);
+
+void pEVSL_LSPolFree(void *vdata);
 
 /* pevsl.c */
 int pEVSL_Start       (MPI_Comm comm, pevsl_Data **data);
