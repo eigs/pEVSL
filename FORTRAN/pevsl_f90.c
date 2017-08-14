@@ -415,10 +415,7 @@ void PEVSL_FORT(pevsl_kpmdos1)(uintptr_t *pevslf90, int *Mdeg, int *damping, int
   /* cast pointer */
   pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
   
-  double *mu;
-  PEVSL_MALLOC(mu, *Mdeg+1, double);
   pEVSL_Kpmdos(pevsl, *Mdeg, *damping, *nvec, intv, 1, 0, MPI_COMM_NULL, mu, ecnt);
-  PEVSL_FREE(mu);
 }
 
 
