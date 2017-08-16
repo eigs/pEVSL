@@ -256,7 +256,7 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, const int nvec, const int msteps, int npts,
   DSCAL(&npts, &scaling, y, &one);
   DCOPY(&npts, y, &one, ydos, &one);
   simpson(xdos, y, npts);
-  *neig = y[npts - 1] * n;
+  *neig = y[npts - 1] * N;
   
   /*-------------------- free arrays */
   pEVSL_ParvecFree(vinit);
