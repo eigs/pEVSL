@@ -410,16 +410,28 @@ void PEVSL_FORT(pevsl_setltsol_lspol)(uintptr_t *pevslf90, uintptr_t *lspolf90) 
 }
 
 
-void PEVSL_FORT(pevsl_kpmdos1)(uintptr_t *pevslf90, int *Mdeg, int *damping, int *nvec,
-                              double *intv, double *mu, double *ecnt) {
+void PEVSL_FORT(pevsl_kpmdos_ecnt)(uintptr_t *pevslf90, int *Mdeg, int *damping, int *nvec,
+                                   double *intv, double *mu, double *ecnt) {
   /* cast pointer */
   pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
   
   pEVSL_Kpmdos(pevsl, *Mdeg, *damping, *nvec, intv, 1, 0, MPI_COMM_NULL, mu, ecnt);
 }
 
+void PEVSL_FORT(pevsl_landos_ecnt)(uintptr_t *pevslf90, int *nvec, int *msteps, int *npts,
+                                   double *intv, double *mu, double *ecnt) {
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
 
+  double *xdos, *ydos;
+  PEVSL_MALLOC(xdos, *npts, double);
+  PEVSL_MALLOC(ydos, *npts, double);
+  
+  pEVSL_LanDosG(pevsl, *nvec, *msteps, *npts, xdos, ydos, ecnt, intv);
 
+  PEVSL_FREE(xdos);
+  PEVSL_FREE(ydos);
+}
 
 
 
