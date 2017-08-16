@@ -419,7 +419,7 @@ void PEVSL_FORT(pevsl_kpmdos_ecnt)(uintptr_t *pevslf90, int *Mdeg, int *damping,
 }
 
 void PEVSL_FORT(pevsl_landos_ecnt)(uintptr_t *pevslf90, int *nvec, int *msteps, int *npts,
-                                   double *intv, double *mu, double *ecnt) {
+                                   double *intv, double *ecnt) {
   /* cast pointer */
   pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
 
