@@ -427,7 +427,7 @@ void PEVSL_FORT(pevsl_landos_ecnt)(uintptr_t *pevslf90, int *nvec, int *msteps, 
   PEVSL_MALLOC(xdos, *npts, double);
   PEVSL_MALLOC(ydos, *npts, double);
   
-  pEVSL_LanDosG(pevsl, *nvec, *msteps, *npts, xdos, ydos, ecnt, intv);
+  pEVSL_LanDosG(pevsl, *nvec, *msteps, *npts, xdos, ydos, ecnt, intv, 1, 0, MPI_COMM_NULL);
 
   PEVSL_FREE(xdos);
   PEVSL_FREE(ydos);

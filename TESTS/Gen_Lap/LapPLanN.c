@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <mpi.h>
 #include "pevsl.h"
 #include "common.h"
@@ -6,6 +7,8 @@
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
+
+#define OUTPUT_LEN 32768
 
 int main(int argc, char *argv[]) {
 /*------------------------------------------------------------
@@ -27,7 +30,7 @@ int main(int argc, char *argv[]) {
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu, tm;
   double xintv[4];
-  //double *xdos, *ydos;
+  char *msg = NULL;
   /*-------------------- communicator struct, which contains all the communicators */
   CommInfo comm;
   pevsl_Parvec vinit;
@@ -55,7 +58,7 @@ int main(int argc, char *argv[]) {
   a  = 1.5;
   b  = 2.5;
   nslices = 4;
-  ngroups = 1;
+  ngroups = 3;
   /*-----------------------------------------------------------------------
    *-------------------- reset some default values from command line  
    *                     user input from command line */
@@ -79,11 +82,12 @@ int main(int argc, char *argv[]) {
   CommInfoCreate(&comm, MPI_COMM_WORLD, ngroups);
   /*-------------------- Group leader (group_rank == 0) creates output file */
   if (comm.group_rank == 0) {
+    /* output on screen */
+    PEVSL_CALLOC(msg, OUTPUT_LEN, char);
     char fname[1024];
     sprintf(fname, "OUT/LapPLanN_G%d.out", comm.group_id);
     if (!(fstats = fopen(fname,"w"))) {
-      printf(" failed in opening output file in OUT/\n");
-      fstats = stdout;
+      PEVSL_ABORT(MPI_COMM_WORLD, -2, " failed in opening output file in OUT/\n");
     }
   }
   /*-------------------- output the problem settings */
@@ -115,13 +119,13 @@ int main(int argc, char *argv[]) {
   pEVSL_SetBParcsr(pevsl, &B);
   /*-------------------- set the solver for B and L^{T} */
   pEVSL_SetBSol(pevsl, BSolDirect, Bsol);
-  //pEVSL_SetLTSol(pevsl, LTSolDirect, Bsol);
   
+  //pEVSL_SetLTSol(pevsl, LTSolDirect, Bsol);
   
   void *Bpol;
   pEVSL_SetupLSPolSqrt(50, 1e-6, 2.0, 6.0, &B, &Bpol);
   pEVSL_SetLTSol(pevsl, pEVSL_LSPolSol, Bpol);  
-  
+
   /*-------------------- for generalized eigenvalue problem */
   pEVSL_SetGenEig(pevsl);
   /*-------------------- step 0: get eigenvalue bounds */
@@ -170,11 +174,13 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 #else
+  Mdeg = 50;
   npts = 200;
   double *xdos = (double *)calloc(npts, sizeof(double));
   double *ydos = (double *)calloc(npts, sizeof(double));
   tm = pEVSL_Wtime();
-  pEVSL_LanDosG(pevsl, nvec, Mdeg, npts, xdos, ydos, &ecount, xintv);
+  pEVSL_LanDosG(pevsl, nvec, Mdeg, npts, xdos, ydos, &ecount, xintv,
+                comm.ngroups, comm.group_id, comm.comm_group_leader);
   tm = pEVSL_Wtime() - tm;
   fprintf(stdout, " estimated eig count in interval: %f \n", ecount);
   if (comm.group_rank == 0) {
@@ -255,14 +261,12 @@ int main(int argc, char *argv[]) {
     if (comm.group_rank == 0) {
       fprintf(fstats, " [Group %d]: number of eigenvalues found: %d\n", 
               comm.group_id, nev2);
-      PEVSL_SEQ_BEGIN(comm.comm_group_leader);
-      if (fstats != stdout) {
-        fprintf(stdout, " ======================================================\n");
-        fprintf(stdout, " subinterval %3d: [%.4e , %.4e]\n", sl, ai, bi);
-        fprintf(stdout, " [Group %d]: number of eigenvalues found: %d\n",
-                comm.group_id, nev2);
-      }
-      PEVSL_SEQ_END(comm.comm_group_leader);
+      
+      sprintf(msg+strlen(msg), " ======================================================\n");
+      sprintf(msg+strlen(msg), " subinterval %3d: [%.4e , %.4e]\n", sl, ai, bi);
+      sprintf(msg+strlen(msg), " [Group %d]: number of eigenvalues found: %d\n",
+              comm.group_id, nev2);
+
       /* print eigenvalues */
       fprintf(fstats, "     Eigenvalues in [a, b]\n");
       fprintf(fstats, "     Computed [%d]       ||Res||\n", nev2);
@@ -286,7 +290,14 @@ int main(int argc, char *argv[]) {
     /*--------------------- print stats */
     pEVSL_StatsPrint(pevsl, fstats);
   } /* for (sl=0 */
-  
+    
+  /* group leaders print on screen in orders */
+  if (comm.group_rank == 0) {
+    PEVSL_SEQ_BEGIN(comm.comm_group_leader);
+    fprintf(stdout, "%s", msg);
+    PEVSL_SEQ_END(comm.comm_group_leader);
+  }
+
   /*--------------------- done */
   if (fstats) {
     fclose(fstats);

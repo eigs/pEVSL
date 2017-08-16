@@ -31,9 +31,9 @@
  *    landos.c/LanDos is only for the standard eigenvalue problem.
  *----------------------------------------------------------------------*/
 
-int pEVSL_LanDosG(pevsl_Data *pevsl, const int nvec, const int msteps, int npts, 
-                  double *xdos, double *ydos, 
-                  double *neig, const double *const intv) {
+int pEVSL_LanDosG(pevsl_Data *pevsl, int nvec, int msteps, int npts, 
+                  double *xdos, double *ydos, double *neig, double* intv,
+                  int ngroups, int groupid, MPI_Comm gl_comm) {
 
   int i, j, k;
   int maxit = msteps, m;  /* Max number of iterations */
@@ -43,6 +43,9 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, const int nvec, const int msteps, int npts,
   int N = pevsl->N;
   int n = pevsl->n;
   int nfirst = pevsl->nfirst;
+  
+  int rank;
+  MPI_Comm_rank(comm, &rank);
   
   const int ifGenEv = pevsl->ifGenEv;
   
@@ -65,7 +68,7 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, const int nvec, const int msteps, int npts,
 
   /*-------------------- frequently used constants  */
   int one = 1;
-  maxit = PEVSL_MIN(n, maxit);
+  maxit = PEVSL_MIN(N, maxit);
   size_t maxit_l = maxit;
   double *gamma2;
   PEVSL_MALLOC(gamma2, maxit, double);
@@ -109,9 +112,19 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, const int nvec, const int msteps, int npts,
   /*-------------------- workspace [double * array] */
   double *warr;
   PEVSL_MALLOC(warr, 3*maxit, double);
-  
+
+  int vec_start, vec_end;
+  /*-------------------- if we have more than one groups, 
+   *                     partition nvecs among groups */
+  if (ngroups > 1) {
+    pEVSL_Part1d(nvec, ngroups, &groupid, &vec_start, &vec_end, 1);
+  } else {
+    vec_start = 0;
+    vec_end = nvec;
+  }
+
   /*-------------------- the vector loop */
-  for (m = 0; m < nvec; m++) {
+  for (m = vec_start; m < vec_end; m++) {
     /*-------------------- random vinit */
     pEVSL_ParvecRand(vinit);
     /*-------------------- a quick reference to V(:,1) */
@@ -234,7 +247,7 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, const int nvec, const int msteps, int npts,
     }
     /*-------------------- dos curve parameters
        Generate DOS from small gaussians centered at the ritz values */
-    for (i = 0; i < msteps; i++) {
+    for (i = 0; i < maxit; i++) {
       // As msteps is width of ritzVal -> we get msteps eigenvectors
       const double t = EvalT[i];
       int numPlaced = 0;
@@ -249,12 +262,28 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, const int nvec, const int msteps, int npts,
                      exp(-((xdos[ind[j]] - t) * (xdos[ind[j]] - t)) / sigma2);
       }
     }
+  } /* the vector loop */
+
+  /* if we have more than one group */
+  if (ngroups > 1) {
+    double *y_global;
+    PEVSL_MALLOC(y_global, npts, double);
+    /* Sum of all partial results: the group leaders first do an All-reduce. 
+       Then, group leaders will do broadcasts
+     */
+    if (rank == 0) {
+      MPI_Allreduce(y, y_global, npts, MPI_DOUBLE, MPI_SUM, gl_comm);
+    }
+    MPI_Bcast(y_global, npts, MPI_DOUBLE, 0, comm);
+    memcpy(y, y_global, npts*sizeof(double));
+    PEVSL_FREE(y_global);
   }
 
   double scaling = 1.0 / (nvec * sqrt(sigma2 * PI));
   /* y = ydos * scaling */
   DSCAL(&npts, &scaling, y, &one);
   DCOPY(&npts, y, &one, ydos, &one);
+  /* input: xdos, y, output: y */
   simpson(xdos, y, npts);
   *neig = y[npts - 1] * N;
   

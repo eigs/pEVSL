@@ -18,9 +18,9 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
                  int ngroups, int groupid, MPI_Comm gl_comm, double *mu, double *ecnt);
 
 /* landos.c */
-int pEVSL_LanDosG(pevsl_Data *pevsl, const int nvec, const int msteps, int npts, 
-            double *xdos, double *ydos, 
-            double *neig, const double *const intv);
+int pEVSL_LanDosG(pevsl_Data *pevsl, const int nvec, int msteps, int npts, 
+                  double *xdos, double *ydos, double *neig, double *intv,
+                  int ngroups, int groupid, MPI_Comm gl_comm);
 
 void pEVSL_SpslicerLan(double* xi, double* yi, int n_int, int npts, double* sli);
 
