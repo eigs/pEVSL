@@ -4,12 +4,13 @@ void pEVSL_StatsPrint(pevsl_Data *pevsl, FILE *fstats) {
   pevsl_Stat *stats = pevsl->stats;
   MPI_Comm comm = pevsl->comm;
   /* time, max */
-  double t_setBsv, t_setASigBsv, t_eigbounds, t_iter, t_mvA, t_mvB, t_svB, t_svLT, 
-         t_svASigB, t_reorth, t_eig, t_blas, t_ritz, t_polAv, t_ratAv, t_sth;
+  double t_setBsv, t_setASigBsv, t_eigbounds, t_dos, t_iter, t_mvA, t_mvB, t_svB, 
+         t_svLT, t_svASigB, t_reorth, t_eig, t_blas, t_ritz, t_polAv, t_ratAv, t_sth;
 
   MPI_Reduce(&stats->t_setBsv,     &t_setBsv,     1, MPI_DOUBLE, MPI_MAX, 0, comm);
   MPI_Reduce(&stats->t_setASigBsv, &t_setASigBsv, 1, MPI_DOUBLE, MPI_MAX, 0, comm);
   MPI_Reduce(&stats->t_eigbounds,  &t_eigbounds,  1, MPI_DOUBLE, MPI_MAX, 0, comm);
+  MPI_Reduce(&stats->t_dos,        &t_dos,        1, MPI_DOUBLE, MPI_MAX, 0, comm);
   MPI_Reduce(&stats->t_iter,       &t_iter,       1, MPI_DOUBLE, MPI_MAX, 0, comm);
   MPI_Reduce(&stats->t_mvA,        &t_mvA,        1, MPI_DOUBLE, MPI_MAX, 0, comm);
   MPI_Reduce(&stats->t_mvB,        &t_mvB,        1, MPI_DOUBLE, MPI_MAX, 0, comm);
@@ -42,7 +43,7 @@ void pEVSL_StatsPrint(pevsl_Data *pevsl, FILE *fstats) {
   MPI_Reduce(&myalloced_max,   &alloced_max,   1, MPI_UNSIGNED_LONG, MPI_SUM, 0, comm);
   /* rank 0 prints */
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(comm, &rank);
   /* group leader prints stats */
   if (rank == 0) {
     /* time */
@@ -52,6 +53,7 @@ void pEVSL_StatsPrint(pevsl_Data *pevsl, FILE *fstats) {
     if (t_setBsv)     { fprintf(fstats, "   Setup Solver for B        :  %f\n",  t_setBsv); }
     if (t_setASigBsv) { fprintf(fstats, "   Setup Solver for A-SIG*B  :  %f\n",  t_setASigBsv); }
     if (t_setASigBsv) { fprintf(fstats, "   Compute Eigenvalue bounds :  %f\n",  t_eigbounds); }
+    if (t_dos)        { fprintf(fstats, "   Compute DOS               :  %f\n",  t_dos); }
     if (t_iter)       { fprintf(fstats, "   Iteration time (tot)      :  %f\n",  t_iter); }
 
     fprintf(fstats, "   - - - - - - - - - - - - - - - - -\n");

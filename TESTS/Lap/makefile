@@ -6,6 +6,10 @@ include ../../makefile.in
 
 INCLUDES = -I../../INC -I../COMMON
 
+ifeq ($(INTEL), 1)
+INCLUDES += -I${MKLROOT}/include
+endif
+
 # Object files
 OBJS_PN  = LapPLanN.o ../COMMON/comm.o ../COMMON/io.o ../COMMON/lapl.o
 

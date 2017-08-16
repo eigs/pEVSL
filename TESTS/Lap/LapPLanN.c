@@ -2,6 +2,9 @@
 #include <mpi.h>
 #include "pevsl.h"
 #include "common.h"
+#if USE_MKL
+#include "mkl.h"
+#endif
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -27,6 +30,11 @@ int main(int argc, char *argv[]) {
   double a, b, lmax, lmin, ecount, tol, *sli, *mu;
   double xintv[4];
   double tm;
+
+#if USE_MKL
+  mkl_set_dynamic(1);
+  mkl_set_num_threads(12);
+#endif
   /*-------------------- communicator struct, which contains all the communicators */
   CommInfo comm;
   pevsl_Parvec vinit;

@@ -35,6 +35,8 @@
 int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *intv,
                  int ngroups, int groupid, MPI_Comm gl_comm, double *mu, double *ecnt) {
   
+  double tm = pEVSL_Wtime();
+
   const int ifGenEv = pevsl->ifGenEv;
   /*-------------------- MPI comm of this instance of pEVSL */
   MPI_Comm comm = pevsl->comm;
@@ -187,6 +189,8 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
     pEVSL_ParvecFree(&parvec[4]);
   }
   PEVSL_FREE(jac);
+
+  pevsl->stats->t_dos = pEVSL_Wtime() - tm;
 
   return 0;
 }

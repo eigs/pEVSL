@@ -242,6 +242,7 @@ typedef struct _pevsl_Stat {
   double t_setBsv;
   double t_setASigBsv;
   double t_eigbounds;
+  double t_dos;
   double t_iter;
   /* timing [level-2 funcs] */
   double t_mvA;
