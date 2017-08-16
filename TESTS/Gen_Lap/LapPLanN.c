@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
   a  = 1.5;
   b  = 2.5;
   nslices = 4;
-  ngroups = 2;
+  ngroups = 1;
   /*-----------------------------------------------------------------------
    *-------------------- reset some default values from command line  
    *                     user input from command line */
@@ -115,7 +115,13 @@ int main(int argc, char *argv[]) {
   pEVSL_SetBParcsr(pevsl, &B);
   /*-------------------- set the solver for B and L^{T} */
   pEVSL_SetBSol(pevsl, BSolDirect, Bsol);
-  pEVSL_SetLTSol(pevsl, LTSolDirect, Bsol);
+  //pEVSL_SetLTSol(pevsl, LTSolDirect, Bsol);
+  
+  
+  void *Bpol;
+  pEVSL_SetupLSPolSqrt(50, 1e-6, 2.0, 6.0, &B, &Bpol);
+  pEVSL_SetLTSol(pevsl, pEVSL_LSPolSol, Bpol);  
+  
   /*-------------------- for generalized eigenvalue problem */
   pEVSL_SetGenEig(pevsl);
   /*-------------------- step 0: get eigenvalue bounds */
@@ -170,6 +176,7 @@ int main(int argc, char *argv[]) {
   tm = pEVSL_Wtime();
   pEVSL_LanDosG(pevsl, nvec, Mdeg, npts, xdos, ydos, &ecount, xintv);
   tm = pEVSL_Wtime() - tm;
+  fprintf(stdout, " estimated eig count in interval: %f \n", ecount);
   if (comm.group_rank == 0) {
     fprintf(fstats, " Time to build DOS (Lanczos dos) was : %10.2f  \n", tm);
     fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
