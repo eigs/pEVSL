@@ -144,8 +144,8 @@ int main(int argc, char *argv[]) {
   xintv[3] = lmax;
   /*-------------------- call kpmdos to get the DOS for dividing the spectrum*/
   /*-------------------- define kpmdos parameters */
-  Mdeg = 300;
   nvec = 60;
+  Mdeg = 50;
   mu = (double *) malloc((Mdeg+1)*sizeof(double));
   /*-------------------- call KPM DOS */
 #if 0
@@ -153,6 +153,7 @@ int main(int argc, char *argv[]) {
   ierr = pEVSL_Kpmdos(pevsl, Mdeg, 1, nvec, xintv, comm.ngroups, comm.group_id,
                       comm.comm_group_leader, mu, &ecount);
   tm = pEVSL_Wtime() - tm;
+  fprintf(stdout, " KPMDOS: estimated eig count in interval: %f \n", ecount);
   if (ierr) {
     printf("kpmdos error %d\n", ierr);
     return 1;
@@ -182,7 +183,7 @@ int main(int argc, char *argv[]) {
   pEVSL_LanDosG(pevsl, nvec, Mdeg, npts, xdos, ydos, &ecount, xintv,
                 comm.ngroups, comm.group_id, comm.comm_group_leader);
   tm = pEVSL_Wtime() - tm;
-  fprintf(stdout, " estimated eig count in interval: %f \n", ecount);
+  fprintf(stdout, " LANDOS: estimated eig count in interval: %f \n", ecount);
   if (comm.group_rank == 0) {
     fprintf(fstats, " Time to build DOS (Lanczos dos) was : %10.2f  \n", tm);
     fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
