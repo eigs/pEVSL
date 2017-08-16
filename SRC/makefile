@@ -8,8 +8,9 @@ INCLUDES += -I${MKLROOT}/include
 endif
 
 # Object files
-OBJS = cheblanNr.o chebpol.o kpmdos.o lantrbnd.o pevsl.o miscla.o parcsr.o \
-       parcsrmv.o parvec.o parvecs.o spmat.o stats.o spslicer.o utils.o vector.o \
+OBJS = cheblanNr.o chebpol.o kpmdos.o lantrbnd.o landos.o lspolapprox.o pevsl.o \
+       miscla.o parcsr.o parcsrmv.o parvec.o parvecs.o simpson.o spmat.o stats.o \
+       spslicer.o utils.o vector.o \
        ../FORTRAN/pevsl_f90.o
        
 LIB = ../libpevsl.a

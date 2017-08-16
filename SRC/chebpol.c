@@ -1,6 +1,20 @@
 #include "pevsl_int.h"
 
 /**
+ * @brief set default values for polparams struct.
+ **/
+void pEVSL_SetPolDef(pevsl_Polparams *pol) {
+  pol->max_deg = 5000;     // max degree allowed
+  pol->min_deg = 2;        // min allowed degree
+  pol->damping = 2;        // damping. 0 = no damping, 1 = Jackson, 2 = Lanczos
+  pol->thresh_ext = 0.20;  // threshold for accepting polynomial for end intervals 
+  pol->thresh_int = 0.8;   // threshold for accepting polynomial for interior intervals
+  pol->mu = NULL;
+  pol->deg = 0;            // degree =0 means determine optimal degree.
+  pol->intvtol = 1e-9;     // cut-off point of middle interval
+}
+
+/**
  * @brief Computes damping coefficient for cheb. expansions.
  *
  * @param damping == 0 --> no damping \n
@@ -308,20 +322,6 @@ int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
 }
 
 /**
- * @brief set default values for polparams struct.
- **/
-void pEVSL_SetPolDef(pevsl_Polparams *pol) {
-  pol->max_deg = 300;      // max degree allowed
-  pol->min_deg = 2;        // min allowed degree
-  pol->damping = 2;        // damping. 0 = no damping, 1 = Jackson, 2 = Lanczos
-  pol->thresh_ext = 0.50;  // threshold for accepting polynomial for end intervals 
-  pol->thresh_int = 0.8;   // threshold for accepting polynomial for interior
-                           // intervals
-  pol->mu = NULL;
-  pol-> deg = 0;           // degree =0 means determine optimal degree.
-}
-
-/**
  *
  * @brief Sets the values in pol
  *
@@ -363,7 +363,8 @@ int pEVSL_FindPol(double *intv, pevsl_Polparams *pol) {
   PEVSL_MALLOC(jac, max_deg+1, double);
   /*-------------------- A parameter for interval check */
   // double IntTol = 2*DBL_EPSILON; // If b*IntTol>1 accept [a b] extreme
-  double IntTol = 0.0005;
+  //double IntTol = 0.0005;
+  double IntTol = pol->intvtol;
   double aa, bb;
   aa = PEVSL_MAX(intv[0], intv[2]);  bb = PEVSL_MIN(intv[1], intv[3]);
   if (intv[0] < intv[2] || intv[1] > intv[3]) {
@@ -398,18 +399,21 @@ int pEVSL_FindPol(double *intv, pevsl_Polparams *pol) {
     //                      obtain bar values.
     nitv = 1;
     aa = -1.0;
-    gam = -1.0;               // set center for a
+    gam = -1.0;            // set center for a
+    pol->type = 1;
   } else if (bb + IntTol >= 1.0) {
     /*-------------------- right interval */
     thc = thb;
     nitv   = 1;
     bb = 1;
     gam = 1;               // set center for b 
+    pol->type = 2;
   } else {
     /*-------------------- middle interval */
     itv[0] = aa;
     itv[1] = bb;
     nitv = 2;
+    pol->type = 0;
   }
   /*-------------------- threshold for finding the best poly */
   if (nitv == 1) { 
@@ -474,7 +478,7 @@ void pEVSL_FreePol(pevsl_Polparams *pol) {
 }
 
 /**
- * @brief @b Computes y=P(A) y, where pn is a Cheb. polynomial expansion 
+ * @brief @b Computes y=P(A) v, where pn is a Cheb. polynomial expansion 
  *
  * @param pol Struct containing the paramenters and expansion coefficient of
  * the polynomail.
@@ -509,7 +513,7 @@ int pEVSL_ChebAv(pevsl_Data      *pevsl,
   pevsl_Parvec *tmp;
   /*-------------------- vk <- v; vkm1 <- zeros(n,1) */
   pEVSL_ParvecCopy(v, vk);
-  pEVSL_ParvecSetZero(vkm1);
+  /* pEVSL_ParvecSetZero(vkm1); */
   /*-------------------- special case: k == 0 */
   s = mu[0];
   pEVSL_ParvecCopy(vk, y);
@@ -533,7 +537,9 @@ int pEVSL_ChebAv(pevsl_Data      *pevsl,
 
     pEVSL_ParvecAxpy(-cc, vk, vkp1);
     pEVSL_ParvecScal(vkp1, t);
-    pEVSL_ParvecAxpy(-1.0, vkm1, vkp1);
+    if (k > 1) {
+      pEVSL_ParvecAxpy(-1.0, vkm1, vkp1);
+    }
     pEVSL_ParvecAxpy(s, vkp1, y);
     
     pevsl->stats->t_sth += pEVSL_Wtime() - ts;

@@ -358,25 +358,80 @@ void PEVSL_FORT(pevsl_free_chebiterb)(uintptr_t *chebf90) {
 
 
 /** @brief Fortran interface for SetBsol with ChebIterSol */
-void PEVSL_FORT(pevsl_setbsol_chebiter)(uintptr_t *pevslf90, int *type, void *data) {
+void PEVSL_FORT(pevsl_setbsol_chebiter)(uintptr_t *pevslf90, int *type, uintptr_t *chebf90) {
   /* cast pointer */
   pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  void *cheb = (void *) (*chebf90);
   
   if (*type == 1) {
-    pEVSL_SetBSol(pevsl, pEVSL_ChebIterSolv1, data);
+    pEVSL_SetBSol(pevsl, pEVSL_ChebIterSolv1, cheb);
   } else {
-    pEVSL_SetBSol(pevsl, pEVSL_ChebIterSolv2, data);
+    pEVSL_SetBSol(pevsl, pEVSL_ChebIterSolv2, cheb);
   }
 }
 
 
+/** @brief Fortran interface for computing L-S polynomial for B^{-1/2} */
+void PEVSL_FORT(pevsl_setup_lspolsqrt)(double *lmin, double *lmax, int *maxdeg, double *tol,
+                                       uintptr_t *parcsrf90, uintptr_t *lspolf90) {
+  /* cast pointer of the matrix */
+  pevsl_Parcsr *A = (pevsl_Parcsr *) (*parcsrf90);
+  void *lspol;
+  pEVSL_SetupLSPolSqrt(*maxdeg, *tol, *lmin, *lmax, A, &lspol);
+  
+  *lspolf90 = (uintptr_t) lspol;
+}
+
+/** @brief Fortran interface for pEVSL_LSPolSol */
+void PEVSL_FORT(pevsl_lspolsol)(double *b, double *x, uintptr_t *lspolf90) {
+  
+  /* cast pointer */
+  void *lspol = (void *) (*lspolf90);
+  pEVSL_LSPolSol(b, x, lspol); 
+}
+
+/** @brief Fortran interface for pEVSL_LSPolFree */
+void PEVSL_FORT(pevsl_free_lspol)(uintptr_t *lspolf90) {
+
+  /* cast pointer */
+  void *lspol = (void *) (*lspolf90);
+  
+  pEVSL_LSPolFree(lspol);
+}
 
 
+/** @brief Fortran interface for SetLTsol with LSPolSol */
+void PEVSL_FORT(pevsl_setltsol_lspol)(uintptr_t *pevslf90, uintptr_t *lspolf90) {
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  void *lspol = (void *) (*lspolf90);
+  
+  pEVSL_SetLTSol(pevsl, pEVSL_LSPolSol, lspol);
+}
 
 
+void PEVSL_FORT(pevsl_kpmdos_ecnt)(uintptr_t *pevslf90, int *Mdeg, int *damping, int *nvec,
+                                   double *intv, double *mu, double *ecnt) {
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  
+  pEVSL_Kpmdos(pevsl, *Mdeg, *damping, *nvec, intv, 1, 0, MPI_COMM_NULL, mu, ecnt);
+}
 
+void PEVSL_FORT(pevsl_landos_ecnt)(uintptr_t *pevslf90, int *nvec, int *msteps, int *npts,
+                                   double *intv, double *ecnt) {
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
 
+  double *xdos, *ydos;
+  PEVSL_MALLOC(xdos, *npts, double);
+  PEVSL_MALLOC(ydos, *npts, double);
+  
+  pEVSL_LanDosG(pevsl, *nvec, *msteps, *npts, xdos, ydos, ecnt, intv, 1, 0, MPI_COMM_NULL);
 
+  PEVSL_FREE(xdos);
+  PEVSL_FREE(ydos);
+}
 
 
 

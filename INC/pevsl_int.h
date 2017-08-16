@@ -25,6 +25,7 @@
 /* chebpol.c */
 int pEVSL_ChebAv(pevsl_Data *pevsl, pevsl_Polparams *pol, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_Parvec *w);
 int dampcf(int m, int damping, double *jac);
+int chebxPltd(int m, double *mu, int npts, double *xi, double *yi);
 
 /* miscla.c */
 int SymmTridEig(pevsl_Data *pevsl, double *eigVal, double *eigVec, int n, const double *diag, const double *sdiag);
@@ -39,6 +40,9 @@ void CGS_DGKS2(pevsl_Data *pevsl, int k, int i_max, pevsl_Parvecs *V, pevsl_Parv
 
 /* parcsrmv.c */
 void pEVSL_ParcsrMatvec0(double *x, double *y, void *data);
+
+/* simpson.c */
+void simpson(double* xi, double* yi, int npts);
 
 /* utils.c */
 int pEVSL_BinarySearchInterval(int *x, int n, int key);
@@ -157,7 +161,7 @@ static inline void pEVSL_SolveLT(pevsl_Data   *pevsl_data,
 
   double tms = pEVSL_Wtime();
   
-  pevsl_data->LTsol->func(x->data, y->data, pevsl_data->Bsol->data);
+  pevsl_data->LTsol->func(x->data, y->data, pevsl_data->LTsol->data);
   
   double tme = pEVSL_Wtime();
   pevsl_data->stats->t_svLT += tme - tms;

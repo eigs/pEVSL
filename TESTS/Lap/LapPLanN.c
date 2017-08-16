@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <mpi.h>
 #include "pevsl.h"
 #include "common.h"
@@ -8,6 +9,8 @@
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
+
+#define OUTPUT_LEN 32768
 
 int main(int argc, char *argv[]) {
 /*------------------------------------------------------------
@@ -35,6 +38,7 @@ int main(int argc, char *argv[]) {
   mkl_set_dynamic(1);
   mkl_set_num_threads(12);
 #endif
+  char *msg = NULL;
   /*-------------------- communicator struct, which contains all the communicators */
   CommInfo comm;
   pevsl_Parvec vinit;
@@ -60,7 +64,7 @@ int main(int argc, char *argv[]) {
   a  = 0.4;
   b  = 0.8;
   nslices = 4;
-  ngroups = 2;
+  ngroups = 3;
   /*-----------------------------------------------------------------------
    *-------------------- reset some default values from command line  
    *                     user input from command line */
@@ -91,11 +95,12 @@ int main(int argc, char *argv[]) {
   CommInfoCreate(&comm, MPI_COMM_WORLD, ngroups);
   /*-------------------- Group leader (group_rank == 0) creates output file */
   if (comm.group_rank == 0) {
+    /* output on screen */
+    PEVSL_CALLOC(msg, OUTPUT_LEN, char);
     char fname[1024];
     sprintf(fname, "OUT/LapPLanN_G%d.out", comm.group_id);
     if (!(fstats = fopen(fname,"w"))) {
-      printf(" failed in opening output file in OUT/\n");
-      fstats = stdout;
+      PEVSL_ABORT(MPI_COMM_WORLD, -2, " failed in opening output file in OUT/\n");
     }
     fprintf(fstats, " nx %d ny %d nz %d, nslices %d, a = %e b = %e\n", 
             nx, ny, nz, nslices, a, b);
@@ -118,10 +123,12 @@ int main(int argc, char *argv[]) {
   Mdeg = 300;
   nvec = 60;
   mu = (double *) malloc((Mdeg+1)*sizeof(double));
+#if 1
   tm = pEVSL_Wtime();
   ierr = pEVSL_Kpmdos(pevsl, Mdeg, 1, nvec, xintv, comm.ngroups, comm.group_id,
                       comm.comm_group_leader, mu, &ecount);
   tm = pEVSL_Wtime() - tm;
+  fprintf(stdout, " estimated eig count in interval: %f \n", ecount);
   if (ierr) {
     printf("kpmdos error %d\n", ierr);
     return 1;
@@ -136,12 +143,33 @@ int main(int argc, char *argv[]) {
   if (comm.group_rank == 0) {
     fprintf(fstats, " DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n", Mdeg, nvec, npts);
   }
-  ierr = pEVSL_Spslicer(sli, mu, Mdeg, xintv, nslices,  npts);
+  ierr = pEVSL_SpslicerKpm(sli, mu, Mdeg, xintv, nslices,  npts);
   /*-------------------- slicing done */
   if (ierr) {
     printf("spslicer error %d\n", ierr);
     return 1;
   }
+#else
+  int msteps = 40;
+  npts = 200;
+  double *xdos = (double *)calloc(npts, sizeof(double));
+  double *ydos = (double *)calloc(npts, sizeof(double));
+  tm = pEVSL_Wtime();
+  pEVSL_LanDosG(pevsl, nvec, msteps, npts, xdos, ydos, &ecount, xintv,
+                comm.ngroups, comm.group_id, comm.comm_group_leader);
+  tm = pEVSL_Wtime() - tm;
+  fprintf(stdout, " estimated eig count in interval: %f \n", ecount);
+  if (comm.group_rank == 0) {
+    fprintf(fstats, " Time to build DOS (Lanczos dos) was : %10.2f  \n", tm);
+    fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
+  }
+  /*-------------------- call Spslicer to slice the spectrum */
+  sli = (double *) malloc((nslices+1)*sizeof(double));
+  pEVSL_SpslicerLan(xdos, ydos, nslices, npts, sli);
+  PEVSL_FREE(xdos);
+  PEVSL_FREE(ydos);
+#endif
+
   if (comm.group_rank == 0) {
     fprintf(fstats, "====================  SLICES FOUND  ====================\n");
     for (j=0; j<nslices;j++) {
@@ -194,7 +222,7 @@ int main(int argc, char *argv[]) {
       fprintf(fstats, " ======================================================\n");
       fprintf(fstats, " subinterval %3d: [%.4e , %.4e]\n", sl, ai, bi);
       fprintf(fstats, " ======================================================\n");
-      fprintf(fstats, " polynomial deg %d, bar %e gam %e\n", pol.deg, pol.bar, pol.gam);
+      fprintf(fstats, " polynomial [type %d] deg %d, bar %e gam %e\n", pol.type, pol.deg, pol.bar, pol.gam);
     }
     //-------------------- then call ChenLanNr    
     ierr = pEVSL_ChebLanNr(pevsl, xintv, mlan, tol, &vinit, &pol, &nev2, &lam, &Y, &res, fstats);
@@ -213,14 +241,12 @@ int main(int argc, char *argv[]) {
       ExactEigLap3(nx, ny, nz, ai, bi, &nev_ex, &lam_ex);
       fprintf(fstats, " [Group %d]: number of eigenvalues: %d, found: %d\n", 
               comm.group_id, nev_ex, nev2);
-      PEVSL_SEQ_BEGIN(comm.comm_group_leader);
-      if (fstats != stdout) {
-        fprintf(stdout, " ======================================================\n");
-        fprintf(stdout, " subinterval %3d: [%.4e , %.4e]\n", sl, ai, bi);
-        fprintf(stdout, " [Group %d]: number of eigenvalues: %d, found: %d\n",
-                comm.group_id, nev_ex, nev2);
-      } 
-      PEVSL_SEQ_END(comm.comm_group_leader);
+
+      sprintf(msg+strlen(msg), " ======================================================\n");
+      sprintf(msg+strlen(msg), " subinterval %3d: [%.4e , %.4e]\n", sl, ai, bi);
+      sprintf(msg+strlen(msg), " [Group %d]: number of eigenvalues: %d, found: %d\n",
+              comm.group_id, nev_ex, nev2);
+
       /* print eigenvalues */
       fprintf(fstats, "                                   Eigenvalues in [a, b]\n");
       fprintf(fstats, "     Computed [%d]       ||Res||              Exact [%d]", nev2, nev_ex);
@@ -260,8 +286,18 @@ int main(int argc, char *argv[]) {
     /*--------------------- print stats */
     pEVSL_StatsPrint(pevsl, fstats);
   } /* for (sl=0 */
-  
+
+  /* group leaders print on screen in orders */
+  if (comm.group_rank == 0) {
+    PEVSL_SEQ_BEGIN(comm.comm_group_leader);
+    fprintf(stdout, "%s", msg);
+    PEVSL_SEQ_END(comm.comm_group_leader);
+  }
+
   /*--------------------- done */
+  if (msg) {
+    free(msg);
+  }
   if (fstats) {
     fclose(fstats);
   }

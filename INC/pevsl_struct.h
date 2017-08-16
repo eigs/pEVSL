@@ -150,10 +150,13 @@ typedef struct _pevsl_polparams {
   int damping;        /**< 0 = no damping, 1 = Jackson, 2 = Lanczos */
   double thresh_ext;  /**< threshold for accepting polynom. for end intervals */
   double thresh_int;  /**< threshold for interior intervals */
+  double intvtol;     /**< cut-off point of middle interval */
   /**@}*/
 
   /** @name output from find_pol */
   /**@{*/
+  int    type;       /**< type of the filter: 
+                          0: middle interval, 1: left interval, 2: right interval */
   double *mu;         /**< coefficients. allocation done by set_pol */
   double cc;          /**< center of interval - used by chebAv */
   double dd;          /**< half-width of interval - used by chebAv */
