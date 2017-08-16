@@ -55,7 +55,7 @@ void intChx(const int Mdeg, double *mu, const int npts, double *xi, double *yi) 
  *                of eigenvalues in the interval [a b] (input). 
  *
  *----------------------------------------------------------------------*/
-int pEVSL_Spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts) {
+int pEVSL_SpslicerKpm(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts) {
   int ls, ii, err=0;
   double  ctr, wid, aL, bL, target, aa, bb;
 

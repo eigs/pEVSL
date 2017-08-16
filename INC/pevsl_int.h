@@ -41,6 +41,9 @@ void CGS_DGKS2(pevsl_Data *pevsl, int k, int i_max, pevsl_Parvecs *V, pevsl_Parv
 /* parcsrmv.c */
 void pEVSL_ParcsrMatvec0(double *x, double *y, void *data);
 
+/* simpson.c */
+void simpson(double* xi, double* yi, int npts);
+
 /* utils.c */
 int pEVSL_BinarySearchInterval(int *x, int n, int key);
 

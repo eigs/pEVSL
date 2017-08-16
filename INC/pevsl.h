@@ -17,6 +17,13 @@ void pEVSL_FreePol(pevsl_Polparams *pol);
 int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *intv,
                  int ngroups, int groupid, MPI_Comm gl_comm, double *mu, double *ecnt);
 
+/* landos.c */
+int pEVSL_LanDosG(pevsl_Data *pevsl, const int nvec, const int msteps, int npts, 
+            double *xdos, double *ydos, 
+            double *neig, const double *const intv);
+
+void pEVSL_SpslicerLan(double* xi, double* yi, int n_int, int npts, double* sli);
+
 /* lantrbnd.c */
 int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol, 
                       pevsl_Parvec *vinit, int bndtype, double *lammin, 
@@ -122,7 +129,7 @@ void vecset(int n, double t, double *v);
 void sort_double(int n, double *v, int *ind);
 
 /* spslicer.c */
-int pEVSL_Spslicer(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts);
+int pEVSL_SpslicerKpm(double *sli, double *mu, int Mdeg, double *intv, int n_int, int npts);
 
 /* stats.c */
 void pEVSL_StatsReset(pevsl_Data *pevsl);
