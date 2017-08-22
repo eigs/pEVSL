@@ -33,10 +33,10 @@ void pEVSL_ParcsrMatvecCommBegin(pevsl_Parcsr *A, double *x) {
 void pEVSL_ParcsrMatvecCommEnd(pevsl_Parcsr *A) {
     int err;
     err = MPI_Waitall(A->comm_handle->num_proc_send_to, A->comm_handle->send_requests, \
-                A->comm_handle->send_status);
+                      A->comm_handle->send_status);
     PEVSL_CHKERR(err != MPI_SUCCESS);
     err = MPI_Waitall(A->comm_handle->num_proc_recv_from, A->comm_handle->recv_requests, \
-                A->comm_handle->recv_status);
+                      A->comm_handle->recv_status);
     PEVSL_CHKERR(err != MPI_SUCCESS);
 }
 

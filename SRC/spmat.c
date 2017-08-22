@@ -104,7 +104,14 @@ void dcsrgemv(char trans, int nrow, int ncol, double alp, double *a,
 
 // y = alp*A*x + bet*y
 int pEVSL_MatvecGen(double alp, pevsl_Csr *A, double *x, double bet, double *y) {
+
+#ifdef USE_MKL
+  char cN = 'N';
+  mkl_dcsrmv(&cN, &(A->nrows), &(A->ncols), &alp, "GXXCXX", A->a, A->ja, A->ia, 
+             A->ia+1, x, &bet, y);
+#else
   dcsrgemv('N', A->nrows, A->ncols, alp, A->a, A->ia, A->ja, x, bet, y);
+#endif
 
   return 0;
 }
