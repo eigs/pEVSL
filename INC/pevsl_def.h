@@ -19,18 +19,18 @@
 
 #define PI M_PI
 
-#ifdef PEVSL_DEBUG
-#define PEVSL_CHKERR(ierr) assert(!(ierr))
-#else
-#define PEVSL_CHKERR(ierr) 
-#endif
-
 #define PEVSL_ABORT(comm, errcode, msg) {\
     int pid; \
     MPI_Comm_rank(comm, &pid); \
     printf("PEVSL error (processor %d): %s \n", pid, msg);  \
     MPI_Abort(comm, errcode); \
 }
+
+#ifdef PEVSL_DEBUG
+#define PEVSL_CHKERR(ierr) if (ierr) { PEVSL_ABORT(MPI_COMM_WORLD, 999, "Assertion failed") }
+#else
+#define PEVSL_CHKERR(ierr) 
+#endif
 
 /* memory management, alloc and free */
 

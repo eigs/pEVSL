@@ -30,6 +30,8 @@ int ParcsrLaplace(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_col_starts, 
 
 int ParcsrLaplace2(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_starts, int *col_starts, MPI_Comm comm);
 
+int ParcsrReadMM(pevsl_Parcsr *A, const char *fn, int idxin, int *row_col_starts, MPI_Comm comm);
+
 int ExactEigLap3(int nx, int ny, int nz, double a, double b, int *m, double **vo);
 
 int RandElems(int n, int m, int *elem);

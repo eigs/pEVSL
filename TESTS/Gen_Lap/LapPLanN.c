@@ -26,11 +26,12 @@ int main(int argc, char *argv[]) {
   Non-restart Lanczos with polynomial filtering
 ------------------------------------------------------------*/
   int n, nx, ny, nz, i, j, nslices, npts, nvec, Mdeg, nev, 
-      ngroups, mlan, ev_int, sl, flg, ierr, np, rank;
+      ngroups, mlan, ev_int, sl, flg, ierr, np, rank, dostype;
   /* find the eigenvalues of A in the interval [a,b] */
   double a, b, lmax, lmin, ecount, tol, *sli, *mu, tm;
   double xintv[4];
   char *msg = NULL;
+  dostype = 0; /* 0: KPM, 1: Lanczos */ 
   /*-------------------- communicator struct, which contains all the communicators */
   CommInfo comm;
   pevsl_Parvec vinit;
@@ -64,7 +65,7 @@ int main(int argc, char *argv[]) {
    *                     user input from command line */
   flg = findarg("help", NA, NULL, argc, argv);
   if (flg && !rank) {
-    printf("Usage: ./test -nx [int] -ny [int] -nz [int] -nslices [int] -ngroups [int] -a [double] -b [double]\n");
+    printf("Usage: ./test -nx [int] -ny [int] -nz [int] -nslices [int] -ngroups [int] -a [double] -b [double] -dostype [0/1] \n");
     return 0;
   }
   flg = findarg("nx", INT, &nx, argc, argv);
@@ -74,6 +75,7 @@ int main(int argc, char *argv[]) {
   flg = findarg("b", DOUBLE, &b, argc, argv);
   flg = findarg("nslices", INT, &nslices, argc, argv);
   flg = findarg("ngroups", INT, &ngroups, argc, argv);
+  flg = findarg("dostype", INT, &dostype, argc, argv);
   /*-------------------- matrix size */
   n = nx * ny * nz;
   /*-------------------- stopping tol */
@@ -148,52 +150,58 @@ int main(int argc, char *argv[]) {
   Mdeg = 50;
   mu = (double *) malloc((Mdeg+1)*sizeof(double));
   /*-------------------- call KPM DOS */
-#if 0
-  tm = pEVSL_Wtime();
-  ierr = pEVSL_Kpmdos(pevsl, Mdeg, 1, nvec, xintv, comm.ngroups, comm.group_id,
-                      comm.comm_group_leader, mu, &ecount);
-  tm = pEVSL_Wtime() - tm;
-  fprintf(stdout, " KPMDOS: estimated eig count in interval: %f \n", ecount);
-  if (ierr) {
-    printf("kpmdos error %d\n", ierr);
-    return 1;
+  if (dostype == 0) {
+    tm = pEVSL_Wtime();
+    ierr = pEVSL_Kpmdos(pevsl, Mdeg, 1, nvec, xintv, comm.ngroups, comm.group_id,
+                        comm.comm_group_leader, mu, &ecount);
+    tm = pEVSL_Wtime() - tm;
+    if (comm.global_rank == 0) {
+      fprintf(stdout, " KPMDOS: estimated eig count in interval: %f \n", ecount);
+      fprintf(fstats, " KPMDOS: estimated eig count in interval: %f \n", ecount);
+    }
+    if (ierr) {
+      printf("kpmdos error %d\n", ierr);
+      return 1;
+    }
+    if (comm.group_rank == 0) {
+      fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n", tm);
+      fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
+    }
+    /*-------------------- call Spslicer to slice the spectrum */
+    npts = 10 * ecount;
+    sli = (double *) malloc((nslices+1)*sizeof(double));
+    if (comm.group_rank == 0) {
+      fprintf(fstats, " DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n", Mdeg, nvec, npts);
+    } 
+    ierr = pEVSL_SpslicerKpm(sli, mu, Mdeg, xintv, nslices,  npts);
+    /*-------------------- slicing done */
+    if (ierr) {
+      printf("spslicer error %d\n", ierr);
+      return 1;
+    }
+  } else {
+    Mdeg = 50;
+    npts = 200;
+    double *xdos = (double *)calloc(npts, sizeof(double));
+    double *ydos = (double *)calloc(npts, sizeof(double));
+    tm = pEVSL_Wtime();
+    pEVSL_LanDosG(pevsl, nvec, Mdeg, npts, xdos, ydos, &ecount, xintv,
+                  comm.ngroups, comm.group_id, comm.comm_group_leader);
+    tm = pEVSL_Wtime() - tm;
+    if (comm.global_rank == 0) {
+      fprintf(stdout, " LANDOS: estimated eig count in interval: %f \n", ecount);
+      fprintf(fstats, " LANDOS: estimated eig count in interval: %f \n", ecount);
+    }
+    if (comm.group_rank == 0) {
+      fprintf(fstats, " Time to build DOS (Lanczos dos) was : %10.2f  \n", tm);
+      fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
+    }
+    /*-------------------- call Spslicer to slice the spectrum */
+    sli = (double *) malloc((nslices+1)*sizeof(double));
+    pEVSL_SpslicerLan(xdos, ydos, nslices, npts, sli);
+    PEVSL_FREE(xdos);
+    PEVSL_FREE(ydos);
   }
-  if (comm.group_rank == 0) {
-    fprintf(fstats, " Time to build DOS (kpmdos) was : %10.2f  \n", tm);
-    fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
-  }
-  /*-------------------- call Spslicer to slice the spectrum */
-  npts = 10 * ecount;
-  sli = (double *) malloc((nslices+1)*sizeof(double));
-  if (comm.group_rank == 0) {
-    fprintf(fstats, " DOS parameters: Mdeg = %d, nvec = %d, npnts = %d\n", Mdeg, nvec, npts);
-  } 
-  ierr = pEVSL_SpslicerKpm(sli, mu, Mdeg, xintv, nslices,  npts);
-  /*-------------------- slicing done */
-  if (ierr) {
-    printf("spslicer error %d\n", ierr);
-    return 1;
-  }
-#else
-  Mdeg = 50;
-  npts = 200;
-  double *xdos = (double *)calloc(npts, sizeof(double));
-  double *ydos = (double *)calloc(npts, sizeof(double));
-  tm = pEVSL_Wtime();
-  pEVSL_LanDosG(pevsl, nvec, Mdeg, npts, xdos, ydos, &ecount, xintv,
-                comm.ngroups, comm.group_id, comm.comm_group_leader);
-  tm = pEVSL_Wtime() - tm;
-  fprintf(stdout, " LANDOS: estimated eig count in interval: %f \n", ecount);
-  if (comm.group_rank == 0) {
-    fprintf(fstats, " Time to build DOS (Lanczos dos) was : %10.2f  \n", tm);
-    fprintf(fstats, " estimated eig count in interval: %.15e \n", ecount);
-  }
-  /*-------------------- call Spslicer to slice the spectrum */
-  sli = (double *) malloc((nslices+1)*sizeof(double));
-  pEVSL_SpslicerLan(xdos, ydos, nslices, npts, sli);
-  PEVSL_FREE(xdos);
-  PEVSL_FREE(ydos);
-#endif
 
   if (comm.group_rank == 0) {
     fprintf(fstats, "====================  SLICES FOUND  ====================\n");
@@ -300,6 +308,9 @@ int main(int argc, char *argv[]) {
   }
 
   /*--------------------- done */
+  if (msg) {
+    free(msg);
+  }
   if (fstats) {
     fclose(fstats);
   }
