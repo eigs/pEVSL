@@ -434,7 +434,13 @@ void PEVSL_FORT(pevsl_landos_ecnt)(uintptr_t *pevslf90, int *nvec, int *msteps, 
 }
 
 
+void PEVSL_FORT(pevsl_set_sigmamult)(uintptr_t *pevslf90, double *mult) {
 
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+
+  pEVSL_SetSigmaMult(pevsl, *mult);
+}
 
 
 

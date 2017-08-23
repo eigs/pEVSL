@@ -305,7 +305,8 @@ typedef struct _pevsl_Data {
                                        hold the points of last computed results */
   double        *eval_computed;
   pevsl_Parvecs *evec_computed;
-  
+ 
+  double        sigma_mult; /** multiplier for sigma in LanDOS*/
 } pevsl_Data;
 
 #endif

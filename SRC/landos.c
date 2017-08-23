@@ -102,7 +102,7 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, int nvec, int msteps, int npts,
   const double kappa = 1.25;
   const int M = PEVSL_MIN(msteps, 30);
   const double H = (lM - lm) / (M - 1);
-  const double sigma = H / sqrt(8 * log(kappa));
+  const double sigma = H / sqrt(8 * log(kappa)) * pevsl->sigma_mult;
   const double sigma2 = 2 * sigma * sigma;
   /*-------------------- If gaussian small than tol ignore point. */
   const double tol = 1e-08;

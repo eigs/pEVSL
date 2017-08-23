@@ -48,6 +48,7 @@ int pEVSL_SetBSol     (pevsl_Data *pevsl_data, SVFunc func, void *data);
 int pEVSL_SetLTSol    (pevsl_Data *pevsl_data, SVFunc func, void *data);
 int pEVSL_SetStdEig   (pevsl_Data *pevsl_data);
 int pEVSL_SetGenEig   (pevsl_Data *pevsl_data);
+int pEVSL_SetSigmaMult(pevsl_Data *pevsl_data, double mult);
 
 /* parcsr.c */
 int  pEVSL_ParcsrCreate(int nrow, int ncol, int *row_starts, int *col_starts, 

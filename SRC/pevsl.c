@@ -20,6 +20,8 @@ int pEVSL_Start(MPI_Comm comm, pevsl_Data **data) {
   pevsl_data->Bsol    = NULL;
   pevsl_data->LTsol   = NULL;
 
+  pevsl_data->sigma_mult = 1.0;
+  
   /* Use MPI_COMM_WORLD rank as rand seed,
    * so each proc will have a different seed,
    * cf. parvec.c: pEVSL_ParvecRand */
@@ -41,6 +43,7 @@ int pEVSL_Start(MPI_Comm comm, pevsl_Data **data) {
  *
  * */
 int pEVSL_Finish(pevsl_Data *pevsl_data) {
+
   if (pevsl_data->Amv) {
     PEVSL_FREE(pevsl_data->Amv);
   }
@@ -67,6 +70,7 @@ int pEVSL_Finish(pevsl_Data *pevsl_data) {
  * 
  * */
 int pEVSL_SetAParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *A) {
+
   /* set N */
   pevsl_data->N = A->ncol_global;
   /* set n */
@@ -88,6 +92,7 @@ int pEVSL_SetAParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *A) {
  * 
  * */
 int pEVSL_SetBParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *B) {
+
   /* set N */
   pevsl_data->N = B->ncol_global;
   /* set n */
@@ -112,6 +117,7 @@ int pEVSL_SetBParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *B) {
  * @warning if nfirst < 0, nfirst = PEVSL_NOT_DEFINED
  * */
 int pEVSL_SetProbSizes(pevsl_Data *pevsl_data, int N, int n, int nfirst) {
+
   pevsl_data->N = N;
   pevsl_data->n = n;
   nfirst = nfirst < 0 ? PEVSL_NOT_DEFINED : nfirst;
@@ -125,6 +131,7 @@ int pEVSL_SetProbSizes(pevsl_Data *pevsl_data, int N, int n, int nfirst) {
  * Save them in pevsl_data
  * */
 int pEVSL_SetAMatvec(pevsl_Data *pevsl_data, MVFunc func, void *data) {
+
   if (!pevsl_data->Amv) {
     PEVSL_CALLOC(pevsl_data->Amv, 1, pevsl_Matvec);
   }
@@ -140,6 +147,7 @@ int pEVSL_SetAMatvec(pevsl_Data *pevsl_data, MVFunc func, void *data) {
  * Save them in pevsl_data
  * */
 int pEVSL_SetBMatvec(pevsl_Data *pevsl_data, MVFunc func, void *data) {
+
   if (!pevsl_data->Bmv) {
     PEVSL_CALLOC(pevsl_data->Bmv, 1, pevsl_Matvec);
   }
@@ -153,6 +161,7 @@ int pEVSL_SetBMatvec(pevsl_Data *pevsl_data, MVFunc func, void *data) {
  * @brief Set the solve routine and the associated data for B
  * */
 int pEVSL_SetBSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
+
   if (!pevsl_data->Bsol) {
     PEVSL_CALLOC(pevsl_data->Bsol, 1, pevsl_Bsol);
   }
@@ -166,6 +175,7 @@ int pEVSL_SetBSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
  * @brief Set the solve routine and the associated data for LT
  * */
 int pEVSL_SetLTSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
+  
   if (!pevsl_data->LTsol) {
     PEVSL_CALLOC(pevsl_data->LTsol, 1, pevsl_Ltsol);
   }
@@ -180,6 +190,7 @@ int pEVSL_SetLTSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
  * 
  * */
 int pEVSL_SetStdEig(pevsl_Data *pevsl_data) {
+  
   pevsl_data->ifGenEv = 0;
 
   return 0;
@@ -190,7 +201,16 @@ int pEVSL_SetStdEig(pevsl_Data *pevsl_data) {
  * 
  * */
 int pEVSL_SetGenEig(pevsl_Data *pevsl_data) {
+  
   pevsl_data->ifGenEv = 1;
+
+  return 0;
+}
+
+
+int pEVSL_SetSigmaMult(pevsl_Data *pevsl_data, double mult) {
+  
+  pevsl_data->sigma_mult = mult;
 
   return 0;
 }
