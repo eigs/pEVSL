@@ -23,4 +23,6 @@ void pEVSL_ChebIterFree(void *vdata);
 
 double* pEVSL_ChebIterGetRes(void *data);
 
+void pEVSL_ChebIterStatsPrint(void *data, FILE *fstats);
+
 #endif

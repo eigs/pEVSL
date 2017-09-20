@@ -117,6 +117,7 @@ int main(int argc, char *argv[]) {
     PEVSL_SEQ_END(comm.comm_group_leader);
   }
 
+  pEVSL_ChebIterStatsPrint(Cheb, stdout);
   pEVSL_ChebIterFree(Cheb);
 
   pEVSL_ParcsrFree(&A);

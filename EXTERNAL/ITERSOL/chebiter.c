@@ -27,7 +27,36 @@ typedef struct _Chebiter_Data {
 #endif
   /* communicator */
   MPI_Comm comm;
+  /* stats */
+  size_t n_chebmv;
+  double t_chebmv;
 } Chebiter_Data;
+
+/** 
+ * @brief Perform matrix-vector product y = A * x in Chebiter
+ * 
+ * */
+static inline void pEVSL_ChebMatvec(Chebiter_Data   *cheb_data, 
+                                    pevsl_Parvec    *x, 
+                                    pevsl_Parvec    *y) {
+
+  PEVSL_CHKERR(!cheb_data->mv);
+     
+  PEVSL_CHKERR(cheb_data->N != x->n_global);
+  PEVSL_CHKERR(cheb_data->n != x->n_local);
+  PEVSL_CHKERR(cheb_data->nfirst != x->n_first);
+  PEVSL_CHKERR(cheb_data->N != y->n_global);
+  PEVSL_CHKERR(cheb_data->n != y->n_local);
+  PEVSL_CHKERR(cheb_data->nfirst != y->n_first);
+
+  double tms = pEVSL_Wtime();
+
+  cheb_data->mv->func(x->data, y->data, cheb_data->mv->data);
+  
+  double tme = pEVSL_Wtime();
+  cheb_data->t_chebmv += tme - tms;
+  cheb_data->n_chebmv ++;
+}
 
 /** @brief Return the residuals in Chebyshev iterations
  *
@@ -56,6 +85,9 @@ int pEVSL_ChebIterSetup(double lmin, double lmax, int deg, pevsl_Parcsr *A,
   pEVSL_ParvecCreate(A->ncol_global, A->ncol_local, A->first_col, A->comm, w);
   pEVSL_ParvecDupl(w, r);
   pEVSL_ParvecDupl(w, p);
+
+  cheb->n_chebmv = 0;
+  cheb->t_chebmv = 0.0;
 
   /* save the solver settings */
   deg = PEVSL_MAX(deg, 0);
@@ -108,7 +140,7 @@ void pEVSL_ChebIterSolv1(double *db, double *dx, void *data) {
   int deg = Chebdata->deg;
   MPI_Comm comm = Chebdata->comm;
   /* matvec */
-  pevsl_Matvec *mv = Chebdata->mv;
+  //pevsl_Matvec *mv = Chebdata->mv;
 
   /* center and half width */
   d = (Chebdata->ub + Chebdata->lb) * 0.5;
@@ -131,7 +163,8 @@ void pEVSL_ChebIterSolv1(double *db, double *dx, void *data) {
   pEVSL_ParvecCopy(p, &x);
   pEVSL_ParvecScal(&x, alp);
   /* w = C * x */
-  mv->func(x.data, w->data, mv->data);
+  pEVSL_ChebMatvec(Chebdata, &x, w);
+  //mv->func(x.data, w->data, mv->data);
   /* r = b - w */
   pEVSL_ParvecCopy(&b, r);
   pEVSL_ParvecAxpy(-1.0, w, r);
@@ -150,7 +183,8 @@ void pEVSL_ChebIterSolv1(double *db, double *dx, void *data) {
     /* x = x + alp * p */
     pEVSL_ParvecAxpy(alp, p, &x);
     /* w = C * x */
-    mv->func(x.data, w->data, mv->data);
+    pEVSL_ChebMatvec(Chebdata, &x, w);
+    //mv->func(x.data, w->data, mv->data);
     /* r = b - w */
     pEVSL_ParvecCopy(&b, r);
     pEVSL_ParvecAxpy(-1.0, w, r);
@@ -189,7 +223,7 @@ void pEVSL_ChebIterSolv2(double *db, double *dx, void *data) {
   int deg = Chebdata->deg;
   MPI_Comm comm = Chebdata->comm;
   /* matvec */
-  pevsl_Matvec *mv = Chebdata->mv;
+  //pevsl_Matvec *mv = Chebdata->mv;
 
   /* wrap b and x into pevsl_Parvec */
   pEVSL_ParvecCreateShell(N, n, nfirst, comm, &b, db);
@@ -217,7 +251,8 @@ void pEVSL_ChebIterSolv2(double *db, double *dx, void *data) {
     /* x = x + d */
     pEVSL_ParvecAxpy(1.0, d, &x);
     /* w = C * d */
-    mv->func(d->data, w->data, mv->data);
+    //mv->func(d->data, w->data, mv->data);
+    pEVSL_ChebMatvec(Chebdata, d, w);
     /* r = r - w */
     pEVSL_ParvecAxpy(-1.0, w, r);
     /* rho1 = 1.0 / (2*sigma-rho) */
@@ -247,5 +282,27 @@ void pEVSL_ChebIterFree(void *vdata) {
   PEVSL_FREE(data->res);
 #endif
   PEVSL_FREE(vdata);
+}
+
+void pEVSL_ChebIterStatsPrint(void *data, FILE *fstats) {
+  
+  Chebiter_Data *cheb = (Chebiter_Data *) data;
+  
+  MPI_Comm comm = cheb->comm;
+  double t_chebmv;
+  unsigned long n_chebmv;
+  int rank;
+  
+  /* rank 0 prints */
+  MPI_Comm_rank(comm, &rank);
+  
+  MPI_Reduce(&cheb->t_chebmv,     &t_chebmv,     1, MPI_DOUBLE, MPI_MAX, 0, comm);
+  n_chebmv = cheb->n_chebmv;
+
+  if (rank == 0) {
+    fprintf(fstats, "= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =\n");
+    if (n_chebmv)  { fprintf(fstats, "   Matvec in ChebIter        :  %f (%8ld, avg %f)\n",  t_chebmv, n_chebmv, t_chebmv / n_chebmv); }
+    fprintf(fstats, "= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =\n");
+  }
 }
 
