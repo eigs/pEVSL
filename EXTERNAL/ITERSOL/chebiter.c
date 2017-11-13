@@ -257,7 +257,7 @@ void pEVSL_ChebIterSolv2(double *db, double *dx, void *data) {
     pEVSL_ParvecAxpy(-1.0, w, r);
     /* rho1 = 1.0 / (2*sigma-rho) */
     rho1 = 1.0 / (2.0*sigma - rho);
-    /* d = rho1*rho*d + 2*rho1/sigma*r */
+    /* d = rho1*rho*d + 2*rho1/delta*r */
     pEVSL_ParvecScal(d, rho1*rho);
     pEVSL_ParvecAxpy(2.0*rho1/delta, r, d);
     /* update rho */
