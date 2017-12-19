@@ -348,7 +348,7 @@ void PEVSL_FORT(pevsl_chebiter)(int *type, double *b, double *x, uintptr_t *cheb
 }
 
 /** @brief Fortran interface for ChebIterStatsPrint */
-void PEVSL_FORT(pevsl_chebiterbstatsprint)(uintptr_t *chebf90) {
+void PEVSL_FORT(pevsl_chebiterstatsprint)(uintptr_t *chebf90) {
 
   FILE *fstats = stdout;
   /* cast pointer */
