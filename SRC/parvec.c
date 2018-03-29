@@ -1,7 +1,18 @@
 #include "pevsl_int.h"
+/**
+ * @file parvec.c
+ * @brief Parallel vector related functions
+ */
+
 
 /*!
  * @brief Create a parallel vector struct without allocating memory for data 
+ * @param[in] nglobal Number of global elements
+ * @param[in] nlocal Number local elements
+ * @param[in] nfirst Index of first local element
+ * @param[in] comm Communicator
+ * @param[out] x Vector
+ * @param[in] data Data
  */
 void pEVSL_ParvecCreateShell(int nglobal, int nlocal, int nfirst, MPI_Comm comm, 
                              pevsl_Parvec *x, double *data) {
@@ -15,6 +26,11 @@ void pEVSL_ParvecCreateShell(int nglobal, int nlocal, int nfirst, MPI_Comm comm,
 
 /*!
  * @brief Create a parallel vector struct
+ * @param[in] nglobal Number of global elements
+ * @param[in] nlocal Number local elements
+ * @param[in] nfirst Index of first local element
+ * @param[in] comm Communicator
+ * @param[out] x Vector
  */
 void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm, 
                         pevsl_Parvec *x) {
@@ -25,6 +41,8 @@ void pEVSL_ParvecCreate(int nglobal, int nlocal, int nfirst, MPI_Comm comm,
 
 /*!
  * @brief Create a parallel vector struct
+ * @param[in] x Input vector
+ * @param[out] y Output vector
  */
 void pEVSL_ParvecDupl(pevsl_Parvec *x, pevsl_Parvec *y) {
 
@@ -42,6 +60,7 @@ void pEVSL_ParvecFree(pevsl_Parvec *x) {
 
 /*!
  * @brief generate a random parallel vector, each element in [-1,1]
+ * @param[in,out] x Vector
  */
 void pEVSL_ParvecRand(pevsl_Parvec *x) {
   int i;
@@ -52,9 +71,12 @@ void pEVSL_ParvecRand(pevsl_Parvec *x) {
   }
 }
 
-
 /*!
  * @brief generate a random parallel vector
+ * @warning This is generated in such a way that it is the same as the
+ * sequential vector with the same starting seed. NOT scalable, ONLY FOR DEBUG
+ *
+ * @param[in,out] x Vector
  */
 void pEVSL_ParvecRand2(pevsl_Parvec *x) {
   int i;
@@ -90,6 +112,14 @@ void pEVSL_ParvecRand2(pevsl_Parvec *x) {
 }
 
 
+
+/**
+ * @brief Parallel dot product
+ * @param[in] x Input vector
+ * @param[in] y Input vector
+ * @param[out] t dot product
+ * 
+ */
 void pEVSL_ParvecDot(pevsl_Parvec *x, pevsl_Parvec *y, double *t) {
   PEVSL_CHKERR(x->n_global != y->n_global);
   PEVSL_CHKERR(x->n_local != y->n_local);
@@ -100,6 +130,11 @@ void pEVSL_ParvecDot(pevsl_Parvec *x, pevsl_Parvec *y, double *t) {
   MPI_Allreduce(&tlocal, t, 1, MPI_DOUBLE, MPI_SUM, x->comm);
 }
 
+/**
+ * @brief Euclidean norm
+ * @param[in] x Input vector
+ * @param[out] t Euclidean norm
+ * */
 void pEVSL_ParvecNrm2(pevsl_Parvec *x, double *t) {
   double t2;
   pEVSL_ParvecDot(x, x, &t2);
@@ -107,6 +142,11 @@ void pEVSL_ParvecNrm2(pevsl_Parvec *x, double *t) {
 }
 
 // y := x
+/**
+ * @brief Copies x to y
+ * @param[in] x Input vector
+ * @param[out] y Output vector
+ */
 void pEVSL_ParvecCopy(pevsl_Parvec *x, pevsl_Parvec *y) {
   PEVSL_CHKERR(x->n_global != y->n_global);
   PEVSL_CHKERR(x->n_local != y->n_local);
@@ -115,6 +155,11 @@ void pEVSL_ParvecCopy(pevsl_Parvec *x, pevsl_Parvec *y) {
   DCOPY(&(x->n_local), x->data, &one, y->data, &one);
 }
 
+/**
+ * @brief Sums up each element of the vector
+ * @param[in] x Input vector
+ * @param[out] t Sum of elements
+ * */
 void pEVSL_ParvecSum(pevsl_Parvec *x, double *t) {
   double localsum = 0.0;
   int i;
@@ -124,6 +169,11 @@ void pEVSL_ParvecSum(pevsl_Parvec *x, double *t) {
   MPI_Allreduce(&localsum, t, 1, MPI_DOUBLE, MPI_SUM, x->comm);
 }
 
+/**
+ * @brief Scales vector
+ * @param[in,out] x Vector to scale
+ * @param[in] t scale
+ * */
 void pEVSL_ParvecScal(pevsl_Parvec *x, double t) {
   int one = 1;
   DSCAL(&(x->n_local), &t, x->data, &one);
@@ -138,15 +188,32 @@ void pEVSL_ParvecScal(pevsl_Parvec *x, double t) {
    }
    */
 
+/**
+ * @brief Sets all elements of a vector to a scalar
+ * @param[in, out] Vector to set to constant
+ * @param[in] t scalar to set vector to
+ * 
+ */
 void pEVSL_ParvecSetScalar(pevsl_Parvec *x, double t) {
   int one = 1, zero = 0;
   DCOPY(&(x->n_local), &t, &zero, x->data, &one);
 }
 
+/**
+ * @brief Sets a vector to 0
+ * @param[in,out] x Vector to set to 0
+ * */
 void pEVSL_ParvecSetZero(pevsl_Parvec *x) {
   memset(x->data, 0, x->n_local*sizeof(double));
 }
 
+/**
+ * @brief Parallel y=ax+y
+ * @param[in] a scalar
+ * @param[in] x input vector
+ * @param[in, out] y input and output vector
+ * 
+ */
 void pEVSL_ParvecAxpy(double a, pevsl_Parvec *x, pevsl_Parvec *y) {
   PEVSL_CHKERR(x->n_global != y->n_global);
   PEVSL_CHKERR(x->n_local != y->n_local);
@@ -156,6 +223,13 @@ void pEVSL_ParvecAxpy(double a, pevsl_Parvec *x, pevsl_Parvec *y) {
 }
 
 
+/**
+ * @brief Checks if two vectors are the same size
+ * @param[in] x Input vector
+ * @param[in] y Input vector
+ * @return 1 if same size, else 0
+ * 
+ */
 int pEVSL_ParvecSameSize(pevsl_Parvec *x, pevsl_Parvec *y) {
   if (x->n_global != y->n_global || x->n_local != y->n_local ||
       x->n_first != y->n_first) {
@@ -166,7 +240,8 @@ int pEVSL_ParvecSameSize(pevsl_Parvec *x, pevsl_Parvec *y) {
 }
 
 /** @brief print Parvec on comm (squential in comm) 
- *  @param fn: filename (if NULL, print it to stdout) */
+ * @param[in] x Input vector
+ *  @param[in] fn filename (if NULL, print it to stdout) */
 int pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn) {
   MPI_Comm comm = x->comm;
   /* if fn == NULL, print to stdout */
@@ -223,4 +298,3 @@ int pEVSL_ParvecWrite(pevsl_Parvec *x, const char *fn) {
    return 0;
    }
    */
-

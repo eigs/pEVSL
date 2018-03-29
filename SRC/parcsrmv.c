@@ -1,5 +1,16 @@
 #include "pevsl_int.h"
 
+/**
+ * @file parcsrmv.c
+ * @brief Parallel csr matrix vector products
+ */
+
+/**
+ * @brief Beginning function for matvecs 
+ * @note Internal use only, use pEVSL_ParcsrMatvec
+ * @param[in] A csr matrix
+ * @param[in] x vector
+ */
 void pEVSL_ParcsrMatvecCommBegin(pevsl_Parcsr *A, double *x) {
     int i;
 
@@ -30,6 +41,11 @@ void pEVSL_ParcsrMatvecCommBegin(pevsl_Parcsr *A, double *x) {
     }
 }
 
+/**
+ * @brief End function for matvecs 
+ * @note Internal use only, use pEVSL_ParcsrMatvec
+ * @param[in] A csr matrix
+ */
 void pEVSL_ParcsrMatvecCommEnd(pevsl_Parcsr *A) {
     int err;
     err = MPI_Waitall(A->comm_handle->num_proc_send_to, A->comm_handle->send_requests, \
@@ -40,7 +56,13 @@ void pEVSL_ParcsrMatvecCommEnd(pevsl_Parcsr *A) {
     PEVSL_CHKERR(err != MPI_SUCCESS);
 }
 
-/* @brief The most general form of ParcsrMatvec */
+/**
+ * @brief (internal) Matrix vector product
+ * @note Internal use only, use pEVSL_ParcsrMatvec
+ * @param[in] x Input vector
+ * @param[out] y output vector
+ * @param[in] data csr matrix
+ */
 void pEVSL_ParcsrMatvec0(double *x, double *y, void *data) {
     pevsl_Parcsr *A = (pevsl_Parcsr *) data;
      
@@ -53,6 +75,13 @@ void pEVSL_ParcsrMatvec0(double *x, double *y, void *data) {
     }
 }
 
+/**
+ * @brief Matrix vector product
+ * @note Internal use only, use pEVSL_ParcsrMatvec
+ * @param[in] A csr matrix
+ * @param[in] x Input vector
+ * @param[out] y output vector
+ */
 void pEVSL_ParcsrMatvec(pevsl_Parcsr *A, pevsl_Parvec *x, pevsl_Parvec *y) {
   PEVSL_CHKERR(A->nrow_global != y->n_global);
   PEVSL_CHKERR(A->ncol_global != x->n_global);

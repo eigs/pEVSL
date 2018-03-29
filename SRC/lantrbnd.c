@@ -3,13 +3,14 @@
 #define COMP_RES 0
 
 /**
- * @file lanTrbounds.c
+ * @file lantrbnd.c
  * @brief A more robust algorithm to give bounds of spectrum based on TR
  * Lanczos
  */
 /**
  * @brief Lanczos process for eigenvalue bounds [Thick restart version]
  *
+ * @param[in] pevsl      pEVSL data struct
  * @param[in] lanm      Dimension of Krylov subspace [restart dimension]
  * 
  * @param[in] maxit  max Num of outer Lanczos iterations (restarts) allowed -- 

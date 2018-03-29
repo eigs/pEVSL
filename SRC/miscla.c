@@ -3,14 +3,18 @@
 // They are wrappers of the LAPACK routine DSTEV() or sstev_()
 //============================================================================
 #include "pevsl_int.h"
+/**
+ * @file miscla.c
+ * @brief Miscellaneous la functions
+ * */
 
 /**----------------------------------------------------------------------- 
  *  @brief compute all eigenvalues and eigenvectors of a symmetric tridiagonal
  *  matrix  
- *  @param n                The  dimension of the symmetric tridiagonal  matrix
- *  @param diag[],sdiag[]   Define the symmetric tridiagonal  matrix:  the
- *          diagonal elements are diag[0,...,n-1]  in order and the subdiagonal
- *          elements are sdiag[0,...,n-2] in order  
+ *  @param[in] n                The  dimension of the symmetric tridiagonal  matrix
+ *  @param[in] diag   Define the symmetric tridiagonal  matrix:  the
+ *          diagonal elements are diag[0,...,n-1]  
+ *  @param[in] sdiag Subdiagonal elements
  *  @param[out] eigVal The output vector of length n containing all eigenvalues
  *          in ascending order 
  *  @param[out] eigVec The output n-by-n matrix with columns as eigenvectors,
@@ -63,8 +67,10 @@ int SymmTridEig(pevsl_Data *pevsl,
 /**----------------------------------------------------------------------- 
  *  @brief compute  eigenvalues and  eigenvectors of  a symmetric  tridiagonal
  *  matrix in a slice
- *  @param n The  dimension of  the  symmetric tridiagonal  matrix
- *  @param diag[],sdiag[]  define  the   symmetric  tridiagonal  matrix.  
+ *  @param[in] pevsl pEVSL data struct
+ *  @param[in] n The  dimension of  the  symmetric tridiagonal  matrix
+ *  @param[in] diag Diagonal elements
+ *  @param[in] sdiag Sub-diagonal elements
  *  @param[out] eigVal Total number of eigenvalues found.
  *  @param[out] eigVec The first M elements contain teh selected eigenvalues in
  *  ascending oredr
@@ -143,6 +149,12 @@ int SymmTridEigS(pevsl_Data *pevsl,
 
 /**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  *     @brief interface to   LAPACK SYMMETRIC EIGEN-SOLVER 
+ *     @param[in] n Size of problem
+ *     @param[in] A Matrix
+ *     @param[in] lda Leading dimension
+ *     @param[out] Q Eigenvectors
+ *     @param[in] ldq Leading dimension q
+ *     @param[out] lam Eigenvalues
  *- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 void SymEigenSolver(pevsl_Data *pevsl,
                     int n, double *A, int lda, double *Q, int ldq, double *lam) {
@@ -185,7 +197,14 @@ void SymEigenSolver(pevsl_Data *pevsl,
 
 
 /**
-  * @brief Classical GS reortho with Daniel, Gragg, Kaufman, Stewart test 
+ * @brief Classical GS reortho with Daniel, Gragg, Kaufman, Stewart test
+ * @param[in] n Number of rows in Q
+ * @param[in] k Number of cols in Q
+ * @param[in] i_max Number iterations
+ * @param[in] Q matrix
+ * @param[out] nrmv
+ * @param[out] v Output
+ * @param[out] w Output
  **/
 void CGS_DGKS(pevsl_Data *pevsl,
               int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v, 

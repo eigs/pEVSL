@@ -1,4 +1,8 @@
 #include "pevsl_int.h"
+/**
+ * @file spslicer.c
+ * @brief Spectrum slicing
+ */
 
 /**  
  * @brief Computes the integrals \f$\int_{xi[0]}^{xi[j]} p(t) dt\f$

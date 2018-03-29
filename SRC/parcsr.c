@@ -1,19 +1,23 @@
 #include "pevsl_int.h"
 
+/**
+ * @file parcsr.c
+ * @brief Functinos related to parallel csr structure
+ * */
 /*!
  * @brief create a parallel csr matrix struct
- * @param nrow: global number of rows
- * @param ncol: global number of columns
- * @param row_starts: array of length NP + 1, which contains the first row index of each rank. NP = size of comm
+ * @param[in] nrow: global number of rows
+ * @param[in] ncol: global number of columns
+ * @param[in] row_starts: array of length NP + 1, which contains the first row index of each rank. NP = size of comm
  *                    row_starts[NP] should = nrow
  *                    if NULL, it means row_starts are from the ``default'' 1D partitioning,
  *                    see pEVSL_Part1d in utils.c for details
- * @param col_starts: array of length NP + 1, which contains the first col index of each rank. NP = size of comm
+ * @param[in] col_starts: array of length NP + 1, which contains the first col index of each rank. NP = size of comm
  *                    col_starts[NP] should = ncol
  *                    if NULL, it means col_starts are from the ``default'' 1D partitioning,
  *                    see pEVSL_Part1d in utils.c for details
- * @param A: parallel csr matrix
- * @param comm: MPI communicator, the communicator that this matrix will reside on 
+ * @param[out] A: parallel csr matrix
+ * @param[in] comm: MPI communicator, the communicator that this matrix will reside on 
  *
  * On return, A will not have any data but only information of sizes and row/col_starts
  * */
@@ -58,10 +62,10 @@ int pEVSL_ParcsrCreate(int nrow, int ncol, int *row_starts, int *col_starts, pev
   return 0;
 }
 
-/*! Construct a parcsr matrix from csr matrices. 
+/*! @brief Construct a parcsr matrix from csr matrices. 
  *  Each rank needs to provide its corresponding chunk of rows in a csr matrix
- *  @param Ai: input the CSR matrix
- *  @param  A: output the parallel CSR matrix
+ *  @param[in] Ai: input the CSR matrix
+ *  @param[out]  A: output the parallel CSR matrix
  */
 int pEVSL_ParcsrSetup(pevsl_Csr *Ai, pevsl_Parcsr *A) {
   int i,j,k1,k2,c1,c2,nnz_Ai,nnz_diag,nnz_offd,ncol_offd,*work;
@@ -303,12 +307,16 @@ void pEVSL_ParcsrFree(pevsl_Parcsr *A) {
   PEVSL_FREE(A->col_map_offd);
 }
 
-/* extract the local matrix from Parcsr
+/**
+ * @brief extract the local matrix from Parcsr
  * local matrix of size m_local x N_global
  * Row indices: LOCAL, Col indices: GLOBAL
- * coo: local matrix in coo format  
- * csr: local matrix in csr format
- * stype: 'L' or 'l', only return the "global" lower triangular portion 
+ *
+ * @param[in] A Input matrix
+ * @param[in] inx if matrix is 1 based
+ * @param[out] coo local matrix in coo format  
+ * @param[out] csr local matrix in csr format
+ * @param[in] stype 'L' or 'l', only return the "global" lower triangular portion 
  *        'U' or 'u', only return the "global" upper triangular portion 
  *        others    ,      return the "entire" local matrix 
  * */
@@ -396,6 +404,11 @@ int pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int idx, pevsl_Coo *coo,
   return 0;
 }
 
+/**
+ * @brief Returns number of GLOBAL non zeroes in A
+ * @param[in] A Input matrix
+ * @return number of GLOBAL non zeros
+ * */
 int pEVSL_ParcsrNnz(pevsl_Parcsr *A) {
   int nnz_global, nnz_local;
   pevsl_Csr *Ad = A->diag;
@@ -406,6 +419,11 @@ int pEVSL_ParcsrNnz(pevsl_Parcsr *A) {
   return nnz_global;
 }
 
+/**
+ * @brief Returns number of LOCAL non zeroes in A
+ * @param[in] A Input matrix
+ * @return number of LOCAL non zeroes
+ * */
 int pEVSL_ParcsrLocalNnz(pevsl_Parcsr *A) {
   pevsl_Csr *Ad = A->diag;
   pevsl_Csr *Ao = A->offd;

@@ -13,6 +13,7 @@
 /* -----------------------------------------------------------------------
  *  @brief Chebyshev polynomial filtering Lanczos process [NON-restarted version]
  *
+ *  @param[in] pevsl  pEVSL data struct
  *  @param[in] intv     An array of length 4 \n
  *          [intv[0], intv[1]] is the interval of desired eigenvalues \n
  *          [intv[2], intv[3]] is the global interval of all eigenvalues \n

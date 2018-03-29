@@ -1,7 +1,13 @@
 #include "pevsl_int.h"
 
 /**
+ * @file pevsl.c
+ * @brief pEVSL interface functions
+ */
+/**
  * @brief Initialize pEVSL  
+ * @param[in] comm MPI comm
+ * @param[out] data pevsl data struct
  *
  * */
 int pEVSL_Start(MPI_Comm comm, pevsl_Data **data) {
@@ -40,6 +46,7 @@ int pEVSL_Start(MPI_Comm comm, pevsl_Data **data) {
 
 /**
  * @brief Finish pEVSL
+ * @param[in,out] pevsl pEVSL data struct
  *
  * */
 int pEVSL_Finish(pevsl_Data *pevsl_data) {
@@ -67,6 +74,8 @@ int pEVSL_Finish(pevsl_Data *pevsl_data) {
 
 /** 
  * @brief Set the matrix A as Parcsr
+ * @param[in,out] pevsl_data pevsl data struct
+ * @param[in] A Matrix
  * 
  * */
 int pEVSL_SetAParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *A) {
@@ -89,6 +98,8 @@ int pEVSL_SetAParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *A) {
 
 /**
  * @brief Set the B matrix as Parcsr
+ * @param[in,out] pevsl_data pevsl data struct
+ * @param[in] B Matrix
  * 
  * */
 int pEVSL_SetBParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *B) {
@@ -111,9 +122,10 @@ int pEVSL_SetBParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *B) {
 
 /**
  * @brief Set problem sizes
- * @param N global size
- * @param n local size
- * @param nfirst first row/col
+ * @param[in,out] pevsl_data pevsl data struct
+ * @param[in] N global size
+ * @param[in] n local size
+ * @param[in] nfirst first row/col
  * @warning if nfirst < 0, nfirst = PEVSL_NOT_DEFINED
  * */
 int pEVSL_SetProbSizes(pevsl_Data *pevsl_data, int N, int n, int nfirst) {
@@ -129,6 +141,9 @@ int pEVSL_SetProbSizes(pevsl_Data *pevsl_data, int N, int n, int nfirst) {
 /**
  * @brief Set the user-input matvec routine and the associated data for A.
  * Save them in pevsl_data
+ * @param[in, out] pevsl_data pEVSL data struct
+ * @param[in] func Matrix vector function
+ * @param[in] data data required for matvec
  * */
 int pEVSL_SetAMatvec(pevsl_Data *pevsl_data, MVFunc func, void *data) {
 
@@ -145,6 +160,9 @@ int pEVSL_SetAMatvec(pevsl_Data *pevsl_data, MVFunc func, void *data) {
 /**
  * @brief Set the user-input matvec routine and the associated data for B.
  * Save them in pevsl_data
+ * @param[in, out] pevsl_data pEVSL data struct
+ * @param[in] func Matrix vector function
+ * @param[in] data data required for matvec
  * */
 int pEVSL_SetBMatvec(pevsl_Data *pevsl_data, MVFunc func, void *data) {
 
@@ -159,6 +177,9 @@ int pEVSL_SetBMatvec(pevsl_Data *pevsl_data, MVFunc func, void *data) {
 
 /**
  * @brief Set the solve routine and the associated data for B
+ * @param[in, out] pevsl_data pEVSL data structure
+ * @param[in] func Function for BSol
+ * @param[in] data Data required for func
  * */
 int pEVSL_SetBSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
 
@@ -173,6 +194,9 @@ int pEVSL_SetBSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
 
 /**
  * @brief Set the solve routine and the associated data for LT
+ * @param[in, out] pevsl_data pEVSL data structure
+ * @param[in] func Function for LTSol
+ * @param[in] data Data required for func
  * */
 int pEVSL_SetLTSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
   
@@ -187,7 +211,7 @@ int pEVSL_SetLTSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
 
 /**
  * @brief Set the problem to standard eigenvalue problem
- * 
+ * @param[in, out] pevsl_data pEVSL data struct
  * */
 int pEVSL_SetStdEig(pevsl_Data *pevsl_data) {
   
@@ -198,6 +222,7 @@ int pEVSL_SetStdEig(pevsl_Data *pevsl_data) {
 
 /**
  * @brief Set the problem to generalized eigenvalue problem
+ * @param[in, out] pevsl_data pEVSL data struct
  * 
  * */
 int pEVSL_SetGenEig(pevsl_Data *pevsl_data) {

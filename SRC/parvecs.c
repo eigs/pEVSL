@@ -1,7 +1,19 @@
 #include "pevsl_int.h"
+/**
+ * @file parvecs.c
+ * @brief Parallel multi-vector related functions
+ */
 
 /*!
  * @brief Create a parallel multi-vector struct without allocating memory for data 
+ * @param[in] nglobal Number of global elements
+ * @param[in] nvec number of vecs
+ * @param[in] id id
+ * @param[in] nlocal Number local elements
+ * @param[in] nfirst Index of first local element
+ * @param[in] comm Communicator
+ * @param[out] x Vectors
+ * @param[in] data Data
  */
 void pEVSL_ParvecsCreateShell(int nglobal, int nvecs, int ld, int nlocal, int nfirst, 
                               MPI_Comm comm, pevsl_Parvecs *x, double *data) {
@@ -17,6 +29,13 @@ void pEVSL_ParvecsCreateShell(int nglobal, int nvecs, int ld, int nlocal, int nf
 
 /*!
  * @brief Create a parallel multi-vector struct
+ * @param[in] nglobal Number of global elements
+ * @param[in] nvecs Number of vectors
+ * @param[in] nvecs id
+ * @param[in] nlocal Number local elements
+ * @param[in] nfirst Index of first local element
+ * @param[in] comm Communicator
+ * @param[out] x Vectors
  */
 void pEVSL_ParvecsCreate(int nglobal, int nvecs, int ld, int nlocal, int nfirst,
                          MPI_Comm comm, pevsl_Parvecs *x) {
@@ -30,6 +49,10 @@ void pEVSL_ParvecsCreate(int nglobal, int nvecs, int ld, int nlocal, int nfirst,
 
 /*!
  * @brief Creates multi-vectors of the same type as an existing vector
+ * @param[in] x input vector
+ * @param[in] nvecs Number of vectors
+ * @param[in] id id
+ * @param[in] y output vectors
  */
 void pEVSL_ParvecsDuplParvec(pevsl_Parvec *x, int nvecs, int ld, pevsl_Parvecs *y) {
 
@@ -46,6 +69,9 @@ void pEVSL_ParvecsFree(pevsl_Parvecs *x) {
 
 /*!
  * @brief enables access vector i of a Parvecs as a Parvec 
+ * @param[in] X input vectors
+ * @param[in] i Requested element
+ * @param[out] x The ith vector of X
  */
 void pEVSL_ParvecsGetParvecShell(pevsl_Parvecs *X, int i, pevsl_Parvec *x) {
 
@@ -57,6 +83,12 @@ void pEVSL_ParvecsGetParvecShell(pevsl_Parvecs *X, int i, pevsl_Parvec *x) {
 /*!
  * @brief Perform GEMV with a Parvecs and an double array to get a Parvec
  * y = alp * A(:,0:nvecs-1) * x + bet * y
+ * @param[in] alp alp
+ * @param[in] A input vectors
+ * @param[in] nvecs Number of vectors
+ * @param[in] x input vector (double array)
+ * @param[in] bet bet
+ * @param[out] y Output vector
  */
 void pEVSL_ParvecsGemv(double alp, pevsl_Parvecs *A, int nvecs, double *x, 
                        double bet, pevsl_Parvec *y) {
@@ -73,6 +105,14 @@ void pEVSL_ParvecsGemv(double alp, pevsl_Parvecs *A, int nvecs, double *x,
  * y = alp * A(:,0:nvecs-1)^T * x + bet * y
  * y is the same array stored on every proc
  * w is the workspace of size 2*nvecs
+ * @param[in] alp alp
+ * @param[in] A A
+ * @param[in] nvecs Number of vectors
+ * @param[in] x input vector
+ * @param[in] bet bet
+ * @param[in, out] y
+ *
+ * @param[in, out] w work vector
  */
 void pEVSL_ParvecsGemtvWithWspace(double alp, pevsl_Parvecs *A, int nvecs, pevsl_Parvec *x, 
                                   double bet, double *y, double *w) {
@@ -96,6 +136,18 @@ void pEVSL_ParvecsGemtvWithWspace(double alp, pevsl_Parvecs *A, int nvecs, pevsl
 }
 
 
+/*!
+ * @brief Perform GEMV with the transpose of a Parvecs and a Parvec
+ * y = alp * A(:,0:nvecs-1)^T * x + bet * y
+ * y is the same array stored on every proc
+ * w is the workspace of size 2*nvecs
+ * @param[in] alp alp
+ * @param[in] A A
+ * @param[in] nvecs Number of vectors
+ * @param[in] x input vector
+ * @param[in] bet bet
+ * @param[in, out] y
+ */
 void pEVSL_ParvecsGemtv(double alp, pevsl_Parvecs *A, int nvecs, pevsl_Parvec *x, 
                         double bet, double *y) {
   PEVSL_CHKERR(A->n_global != x->n_global);

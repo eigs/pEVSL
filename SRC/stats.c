@@ -1,5 +1,15 @@
 #include "pevsl_int.h"
 
+/**
+ * @file stats.c
+ * @brief Used to track various statistics (time taken by various
+ * operations).
+ */
+/** 
+ * @brief Prints out stats
+ * @param[in] pevsl pevsl data struct
+ * @param[in] fstats FILE to print to
+ */
 void pEVSL_StatsPrint(pevsl_Data *pevsl, FILE *fstats) {
   pevsl_Stat *stats = pevsl->stats;
   MPI_Comm comm = pevsl->comm;
@@ -92,6 +102,10 @@ void pEVSL_StatsPrint(pevsl_Data *pevsl, FILE *fstats) {
   }
 }
 
+/**
+ * @brief Resets stats
+ * @param[in, out] pevsl data struct
+ */
 void pEVSL_StatsReset(pevsl_Data *pevsl) {
   pevsl_Stat *stats = pevsl->stats;
   memset(stats, 0, sizeof(pevsl_Stat));

@@ -1,5 +1,17 @@
 #include "pevsl_int.h"
 
+/**
+ * @file vector.c
+ * @brief Vector related functions
+ * */
+/**
+ * Linearly partitions an interval (linspace in Matlab)
+ * @param[in] left end of interval
+ * @param[in] right end of interval
+ * @param[in] num Number of points
+ * @param[out] arr Linearly spaced points
+ * 
+ */
 void linspace(double a, double b, int num, double *arr) {
   double h;
   h = num == 1 ? 0 : (b-a)/(num-1);
@@ -12,12 +24,24 @@ void linspace(double a, double b, int num, double *arr) {
   }
 }
 
+/**
+ * Sets all elements of v to t
+ * @param[in] n Number of elements
+ * @param[in] t Value which elements should be set to
+ * @param[out] v Vector to set
+ * */
 void vecset(int n, double t, double *v) {
   int i;
   for (i=0; i<n; i++) 
     v[i] = t; 
 }
 
+/** 
+ * @brief Compares a,b as doubles
+ * @param[in] a First value
+ * @param[in] b Second value
+ * @return -1 if b>a, 0 if a==b, 1 otherwise
+ * */
 int compare1(const void *a, const void *b) {
   double *aa = (double*) a;
   double *bb = (double*) b;
@@ -33,6 +57,13 @@ typedef struct _doubleint {
   int i;
   double d;
 } doubleint;
+
+/** 
+ * @brief Compares the doubles of a,b as double/int pairs
+ * @param[in] a First value
+ * @param[in] b Second value
+ * @return -1 if b>a, 0 if a==b, 1 otherwise
+ * */
 int compare2(const void *a, const void *b) {
   const doubleint *aa = (doubleint*) a;
   const doubleint *bb = (doubleint*) b;
@@ -44,6 +75,13 @@ int compare2(const void *a, const void *b) {
     return 1;
   }
 }
+/** 
+ * @brief Sorts a vector, and potentially indices
+ * @param[in] n Number of elements
+ * @param[in, out] v Vector to sort
+ * @param[in, out] ind Indices to sort
+ *
+ * */
 void sort_double(int n, double *v, int *ind) {
   /* if sorting indices are not wanted */
   if (ind == NULL) {

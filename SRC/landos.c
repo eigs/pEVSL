@@ -1,7 +1,7 @@
 #include "pevsl_int.h"
 
 /**
- * @file landos.c
+ * @file SRC/landos.c
  * @brief Function to use Lanczos method for approximating DOS for the
  * generalized eigenvalue problem.
  */
@@ -11,20 +11,23 @@
  *    Computes the density of states (DOS, or spectral density) using Lanczos
  *    algorithm for the generalized eigenvalue problem.
  *
+ *    @param[in] pevsl pEVSL data strcut 
  *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] npts number of sample points used for the DOS curve
- *    @param[in] *intv Stores the the intervals of interest
+ *    @param[in] intv Stores the intervals of interest
  *      intv[0:1] = [a b] = interval where DOS is to be computed
  *      intv[2:3] = [lambda_min, lambda_max] \\
  *
- *    @param[out] *xdos Length-npts long vector, x-coordinate points for
+ *    @param[out] xdos Length-npts long vector, x-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
- *    @param[out] *ydos Length-npts long vector, y-coordinate points for
+ *    @param[out] ydos Length-npts long vector, y-coordinate points for
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
  *    @param[out] neig  estimated number of eigenvalues
+ *
+ *
  *
  *    @note This works for both the standard and generalized eigenvalue
  *    problems.
@@ -309,7 +312,7 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, int nvec, int msteps, int npts,
 
 /**----------------------------------------------------------------------
  *
- *    Interval partitioner based for Lanczos DOS output
+ *    @brief Interval partitioner based for Lanczos DOS output
  *
  *    @param[in] xi coordinates of interval [a b]
  *    @param[in] yi yi[k] = integral of the does from a to xi[k]

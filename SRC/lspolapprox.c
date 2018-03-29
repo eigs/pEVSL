@@ -1,6 +1,10 @@
 #include "pevsl_int.h"
 
-/*
+/** 
+ * @file lspolapprox.c
+ * @brief Least squares polynomial approximation to a matrix function
+ * */
+/**
  * Define a struct for L-S polynomial approximation to a matrix function
  */
 typedef struct _LSPol_Data {
@@ -154,6 +158,13 @@ double isqrt(const double a) { return 1.0 / sqrt(a); }
 
 /** @brief
  * Initalize LSPol_Data: use L-S polynomial to approximate a function 'ffun'
+ * @param[in] max_deg max degree
+ * @param[in] tol tolerance
+ * @param[in] lmin left bound of interval of desired eigenvalue
+ * @param[in] lmax right bound of interval of desired eigenvalue
+ * @param[in] B csr matrix
+ * @param[in] ffun function to approximate
+ * @param[in,out] vdata data output
  */
 void pEVSL_SetupLSPol(int max_deg, double tol, double lmin, double lmax, 
                       pevsl_Parcsr *B, double (*ffun)(double), void **vdata) {
@@ -184,6 +195,12 @@ void pEVSL_SetupLSPol(int max_deg, double tol, double lmin, double lmax,
 
 /** @brief
  * Initialize the member of LSPol_Data struct for solving B^{-1}
+ * @param[in] max_deg max degree
+ * @param[in] tol tolerance
+ * @param[in] lmin left bound of interval of desired eigenvalue
+ * @param[in] lmax right bound of interval of desired eigenvalue
+ * @param[in] B csr matrix
+ * @param[in,out] vdata data output
  */
 void pEVSL_SetupLSPolRec(int max_deg, double tol, double lmin, double lmax, 
                          pevsl_Parcsr *B, void **vdata) {
@@ -192,6 +209,12 @@ void pEVSL_SetupLSPolRec(int max_deg, double tol, double lmin, double lmax,
 
 /** @brief
  * Initialize the member of LSPol_Data struct for solving B^{-1/2}
+ * @param[in] max_deg max degree
+ * @param[in] tol tolerance
+ * @param[in] lmin left bound of interval of desired eigenvalue
+ * @param[in] lmax right bound of interval of desired eigenvalue
+ * @param[in] B csr matrix
+ * @param[in,out] vdata data output
  */
 void pEVSL_SetupLSPolSqrt(int max_deg, double tol, double lmin, double lmax, 
                           pevsl_Parcsr *B, void **vdata) {
@@ -263,6 +286,8 @@ static inline int pnav(double *mu, const int m, const double cc, const double dd
 
 /** @brief
  * Solve function for LSPol_Data
+ * @param[in] db Input vector
+ * @param[out] dx output vector
  */
 void pEVSL_LSPolSol(double *db, double *dx, void *data) {
   LSPol_Data *pol = (LSPol_Data *) data;
