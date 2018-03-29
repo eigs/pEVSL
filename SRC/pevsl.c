@@ -5,7 +5,7 @@
  * @brief pEVSL interface functions
  */
 /**
- * @brief Initialize pEVSL  
+ * @brief Initialize pEVSL
  * @param[in] comm MPI comm
  * @param[out] data pevsl data struct
  *
@@ -27,7 +27,7 @@ int pEVSL_Start(MPI_Comm comm, pevsl_Data **data) {
   pevsl_data->LTsol   = NULL;
 
   pevsl_data->sigma_mult = 1.0;
-  
+
   /* Use MPI_COMM_WORLD rank as rand seed,
    * so each proc will have a different seed,
    * cf. parvec.c: pEVSL_ParvecRand */
@@ -72,11 +72,11 @@ int pEVSL_Finish(pevsl_Data *pevsl_data) {
   return 0;
 }
 
-/** 
+/**
  * @brief Set the matrix A as Parcsr
  * @param[in,out] pevsl_data pevsl data struct
  * @param[in] A Matrix
- * 
+ *
  * */
 int pEVSL_SetAParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *A) {
 
@@ -92,7 +92,7 @@ int pEVSL_SetAParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *A) {
   }
   pevsl_data->Amv->func = pEVSL_ParcsrMatvec0;
   pevsl_data->Amv->data = (void *) A;
-  
+
   return 0;
 }
 
@@ -100,7 +100,7 @@ int pEVSL_SetAParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *A) {
  * @brief Set the B matrix as Parcsr
  * @param[in,out] pevsl_data pevsl data struct
  * @param[in] B Matrix
- * 
+ *
  * */
 int pEVSL_SetBParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *B) {
 
@@ -116,7 +116,7 @@ int pEVSL_SetBParcsr(pevsl_Data *pevsl_data, pevsl_Parcsr *B) {
   }
   pevsl_data->Bmv->func = pEVSL_ParcsrMatvec0;
   pevsl_data->Bmv->data = (void *) B;
-  
+
   return 0;
 }
 
@@ -152,7 +152,7 @@ int pEVSL_SetAMatvec(pevsl_Data *pevsl_data, MVFunc func, void *data) {
   }
   pevsl_data->Amv->func = func;
   pevsl_data->Amv->data = data;
-  
+
   return 0;
 }
 
@@ -171,7 +171,7 @@ int pEVSL_SetBMatvec(pevsl_Data *pevsl_data, MVFunc func, void *data) {
   }
   pevsl_data->Bmv->func = func;
   pevsl_data->Bmv->data = data;
-  
+
   return 0;
 }
 
@@ -199,7 +199,7 @@ int pEVSL_SetBSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
  * @param[in] data Data required for func
  * */
 int pEVSL_SetLTSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
-  
+
   if (!pevsl_data->LTsol) {
     PEVSL_CALLOC(pevsl_data->LTsol, 1, pevsl_Ltsol);
   }
@@ -214,7 +214,7 @@ int pEVSL_SetLTSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
  * @param[in, out] pevsl_data pEVSL data struct
  * */
 int pEVSL_SetStdEig(pevsl_Data *pevsl_data) {
-  
+
   pevsl_data->ifGenEv = 0;
 
   return 0;
@@ -223,10 +223,10 @@ int pEVSL_SetStdEig(pevsl_Data *pevsl_data) {
 /**
  * @brief Set the problem to generalized eigenvalue problem
  * @param[in, out] pevsl_data pEVSL data struct
- * 
+ *
  * */
 int pEVSL_SetGenEig(pevsl_Data *pevsl_data) {
-  
+
   pevsl_data->ifGenEv = 1;
 
   return 0;
@@ -234,7 +234,7 @@ int pEVSL_SetGenEig(pevsl_Data *pevsl_data) {
 
 
 int pEVSL_SetSigmaMult(pevsl_Data *pevsl_data, double mult) {
-  
+
   pevsl_data->sigma_mult = mult;
 
   return 0;

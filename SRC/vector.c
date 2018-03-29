@@ -10,7 +10,7 @@
  * @param[in] right end of interval
  * @param[in] num Number of points
  * @param[out] arr Linearly spaced points
- * 
+ *
  */
 void linspace(double a, double b, int num, double *arr) {
   double h;
@@ -32,11 +32,11 @@ void linspace(double a, double b, int num, double *arr) {
  * */
 void vecset(int n, double t, double *v) {
   int i;
-  for (i=0; i<n; i++) 
-    v[i] = t; 
+  for (i=0; i<n; i++)
+    v[i] = t;
 }
 
-/** 
+/**
  * @brief Compares a,b as doubles
  * @param[in] a First value
  * @param[in] b Second value
@@ -58,7 +58,7 @@ typedef struct _doubleint {
   double d;
 } doubleint;
 
-/** 
+/**
  * @brief Compares the doubles of a,b as double/int pairs
  * @param[in] a First value
  * @param[in] b Second value
@@ -75,7 +75,7 @@ int compare2(const void *a, const void *b) {
     return 1;
   }
 }
-/** 
+/**
  * @brief Sorts a vector, and potentially indices
  * @param[in] n Number of elements
  * @param[in, out] v Vector to sort

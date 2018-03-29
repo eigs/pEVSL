@@ -8,15 +8,15 @@
  * @brief Miscellaneous la functions
  * */
 
-/**----------------------------------------------------------------------- 
+/**-----------------------------------------------------------------------
  *  @brief compute all eigenvalues and eigenvectors of a symmetric tridiagonal
- *  matrix  
+ *  matrix
  *  @param[in] n                The  dimension of the symmetric tridiagonal  matrix
  *  @param[in] diag   Define the symmetric tridiagonal  matrix:  the
- *          diagonal elements are diag[0,...,n-1]  
+ *          diagonal elements are diag[0,...,n-1]
  *  @param[in] sdiag Subdiagonal elements
  *  @param[out] eigVal The output vector of length n containing all eigenvalues
- *          in ascending order 
+ *          in ascending order
  *  @param[out] eigVec The output n-by-n matrix with columns as eigenvectors,
  *          in the order as elements in eigVal. If NULL, then no eigenvector
  *          will be computed
@@ -26,12 +26,12 @@
  * --------------------------------------------------------------------- */
 
 int SymmTridEig(pevsl_Data *pevsl,
-                double *eigVal, double *eigVec, int n, 
+                double *eigVal, double *eigVec, int n,
                 const double *diag, const double *sdiag) {
 
   double tms = pEVSL_Wtime();
   // compute eigenvalues and eigenvectors or eigvalues only
-  char jobz = eigVec ? 'V' : 'N'; 
+  char jobz = eigVec ? 'V' : 'N';
   int nn = n;
   int ldz = n;
   int info;  // output flag
@@ -56,7 +56,7 @@ int SymmTridEig(pevsl_Data *pevsl,
   if (info) {
     printf("DSTEV ERROR: INFO %d\n", info);
   }
-    
+
   double tme = pEVSL_Wtime();
   pevsl->stats->t_eig += tme - tms;
 
@@ -64,7 +64,7 @@ int SymmTridEig(pevsl_Data *pevsl,
   return info;
 }
 
-/**----------------------------------------------------------------------- 
+/**-----------------------------------------------------------------------
  *  @brief compute  eigenvalues and  eigenvectors of  a symmetric  tridiagonal
  *  matrix in a slice
  *  @param[in] pevsl pEVSL data struct
@@ -88,15 +88,15 @@ int SymmTridEig(pevsl_Data *pevsl,
 int SymmTridEigS(pevsl_Data *pevsl,
                  double *eigVal, double *eigVec, int n, double vl, double vu,
                  int *nevO, const double *diag, const double *sdiag) {
-  
+
   double tms = pEVSL_Wtime();
   char jobz = 'V';  // compute eigenvalues and eigenvectors
   char range = 'V'; // compute eigenvalues in an interval
 
   // this does not use mwlapack for mex files
-  int info;  
+  int info;
   //int idum = 0;
-  //-------------------- isuppz not needed  
+  //-------------------- isuppz not needed
   int *isuppz;
   PEVSL_MALLOC(isuppz, 2*n, int);
   //-------------------- real work array
@@ -109,7 +109,7 @@ int SymmTridEigS(pevsl_Data *pevsl,
   PEVSL_CALLOC(iwork, liwork, int);
   //-------------------- copy diagonal + subdiagonal elements
   //                     to alp and bet
-  double *alp; 
+  double *alp;
   double *bet;
   PEVSL_MALLOC(bet, n, double);
   PEVSL_MALLOC(alp, n, double);
@@ -125,8 +125,8 @@ int SymmTridEigS(pevsl_Data *pevsl,
   double t0 = vl;
   double t1 = vu;
 
-  DSTEMR(&jobz, &range, &n, alp, bet, &t0, &t1, NULL, NULL, nevO, 
-         eigVal, eigVec, &n, &n, isuppz, &tryrac, work, &lwork, 
+  DSTEMR(&jobz, &range, &n, alp, bet, &t0, &t1, NULL, NULL, nevO,
+         eigVal, eigVec, &n, &n, isuppz, &tryrac, work, &lwork,
          iwork, &liwork, &info);
 
   if (info) {
@@ -139,16 +139,16 @@ int SymmTridEigS(pevsl_Data *pevsl,
   PEVSL_FREE(work);
   PEVSL_FREE(iwork);
   PEVSL_FREE(isuppz);
-  
+
   double tme = pEVSL_Wtime();
   pevsl->stats->t_eig += tme - tms;
-  
+
   return info;
 }
 
 
 /**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- *     @brief interface to   LAPACK SYMMETRIC EIGEN-SOLVER 
+ *     @brief interface to   LAPACK SYMMETRIC EIGEN-SOLVER
  *     @param[in] n Size of problem
  *     @param[in] A Matrix
  *     @param[in] lda Leading dimension
@@ -158,7 +158,7 @@ int SymmTridEigS(pevsl_Data *pevsl,
  *- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 void SymEigenSolver(pevsl_Data *pevsl,
                     int n, double *A, int lda, double *Q, int ldq, double *lam) {
-  
+
   double tms = pEVSL_Wtime();
   /* compute eigenvalues/vectors of A that n x n, symmetric
    * eigenvalues saved in lam: the eigenvalues in ascending order
@@ -190,7 +190,7 @@ void SymEigenSolver(pevsl_Data *pevsl,
     exit(0);
   }
   PEVSL_FREE(work);
-  
+
   double tme = pEVSL_Wtime();
   pevsl->stats->t_eig += tme - tms;
 }
@@ -207,12 +207,12 @@ void SymEigenSolver(pevsl_Data *pevsl,
  * @param[out] w Output
  **/
 void CGS_DGKS(pevsl_Data *pevsl,
-              int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v, 
+              int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v,
               double *nrmv, double *w) {
 
 
   double tms = pEVSL_Wtime();
-  
+
   double eta = 1.0 / sqrt(2.0);
   double old_nrm, new_nrm;
   int i;
@@ -245,9 +245,9 @@ void CGS_DGKS(pevsl_Data *pevsl,
 void CGS_DGKS2(pevsl_Data *pevsl,
                int k, int i_max, pevsl_Parvecs *V, pevsl_Parvecs *Z, pevsl_Parvec *v,
                double *w) {
-  
+
   double tms = pEVSL_Wtime();
-  
+
   int i;
   for (i=0; i<i_max; i++) {
     /* w = Z^T * v */

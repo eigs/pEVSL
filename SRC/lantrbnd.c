@@ -12,10 +12,10 @@
  *
  * @param[in] pevsl      pEVSL data struct
  * @param[in] lanm      Dimension of Krylov subspace [restart dimension]
- * 
- * @param[in] maxit  max Num of outer Lanczos iterations (restarts) allowed -- 
+ *
+ * @param[in] maxit  max Num of outer Lanczos iterations (restarts) allowed --
  *         Each restart may or use the full lanm lanczos steps or fewer.
- * 
+ *
  * @param[in] tol       tolerance for convergence
  * @param[in] vinit     initial  vector for Lanczos -- [optional]
  * @param[in] bndtype   Type of bound >1 for kato-temple, otherwise
@@ -25,10 +25,10 @@
  * @param[out] lammax   Upper bound of the spectrum
  * @param[out] fstats File stream which stats are printed to
  *
- * @return Returns 0 on success 
+ * @return Returns 0 on success
  *
  **/
-int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol, 
+int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
                       pevsl_Parvec *vinit, int bndtype,
                       double *lammin, double *lammax, FILE *fstats) {
 
@@ -40,9 +40,9 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
   if (fstats == NULL) {
     do_print = 0;
   }
-  MPI_Comm comm = pevsl->comm; 
+  MPI_Comm comm = pevsl->comm;
   /*-------------------- MPI rank in comm */
-  MPI_Comm_rank(comm, &rank);  
+  MPI_Comm_rank(comm, &rank);
   /* size of the matrix */
   int N;
   N = pevsl->N;
@@ -56,14 +56,14 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
   size_t lanm1_l = lanm1;
   /*--------------------   some constants frequently used */
   int i;
-  /*-----------------------------------------------------------------------* 
-   * *thick restarted* Lanczos step 
+  /*-----------------------------------------------------------------------*
+   * *thick restarted* Lanczos step
    *-----------------------------------------------------------------------*/
   if (do_print) {
     fprintf(fstats, " LanTR for bounds: dim %d, maxits %d\n", lanm, maxit);
   }
-  /*--------------------- the min number of steps to be performed for 
-   *                      each innter loop, must be >= 1 - if not, 
+  /*--------------------- the min number of steps to be performed for
+   *                      each innter loop, must be >= 1 - if not,
    *                      it means that the Krylov dim is too small */
   int min_inner_step = 5;
   /*-------------------- it = number of Lanczos steps */
@@ -102,7 +102,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
   double s[3];
   /*-------------------- alloc some work space */
   double *warr;
-  PEVSL_MALLOC(warr, 3*lanm, double);  
+  PEVSL_MALLOC(warr, 3*lanm, double);
   /*-------------------- copy initial vector to V(:,1) */
   pevsl_Parvec parvec[5];
   pevsl_Parvec *v    = &parvec[0];
@@ -140,7 +140,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
     double beta = 0.0;
     /*  start with V(:,k) */
     int k = trlen > 0 ? trlen + 1 : 0;
-    /* ! add a test if dimension exceeds (m+1) 
+    /* ! add a test if dimension exceeds (m+1)
      * (trlen + 1) + min_inner_step <= lanm + 1 */
     if (k+min_inner_step > lanm1) {
       pEVSL_fprintf0(rank, stderr, "Krylov dim too small for this problem. Try a larger dim\n");
@@ -193,14 +193,14 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
         pEVSL_ParvecRand(vnew);
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-          CGS_DGKS2(pevsl, k, NGS_MAX, V, Z, vnew, warr);          
+          CGS_DGKS2(pevsl, k, NGS_MAX, V, Z, vnew, warr);
           pEVSL_MatvecB(pevsl, vnew, znew);
           pEVSL_ParvecDot(vnew, znew, &beta);
-          beta = sqrt(beta);         
+          beta = sqrt(beta);
           double ibeta = 1.0 / beta;
           pEVSL_ParvecScal(vnew, ibeta);
           pEVSL_ParvecScal(znew, ibeta);
-          beta = 0.0;            
+          beta = 0.0;
         } else {
           /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
           /*   beta = norm(w) */
@@ -222,7 +222,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
       T[k*lanm1_l+k1] = beta;
     } /* if (trlen > 0) */
     /*-------------------- Done with TR step. Rest of Lanczos step */
-    /*-------------------- regardless of trlen, *(k+1)* is the current 
+    /*-------------------- regardless of trlen, *(k+1)* is the current
      *                     number of Lanczos vectors in V */
     /*-------------------- pointer to the previous Lanczos vector */
     if (k > 0) {
@@ -283,18 +283,18 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
         pEVSL_ParvecRand(vnew);
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
-          CGS_DGKS2(pevsl, k, NGS_MAX, V, Z, vnew, warr);          
+          CGS_DGKS2(pevsl, k, NGS_MAX, V, Z, vnew, warr);
           pEVSL_MatvecB(pevsl, vnew, znew);
           pEVSL_ParvecDot(vnew, znew, &beta);
-          beta = sqrt(beta); 
+          beta = sqrt(beta);
           double ibeta = 1.0 / beta;
           pEVSL_ParvecScal(vnew, ibeta);
           pEVSL_ParvecScal(znew, ibeta);
-          beta = 0.0;            
+          beta = 0.0;
         } else {
           /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
           /*   beta = norm(w) */
-          CGS_DGKS(pevsl, k, NGS_MAX, V, vnew, &beta, warr);          
+          CGS_DGKS(pevsl, k, NGS_MAX, V, vnew, &beta, warr);
           double ibeta = 1.0 / beta;
           pEVSL_ParvecScal(vnew, ibeta);
           beta = 0.0;
@@ -319,7 +319,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
 
     /*-------------------- Rval is in ascending order */
     /*-------------------- Rval[0] is smallest, Rval[k-1] is largest */
-    /*-------------------- special vector for TR that is the bottom row of 
+    /*-------------------- special vector for TR that is the bottom row of
                            eigenvectors of Tm */
     s[0] = beta * EvecT[k-1];
     s[1] = beta * EvecT[(k-1)*lanm1_l+(k-1)];
@@ -335,8 +335,8 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
     }
     lmin = Rval[0]   - t1;
     lmax = Rval[k-1] + t2;
-    /*---------------------- Compute two Ritz vectors: 
-     *                       Rvec(:,1) = V(:,1:k) * EvecT(:,1) 
+    /*---------------------- Compute two Ritz vectors:
+     *                       Rvec(:,1) = V(:,1:k) * EvecT(:,1)
      *                       Rvec(:,end) = V(:,1:k) * EvecT(:,end) */
     pEVSL_ParvecsGemv(1.0, V, k, EvecT, 0.0, Rvec);
     pEVSL_ParvecsGemv(1.0, V, k, EvecT+(k-1)*lanm1_l, 0.0, Rvec+1);
@@ -361,7 +361,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
 #if COMP_RES
 #else
     if (do_print) {
-      pEVSL_fprintf0(rank, fstats,"it %4d, k %3d: ritz %.15e %.15e, t1,t2 %e %e, res %.15e %.15e\n", 
+      pEVSL_fprintf0(rank, fstats,"it %4d, k %3d: ritz %.15e %.15e, t1,t2 %e %e, res %.15e %.15e\n",
                     it, k, Rval[0], Rval[1], t1, t2, fabs(s[0]), fabs(s[1]));
     }
 #endif
@@ -403,6 +403,6 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
 
   double tme = pEVSL_Wtime();
   pevsl->stats->t_eigbounds += tme - tms;
-  
+
   return 0;
 }

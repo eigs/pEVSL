@@ -13,7 +13,7 @@ int compareInt(const void * a, const void * b) {
     return ( *(int*)a - *(int*)b );
 }
 
-/** 
+/**
  * @brief Compares a,b as doubles
  * @param[in] a First value
  * @param[in] b Second value
@@ -31,7 +31,7 @@ int compareDouble(const void *a, const void *b) {
   }
 }
 
-/** 
+/**
  * @brief Compares the doubles of a,b as double/int pairs
  * @param[in] a First value
  * @param[in] b Second value
@@ -49,7 +49,7 @@ int compareDoubleInt(const void *a, const void *b) {
   }
 }
 
-/** 
+/**
  * @brief Sorts a vector of ints, and potentially indices
  * @param[in] n Number of elements
  * @param[in, out] x Vector to sort
@@ -59,7 +59,7 @@ void pEVSL_SortInt(int *x, int n) {
     qsort(x, n, sizeof(int), compareInt);
 }
 
-/** 
+/**
  * @brief Sorts a vector, and potentially indices
  * @param[in] n Number of elements
  * @param[in, out] v Vector to sort
@@ -93,7 +93,7 @@ void pEVSL_SortDouble(int n, double *v, int *ind) {
  * @param[in] right end of interval
  * @param[in] num Number of points
  * @param[out] arr Linearly spaced points
- * 
+ *
  */
 void pEVSL_LinSpace(double a, double b, int num, double *arr) {
   double h;
@@ -151,10 +151,10 @@ void pEVSL_Part1d(int len, int pnum, int *idx, int *j1, int *j2, int job) {
  *  @param[in] x vector
  *  @param[in] n number of elements
  *  @param[in] key key
- *  @return 
+ *  @return
  *  if found return its position
  *  if not found, return -1
- */  
+ */
 int pEVSL_BinarySearch(int *x, int n, int key) {
     int *p = bsearch(&key, x, n, sizeof(int), compareInt);
     if (p) {
@@ -164,17 +164,17 @@ int pEVSL_BinarySearch(int *x, int n, int key) {
         return -1;
     }
 }
-/*! search an element in a sorted array, of length n, 
+/*! search an element in a sorted array, of length n,
  *  that represents intervals
  *  [x0, x1), [x1, x2), [x2, x3),...,[x_{n-2}, x_{n-1})
  *  @param[in] x vector
  *  @param[in] n number of elements
  *  @param[in] key key
- *  @return 
+ *  @return
  *  if x_{i} <= key < x_{i+1}, return i
  *  if key < x_{0}, return -1
- *  if x_{n-1} <= key return n-1 
- */  
+ *  if x_{n-1} <= key return n-1
+ */
 int pEVSL_BinarySearchInterval(int *x, int n, int key) {
   if (key < x[0]) {
     return -1;
@@ -205,8 +205,8 @@ int pEVSL_BinarySearchInterval(int *x, int n, int key) {
  */
 void pEVSL_Vecset(int n, double t, double *v) {
   int i;
-  for (i=0; i<n; i++) 
-    v[i] = t; 
+  for (i=0; i<n; i++)
+    v[i] = t;
 }
 
 

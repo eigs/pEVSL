@@ -5,7 +5,7 @@
  * @brief Used to track various statistics (time taken by various
  * operations).
  */
-/** 
+/**
  * @brief Prints out stats
  * @param[in] pevsl pevsl data struct
  * @param[in] fstats FILE to print to
@@ -14,7 +14,7 @@ void pEVSL_StatsPrint(pevsl_Data *pevsl, FILE *fstats) {
   pevsl_Stat *stats = pevsl->stats;
   MPI_Comm comm = pevsl->comm;
   /* time, max */
-  double t_setBsv, t_setASigBsv, t_eigbounds, t_dos, t_iter, t_mvA, t_mvB, t_svB, 
+  double t_setBsv, t_setASigBsv, t_eigbounds, t_dos, t_iter, t_mvA, t_mvB, t_svB,
          t_svLT, t_svASigB, t_reorth, t_eig, t_blas, t_ritz, t_polAv, t_ratAv, t_sth;
 
   MPI_Reduce(&stats->t_setBsv,     &t_setBsv,     1, MPI_DOUBLE, MPI_MAX, 0, comm);

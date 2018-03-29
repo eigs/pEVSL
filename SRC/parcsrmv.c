@@ -6,7 +6,7 @@
  */
 
 /**
- * @brief Beginning function for matvecs 
+ * @brief Beginning function for matvecs
  * @note Internal use only, use pEVSL_ParcsrMatvec
  * @param[in] A csr matrix
  * @param[in] x vector
@@ -42,7 +42,7 @@ void pEVSL_ParcsrMatvecCommBegin(pevsl_Parcsr *A, double *x) {
 }
 
 /**
- * @brief End function for matvecs 
+ * @brief End function for matvecs
  * @note Internal use only, use pEVSL_ParcsrMatvec
  * @param[in] A csr matrix
  */
@@ -65,7 +65,7 @@ void pEVSL_ParcsrMatvecCommEnd(pevsl_Parcsr *A) {
  */
 void pEVSL_ParcsrMatvec0(double *x, double *y, void *data) {
     pevsl_Parcsr *A = (pevsl_Parcsr *) data;
-     
+
     pEVSL_ParcsrMatvecCommBegin(A, x);
     // overlapping computations with communications
     pEVSL_Matvec(A->diag, x, y);

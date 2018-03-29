@@ -122,9 +122,9 @@ int pEVSL_CsrToCoo(pevsl_Csr *csr, int cooidx, pevsl_Coo *coo) {
  * @param[in] bet bet
  * @param[in] x Input vector
  * @param[in,out] y y
- * 
+ *
  */
-void dcsrgemv(char trans, int nrow, int ncol, double alp, double *a, 
+void dcsrgemv(char trans, int nrow, int ncol, double alp, double *a,
               int *ia, int *ja, double *x, double bet, double *y) {
   int i,j;
   if (trans == 'N') {
@@ -135,7 +135,7 @@ void dcsrgemv(char trans, int nrow, int ncol, double alp, double *a,
       }
       y[i] = bet*y[i] + alp*r;
     }
-  } else {  
+  } else {
     for (i=0; i<ncol; i++) {
       y[i] *= bet;
     }
@@ -160,7 +160,7 @@ int pEVSL_MatvecGen(double alp, pevsl_Csr *A, double *x, double bet, double *y) 
 
 #ifdef USE_MKL
   char cN = 'N';
-  mkl_dcsrmv(&cN, &(A->nrows), &(A->ncols), &alp, "GXXCXX", A->a, A->ja, A->ia, 
+  mkl_dcsrmv(&cN, &(A->nrows), &(A->ncols), &alp, "GXXCXX", A->a, A->ja, A->ia,
              A->ia+1, x, &bet, y);
 #else
   dcsrgemv('N', A->nrows, A->ncols, alp, A->a, A->ia, A->ja, x, bet, y);
@@ -179,12 +179,12 @@ int pEVSL_MatvecGen(double alp, pevsl_Csr *A, double *x, double bet, double *y) 
  * @param[in] ja Column indices
  * @param[in] x Input vector
  * @param[out] y Output vector
- * 
+ *
  */
-void dcsrmv(char trans, int nrow, int ncol, double *a, 
+void dcsrmv(char trans, int nrow, int ncol, double *a,
             int *ia, int *ja, double *x, double *y) {
   int i,j;
-  if (trans == 'N') {  
+  if (trans == 'N') {
     for (i=0; i<nrow; i++) {
       double r = 0.0;
       for (j=ia[i]; j<ia[i+1]; j++) {
@@ -192,7 +192,7 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
       }
       y[i] = r;
     }
-  } else {  
+  } else {
     for (i=0; i<ncol; i++) {
       y[i] = 0;
     }
@@ -210,7 +210,7 @@ void dcsrmv(char trans, int nrow, int ncol, double *a,
  * @param[in] A A
  * @param[in] x x
  * @param[out] y y
- * 
+ *
  */
 int pEVSL_Matvec(pevsl_Csr *A, double *x, double *y) {
 
@@ -218,7 +218,7 @@ int pEVSL_Matvec(pevsl_Csr *A, double *x, double *y) {
   char cN = 'N';
   /*
   double alp = 1.0, bet = 0.0;
-  mkl_dcsrmv(&cN, &(A->nrows), &(A->ncols), &alp, "GXXCXX", 
+  mkl_dcsrmv(&cN, &(A->nrows), &(A->ncols), &alp, "GXXCXX",
              A->a, A->ja, A->ia, A->ia+1, x, &bet, y);
   */
   mkl_cspblas_dcsrgemv(&cN, &A->nrows, A->a, A->ia, A->ja, x, y);
@@ -239,10 +239,10 @@ int pEVSL_Matvec(pevsl_Csr *A, double *x, double *y) {
  * @param[in] job flag
  * @param[in] a Values of input matrix
  * @param[in] ia Input row pointers
- * @param[in] ja Input column indices 
+ * @param[in] ja Input column indices
  * @param[out] ao Output values
  * @param[out] iao Output row pointers
- * @param[out] jao Output column indices 
+ * @param[out] jao Output column indices
  */
 void csrcsc(int OUTINDEX, int nrow, int ncol, int job,
             double *a, int *ja, int *ia,
@@ -279,7 +279,7 @@ void csrcsc(int OUTINDEX, int nrow, int ncol, int job,
 }
 
 /**
- * @brief  Sort each row of a csr by increasing column 
+ * @brief  Sort each row of a csr by increasing column
  * order
  * By double transposition
  * @param[in] A Matrix to sort

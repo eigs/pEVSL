@@ -1,6 +1,6 @@
 #include "pevsl_int.h"
 
-/** 
+/**
  * @file lspolapprox.c
  * @brief Least squares polynomial approximation to a matrix function
  * */
@@ -145,13 +145,13 @@ int pEVSL_FindLSPol(double (*ffun)(double), LSPol_Data *pol) {
   return 0;
 }
 
-/** 
+/**
  *  @file lspolapprox.c
  *  @brief L-S Polynomial approximation routines
  */
 
 /** @brief Reciprocal */
-double rec(const double a) { return 1.0 / a; }  
+double rec(const double a) { return 1.0 / a; }
 
 /** @brief Inverse square root */
 double isqrt(const double a) { return 1.0 / sqrt(a); }
@@ -166,7 +166,7 @@ double isqrt(const double a) { return 1.0 / sqrt(a); }
  * @param[in] ffun function to approximate
  * @param[in,out] vdata data output
  */
-void pEVSL_SetupLSPol(int max_deg, double tol, double lmin, double lmax, 
+void pEVSL_SetupLSPol(int max_deg, double tol, double lmin, double lmax,
                       pevsl_Parcsr *B, double (*ffun)(double), void **vdata) {
 
   LSPol_Data *data;
@@ -202,7 +202,7 @@ void pEVSL_SetupLSPol(int max_deg, double tol, double lmin, double lmax,
  * @param[in] B csr matrix
  * @param[in,out] vdata data output
  */
-void pEVSL_SetupLSPolRec(int max_deg, double tol, double lmin, double lmax, 
+void pEVSL_SetupLSPolRec(int max_deg, double tol, double lmin, double lmax,
                          pevsl_Parcsr *B, void **vdata) {
   pEVSL_SetupLSPol(max_deg, tol, lmin, lmax, B, rec, vdata);
 }
@@ -216,7 +216,7 @@ void pEVSL_SetupLSPolRec(int max_deg, double tol, double lmin, double lmax,
  * @param[in] B csr matrix
  * @param[in,out] vdata data output
  */
-void pEVSL_SetupLSPolSqrt(int max_deg, double tol, double lmin, double lmax, 
+void pEVSL_SetupLSPolSqrt(int max_deg, double tol, double lmin, double lmax,
                           pevsl_Parcsr *B, void **vdata) {
   pEVSL_SetupLSPol(max_deg, tol, lmin, lmax, B, isqrt, vdata);
 }
@@ -239,7 +239,7 @@ void pEVSL_SetupLSPolSqrt(int max_deg, double tol, double lmin, double lmax,
  * @b Workspace
  * @param[in,out] w Work vector of length 3*n [allocate before call
  **/
-static inline int pnav(double *mu, const int m, const double cc, const double dd, 
+static inline int pnav(double *mu, const int m, const double cc, const double dd,
                        pevsl_Matvec *mv, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_Parvec *w) {
   /*-------------------- pointers to v_[k-1],v_[k], v_[k+1] from w */
   pevsl_Parvec *vk   = &w[0];
@@ -264,16 +264,16 @@ static inline int pnav(double *mu, const int m, const double cc, const double dd
     t = k == 1 ? t1 : t2;
     /*-------------------- */
     s = mu[k];
-    
+
     mv->func(vk->data, vkp1->data, mv->data);
- 
+
     pEVSL_ParvecAxpy(-cc, vk, vkp1);
     pEVSL_ParvecScal(vkp1, t);
     if (k > 1) {
       pEVSL_ParvecAxpy(-1.0, vkm1, vkp1);
     }
     pEVSL_ParvecAxpy(s, vkp1, y);
-    
+
     /*-------------------- next: rotate vectors via pointer exchange */
     tmp = vkm1;
     vkm1 = vk;
@@ -291,7 +291,7 @@ static inline int pnav(double *mu, const int m, const double cc, const double dd
  */
 void pEVSL_LSPolSol(double *db, double *dx, void *data) {
   LSPol_Data *pol = (LSPol_Data *) data;
-  pevsl_Parvec b, x;  
+  pevsl_Parvec b, x;
   int N = pol->N;
   int n = pol->n;
   int nfirst = pol->nfirst;
@@ -299,7 +299,7 @@ void pEVSL_LSPolSol(double *db, double *dx, void *data) {
   /* wrap b and x into pevsl_Parvec */
   pEVSL_ParvecCreateShell(N, n, nfirst, comm, &b, db);
   pEVSL_ParvecCreateShell(N, n, nfirst, comm, &x, dx);
-  
+
   pnav(pol->mu, pol->deg, pol->cc, pol->dd, &pol->mv, &b, &x, pol->wk);
 }
 

@@ -7,7 +7,7 @@
 
 /**
  * if filter the initial vector
- */ 
+ */
 #define FILTER_VINIT 1
 
 /* -----------------------------------------------------------------------
@@ -18,11 +18,11 @@
  *          [intv[0], intv[1]] is the interval of desired eigenvalues \n
  *          [intv[2], intv[3]] is the global interval of all eigenvalues \n
  *          Must contain all eigenvalues of A
- *  
- *  @param[in] maxit    Max number of outer Lanczos steps  allowed --[max dim of Krylov 
+ *
+ *  @param[in] maxit    Max number of outer Lanczos steps  allowed --[max dim of Krylov
  *          subspace]
- *  
- *  @param[in] tol       
+ *
+ *  @param[in] tol
  *          Tolerance for convergence. The code uses a stopping criterion based
  *          on the convergence of the restricted trace. i.e., the sum of the
  *          eigenvalues of T_k that  are in the desired interval. This test  is
@@ -31,12 +31,12 @@
  *          than  tol.  Note that the test  performed on filtered matrix only
  *          - *but* the actual residual norm associated with the original
  *          matrix A is returned
- *  
+ *
  *  @param[in] vinit  initial  vector for Lanczos -- [optional]
- * 
+ *
  *  @param[in] pol       A struct containing the parameters of the polynomial..
- *  This is set up by a call to find_deg prior to calling chenlanNr 
- * 
+ *  This is set up by a call to find_deg prior to calling chenlanNr
+ *
  *  @b Modifies:
  *  @param[out] nevOut    Number of eigenvalues/vectors computed
  *  @param[out] Wo        A set of eigenvectors  [n x nevOut matrix]
@@ -48,12 +48,12 @@
  *  if |gamB| < 1
  *
  *
- * @warning memory allocation for Wo/lamo/reso within this function 
+ * @warning memory allocation for Wo/lamo/reso within this function
  *
  * ------------------------------------------------------------ */
-int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol, 
-                    pevsl_Parvec *vinit, pevsl_Polparams *pol, int *nevOut, 
-                    double **lamo, pevsl_Parvecs **Wo, 
+int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
+                    pevsl_Parvec *vinit, pevsl_Polparams *pol, int *nevOut,
+                    double **lamo, pevsl_Parvecs **Wo,
                     double **reso, FILE *fstats) {
 
   //-------------------- to report timings/
@@ -61,7 +61,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
   tall = pEVSL_Wtime();
   const int ifGenEv = pevsl->ifGenEv;
   double tr0, tr1;
-  double *y, flami; 
+  double *y, flami;
   int i, k, kdim=0, rank;
   /* handle case where fstats is NULL. Then no output. Needed for openMP */
   int do_print = 1;
@@ -79,16 +79,16 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
   /*-------------------- rank in comm */
   MPI_Comm_rank(comm, &rank);
   /*-------------------- Ntest = when to start testing convergence */
-  int Ntest = 30; 
+  int Ntest = 30;
   /*-------------------- how often to test */
-  int cycle = 20; 
+  int cycle = 20;
   /* size of the matrix. N: global size */
   int N;
   N = pevsl->N;
   /* max num of its */
   maxit = PEVSL_MIN(N, maxit);
   /*-------------------- polynomial filter  approximates the delta
-                         function centered at 'gamB'. 
+                         function centered at 'gamB'.
                          bar: a bar value to threshold Ritz values of p(A) */
   double bar = pol->bar;
   double gamB = pol->gam;
@@ -103,7 +103,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
   int deg = pol->deg;
   if (do_print) {
     pEVSL_fprintf0(rank, fstats, " intv:[%e, %e, %e, %e]\n", intv[0], intv[1], intv[2], intv[3]);
-    pEVSL_fprintf0(rank, fstats, " ** Cheb Poly of deg = %d, gam = %.15e, bar: %.15e\n", 
+    pEVSL_fprintf0(rank, fstats, " ** Cheb Poly of deg = %d, gam = %.15e, bar: %.15e\n",
                    deg, gamB, bar);
   }
   /*-------------------- gamB must be within [-1, 1] */
@@ -111,8 +111,8 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
     pEVSL_fprintf0(rank, stdout, "gamB error %.15e\n", gamB);
     return -1;
   }
-  /*-----------------------------------------------------------------------* 
-   * *Non-restarted* Lanczos iteration 
+  /*-----------------------------------------------------------------------*
+   * *Non-restarted* Lanczos iteration
    *-----------------------------------------------------------------------*/
   if (do_print) {
     pEVSL_fprintf0(rank, fstats, " ** Cheb-LanNr \n");
@@ -139,7 +139,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
   PEVSL_MALLOC(Lam,   maxit, double);       // holds computed Ritz values
   PEVSL_MALLOC(res,   maxit, double);       // residual norms (w.r.t. ro(A))
   PEVSL_MALLOC(EvalT, maxit, double);       // eigenvalues of tridiag matrix T
-  /*-------------------- nev = current number of converged e-pairs 
+  /*-------------------- nev = current number of converged e-pairs
                          nconv = converged eigenpairs from looking at Tk alone */
   int nev, nconv = 0;
   /*-------------------- u is just a pointer. wk: work space [Parvec] */
@@ -155,7 +155,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
   PEVSL_MALLOC(warr, 3*maxit, double);
   /*-------------------- lanczos vectors: Parvec referencing to Parvecs */
   pevsl_Parvec parvec[7];
-  pevsl_Parvec *zold  = &parvec[0]; 
+  pevsl_Parvec *zold  = &parvec[0];
   pevsl_Parvec *z     = &parvec[1];
   pevsl_Parvec *znew  = &parvec[2];
   pevsl_Parvec *v     = &parvec[3];
@@ -293,11 +293,11 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
     if ( (k < Ntest || (k-Ntest) % cycle != 0) && k != maxit-1 ) {
       continue;
     }
-    /*---------------------- diagonalize  T(1:k,1:k)       
+    /*---------------------- diagonalize  T(1:k,1:k)
                              vals in EvalT, vecs in EvecT  */
     kdim = k+1;
 #if 1
-    /*-------------------- THIS uses dsetv, do not need eig vector */    
+    /*-------------------- THIS uses dsetv, do not need eig vector */
     SymmTridEig(pevsl, EvalT, NULL, kdim, dT, eT);
     count = kdim;
 #else
@@ -306,10 +306,10 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
     SymmTridEigS(pevsl, EvalT, EvecT, kdim, vl, vu, &count, dT, eT);
 #endif
     /*-------------------- restricted trace: used for convergence test */
-    tr1 = 0;  
-    /*-------------------- get residual norms and check acceptance of Ritz 
-     *                     values for p(A). nconv records number of 
-     *                     eigenvalues whose residual for p(A) is smaller 
+    tr1 = 0;
+    /*-------------------- get residual norms and check acceptance of Ritz
+     *                     values for p(A). nconv records number of
+     *                     eigenvalues whose residual for p(A) is smaller
      *                     than tol. */
     nconv = 0;
     for (i=0; i<count; i++) {
@@ -340,12 +340,12 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
   size_t kdim_l = kdim; /* just in case if kdim is > 65K */
   PEVSL_MALLOC(EvecT, kdim_l*kdim_l, double); // Eigen vectors of T
   SymmTridEig(pevsl, EvalT, EvecT, kdim, dT, eT);
-  
+
   tt = pEVSL_Wtime();
   /*-------------------- done == compute Ritz vectors */
   PEVSL_MALLOC(Rvec, 1, pevsl_Parvecs);
   pEVSL_ParvecsDuplParvec(vinit, nconv, vinit->n_local, Rvec);
-  
+
   nev = 0;
   for (i=0; i<count; i++) {
     flami = EvalT[i];
@@ -403,7 +403,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
       pEVSL_ParvecAxpy(-t, u, wk);
     }
     /*-------------------- res0 = 2-norm(wk) */
-    pEVSL_ParvecNrm2(wk, &res0); 
+    pEVSL_ParvecNrm2(wk, &res0);
     /*--------------------   accept (t, y) */
     if (res0 < tol) {
       Lam[nev] = t;

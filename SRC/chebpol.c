@@ -11,7 +11,7 @@ void pEVSL_SetPolDef(pevsl_Polparams *pol) {
   pol->max_deg = 5000;     // max degree allowed
   pol->min_deg = 2;        // min allowed degree
   pol->damping = 2;        // damping. 0 = no damping, 1 = Jackson, 2 = Lanczos
-  pol->thresh_ext = 0.20;  // threshold for accepting polynomial for end intervals 
+  pol->thresh_ext = 0.20;  // threshold for accepting polynomial for end intervals
   pol->thresh_int = 0.8;   // threshold for accepting polynomial for interior intervals
   pol->mu = NULL;
   pol->deg = 0;            // degree =0 means determine optimal degree.
@@ -38,9 +38,9 @@ int dampcf(int m, int damping, double *jac) {
     thetJ = PI/(dm+2);
     a1 = 1/(dm+2);
     a2 = sin(thetJ);
-  } 
-  if (damping == 2) 
-    thetL = PI/(dm+1);   
+  }
+  if (damping == 2)
+    thetL = PI/(dm+1);
   jac[0] = 0.5;    // <<-- Note this is instead of 1 - in order
   // to reflect  the 1/2 factor in zeroth term
   // of Chebyshev expansion
@@ -48,24 +48,24 @@ int dampcf(int m, int damping, double *jac) {
   for (k=1; k<=m; k++) {
     if (damping == 0) {
       jac[k] = 1.0;
-    } else if (damping == 1){  
-      //-------------------- Note: slightly simpler formulas for jackson: 
+    } else if (damping == 1){
+      //-------------------- Note: slightly simpler formulas for jackson:
       k1 = k+1;
-      jac[k] = a1*sin(k1*thetJ)/a2 + (1-k1*a1)*cos(k*thetJ) ; 
-      //-------------------- Lanczos sigma-damping: 
+      jac[k] = a1*sin(k1*thetJ)/a2 + (1-k1*a1)*cos(k*thetJ) ;
+      //-------------------- Lanczos sigma-damping:
     } else {
       jac[k] = sin(k*thetL)/(k*thetL);
     }
   }
   return (0);
-}        
+}
 
 /**
  *@brief function dif_eval(v, m, thc, jac)
  * evaluates the difference between the right and left
  * values of the polynomial expressed in chebyshev expansion
  * @param[in] v  vector of coefficients [see paper]
- * @param[in] m  degree 
+ * @param[in] m  degree
  * @param[in] thc  angle theta corresponding to peak of polynomial
  * @param[in] jac vector of damping coefficients
 **/
@@ -73,8 +73,8 @@ int dampcf(int m, int damping, double *jac) {
 double dif_eval(double *v, int m, double thc, double *jac){
   double fval = 0.0;
   int j;
-  for (j=0; j<=m; j++) 
-    fval += v[j]*cos(j*thc)*jac[j]; 
+  for (j=0; j<=m; j++)
+    fval += v[j]*cos(j*thc)*jac[j];
   return (fval);
 }
 
@@ -83,8 +83,8 @@ double dif_eval(double *v, int m, double thc, double *jac){
  *
  *  @brief function yi = chebxPltd computes yi = p_mu (xi),
  *
- *  where xi is a vectors of values. This can used for plotting 
- *  the filter given by mu for example --  
+ *  where xi is a vectors of values. This can used for plotting
+ *  the filter given by mu for example --
  *  Jackson (or other) dampings is not explicitly used here but
  *  is assumed to be multiplied by mu outside this routine.
 
@@ -92,7 +92,7 @@ double dif_eval(double *v, int m, double thc, double *jac){
  *  @param[in] mu        Chev. expansion coefficients in KPM method
  *  @param[in] npts     = number of points in xi, yi
  *  @param[in] xi       = a vector of values where p(xi) is to be computed.
- *  @warning Note xi's must be in [-1 1] 
+ *  @warning Note xi's must be in [-1 1]
  *
  *  @param[out] yi       = pn(xi(:) )
  *  @return 0
@@ -106,15 +106,15 @@ int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
   double *tmp;
   //-------------------- compute p(xi)
   memset(vkm1, 0, n*sizeof(double));
-  vecset (n, 1.0, vk) ; 
+  vecset (n, 1.0, vk) ;
   //-------------------- start yi = mu[0]*vk = mu[0]*ones
-  vecset (n, mu[0], yi) ; 
+  vecset (n, mu[0], yi) ;
   //-------------------- POLYNOMIAL loop
   for (k=0; k<m; k++) {
     //-------------------- generates term of degree k+1
     scal = (k==0? 1.0 : 2.0);
     for (j=0; j<n; j++)
-      vkp1[j] = scal*xi[j]*vk[j] - vkm1[j];  
+      vkp1[j] = scal*xi[j]*vk[j] - vkm1[j];
     tmp  = vkm1;
     vkm1 = vk;
     vk   = vkp1;
@@ -126,7 +126,7 @@ int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
   PEVSL_FREE(vkm1);
   PEVSL_FREE(vkp1);
   PEVSL_FREE(vk);
-  
+
   return 0;
 }
 
@@ -136,7 +136,7 @@ int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
  *
  *  In these cases, polynomial is just a scaled Chebyshev polynomial. However
  *  we need to express it in the same basis as in the other (middle interval)
- *  cases. This function determines this expansion 
+ *  cases. This function determines this expansion
  *
  * @param[in,out] pol A struct containing the parameters of polynomial.
  * @param[in] aIn The start index of the transformed interval
@@ -149,8 +149,8 @@ int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
  * deg: Degree of polynomial
  * gam: Site of delta function that is expanded.
  *      Accurate 'balancing' is done:
- *             If p(t) is best approximation to delta function at gam 
- *              then gam is selected so that p(a)=p(b) - within the 
+ *             If p(t) is best approximation to delta function at gam
+ *              then gam is selected so that p(a)=p(b) - within the
  *              tolerance tolBal (set in this function to 1.e-10)
  * bar: If \f$P(\lambda_{i}) \geq \f$ bar, accept eigenvalue as belonging to
  * interval; else reject.
@@ -159,19 +159,19 @@ int chebxPltd(int m, double *mu, int npts, double *xi, double *yi) {
  * [aIn, bIn] is the interval of interest
  * del is used to expand interval of interest slightly so that pn(t)<bar by
  * some margin.
- *          
+ *
  *
  *
  * * */
 void chext(pevsl_Polparams *pol, double aIn, double bIn){
   int max_deg = pol->max_deg;
-  // int min_deg = pol->min_deg;   NOT used 
+  // int min_deg = pol->min_deg;   NOT used
   double thresh = pol->thresh_ext;
   double *mu = pol->mu;
-  //-------------------- local variables 
-  double del = 0.1*sqrt((bIn-aIn)*0.5); 
+  //-------------------- local variables
+  double del = 0.1*sqrt((bIn-aIn)*0.5);
   //double del = 0.0;
-  double eps = 1e-13;  
+  double eps = 1e-13;
   //double eps = 0.0;
   double a, b, x, e, c, sigma, sigma1, sigma_new, g0, g1, gnew, s1, s2, s3;
   double *t0, *t1, *tnew; // coef. of three consecutive cheby. expansions
@@ -180,11 +180,11 @@ void chext(pevsl_Polparams *pol, double aIn, double bIn){
   int m1 = max_deg+1, j, k;
   //-------------------- local work space
   int work_size = 3*m1;
-  //-------------------- this is for the forced degree case 
+  //-------------------- this is for the forced degree case
   if (pol->deg > 0){
     thresh = -1.0;
     max_deg = pol->deg;
-  } 
+  }
 
   if (bIn >= (1.0-eps)) {
     /*-------------------- right interval case */
@@ -198,7 +198,7 @@ void chext(pevsl_Polparams *pol, double aIn, double bIn){
     a = x+del;
     b = 1.0;
     gam = -1.0;
-  } 
+  }
   e = (b-a)*0.5;
   c = (b+a)*0.5;
   sigma1 = e/(gam-c);
@@ -244,7 +244,7 @@ void chext(pevsl_Polparams *pol, double aIn, double bIn){
       if (g1<thresh)
         break;
       sigma = sigma_new;
-    }   
+    }
   }
   memcpy(mu,t1,(mbest+1)*sizeof(double));
   bar = g1;
@@ -264,7 +264,7 @@ int indexofSmallestElement(double *array, int size){
   int index = 0, i;
   for(i = 1; i < size; i++){
     if(array[i] < array[index])
-      index = i;              
+      index = i;
   }
   return index;
 }
@@ -272,19 +272,19 @@ int indexofSmallestElement(double *array, int size){
 /**
  * @brief Finds the roots of linear combination of chebyshev polynomials
  * @param[in] m   degree of polynomial
- * @param[in] v difference between cosines on left and right [(3.12) in paper] 
- * @param[in] jac   damping coefficients 
+ * @param[in] v difference between cosines on left and right [(3.12) in paper]
+ * @param[in] jac   damping coefficients
  * @param[in] tha    theta_a [refer to paper]
  * @param[in] thb    theta_b [refer to paper]
- * @param[out] mu     expansion coefficients. 
- * @param[out] thcOut  value of theta_c  
+ * @param[out] mu     expansion coefficients.
+ * @param[out] thcOut  value of theta_c
  *
  * @warning mu must be preallocated
 **/
 int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
 	    double *thcOut){
   int MaxIterBalan = 30;     // max steps in Newton to balance interval
-  double tolBal; 
+  double tolBal;
   // do 2 newton steps -- if OK exit otherwise
   // continue to get root by solving eigv. pb
   int j, it;
@@ -307,18 +307,18 @@ int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
     for (j=1; j<=m; j++)
       d += jac[j]*j*sin(j*(thc))*v[j];
     thN = thc + fval/d;
-    /*-------------------- test for stopping */ 
+    /*-------------------- test for stopping */
    if ((fabs(fval) < tolBal) || fabs(thc - thN) < DBL_EPSILON * fabs(thc)) {
      break;
    }
    /*-------------------- test for doing a form of bisection */
-    if (fval >0){ 
-      if((thN < thb) || (thN > tha)) 
+    if (fval >0){
+      if((thN < thb) || (thN > tha))
 	thN = 0.5*(thc+tha);
       thb = thc;
       thc = thN;
     } else {
-      if((thN < thb) || (thN > tha) ) 
+      if((thN < thb) || (thN > tha) )
 	thN = 0.5*(thc+thb);
       tha = thc;
       thc = thN;
@@ -343,10 +343,10 @@ int rootchb(int m, double *v, double* jac, double tha, double thb, double *mu,
  *
  * @warning Set the following values of pol \n
  *  mu Expansion coefficients of best polynomial found  \n
- *  gam  Site of delta function that is expanded. 
+ *  gam  Site of delta function that is expanded.
  *          accurate 'balancing' is done:
- *          if p(t) is best approximation to delta function at gam 
- *           then gam is selected so that p(a)=p(b) - within the 
+ *          if p(t) is best approximation to delta function at gam
+ *           then gam is selected so that p(a)=p(b) - within the
  *          tolerance tolBal (set in this function to 1.e-10) \n
  *  bar If \f$p(\lambda_i)) \geq \f$ bar, accept eignevalue as belonging to
  *  interval; else reject.\n
@@ -386,7 +386,7 @@ int pEVSL_FindPol(double *intv, pevsl_Polparams *pol) {
   double cc = 0.5 * (lmax + lmin);
   double dd = 0.5 * (lmax - lmin);
   pol->cc = cc;
-  pol->dd = dd; 
+  pol->dd = dd;
   /*-------------------- adjust intervals just in case. */
   //a = max(a, lmin);
   //b = min(b, lmax);
@@ -405,7 +405,7 @@ int pEVSL_FindPol(double *intv, pevsl_Polparams *pol) {
   if (aa-IntTol <= -1.0) {
     /*-------------------- left interval */
     thc = tha;
-    //--------------------  note: p(itv) == where to evaluate p to 
+    //--------------------  note: p(itv) == where to evaluate p to
     //                      obtain bar values.
     nitv = 1;
     aa = -1.0;
@@ -416,7 +416,7 @@ int pEVSL_FindPol(double *intv, pevsl_Polparams *pol) {
     thc = thb;
     nitv   = 1;
     bb = 1;
-    gam = 1;               // set center for b 
+    gam = 1;               // set center for b
     pol->type = 2;
   } else {
     /*-------------------- middle interval */
@@ -426,7 +426,7 @@ int pEVSL_FindPol(double *intv, pevsl_Polparams *pol) {
     pol->type = 0;
   }
   /*-------------------- threshold for finding the best poly */
-  if (nitv == 1) { 
+  if (nitv == 1) {
     /*-------------------- end interval case done separately */
     chext(pol,aa,bb);
   } else {
@@ -435,8 +435,8 @@ int pEVSL_FindPol(double *intv, pevsl_Polparams *pol) {
     // min_deg = max(min_deg,2);
     // min_deg = 2;
     thresh = pol->thresh_int;
-    //-------------------- this is a short-circuit for the 
-    //                     case of a forced degree 
+    //-------------------- this is a short-circuit for the
+    //                     case of a forced degree
     if (pol->deg > 0){
       thresh = -1;
       max_deg = pol->deg;
@@ -452,17 +452,17 @@ int pEVSL_FindPol(double *intv, pevsl_Polparams *pol) {
       //---------------------Balacing the interval + get new mu
       if (rootchb(m, v, jac, tha, thb, mu, &thc)) {
       //-------------------- if m<0 degree is too low - skip
-        //printf("rootchb == 1, m = %d, [%.15e, %.15e], tha %e thb %e\n", 
+        //printf("rootchb == 1, m = %d, [%.15e, %.15e], tha %e thb %e\n",
         //       m, aa, bb, tha, thb);
         continue;
       }
-      //----------------------New center 
+      //----------------------New center
       gam = cos(thc);
       //-------------------- for scaling
       chebxPltd(m, mu, 1, &gam, &t);
       chebxPltd(m, mu, nitv, itv, vals);
-      //-------------------- test for acceptance of this pol. 
-      //printf("mindeg=%d, m = %d, val %e %e, t %e, thresh %e\n", 
+      //-------------------- test for acceptance of this pol.
+      //printf("mindeg=%d, m = %d, val %e %e, t %e, thresh %e\n",
       //       min_deg, m, vals[0], vals[1], t, thresh);
       if (vals[0] <= t*thresh && vals[1] <= t*thresh) {
         m++;
@@ -471,7 +471,7 @@ int pEVSL_FindPol(double *intv, pevsl_Polparams *pol) {
     }
     mbest = m - 1;
     //-------------------- scale the polynomial
-    for (j=0; j<=m; j++) 
+    for (j=0; j<=m; j++)
       mu[j] /= t;
     pol->bar = PEVSL_MIN(vals[0], vals[1])/t;
     pol->gam = gam;
@@ -483,7 +483,7 @@ int pEVSL_FindPol(double *intv, pevsl_Polparams *pol) {
   return 0;
 }
 
-/** 
+/**
  * Frees a polparams struct's mu
  *
  * @param[in,out] pol struct to free
@@ -493,7 +493,7 @@ void pEVSL_FreePol(pevsl_Polparams *pol) {
 }
 
 /**
- * @brief @b Computes y=P(A) v, where pn is a Cheb. polynomial expansion 
+ * @brief @b Computes y=P(A) v, where pn is a Cheb. polynomial expansion
  *
  * @param[in] pevsl Struct containing pevsl data
  * @param[in] pol Struct containing the paramenters and expansion coefficient of
@@ -507,9 +507,9 @@ void pEVSL_FreePol(pevsl_Polparams *pol) {
  * @param[in, out] v is untouched
  **/
 int pEVSL_ChebAv(pevsl_Data      *pevsl,
-                 pevsl_Polparams *pol, 
-                 pevsl_Parvec    *v, 
-                 pevsl_Parvec    *y, 
+                 pevsl_Polparams *pol,
+                 pevsl_Parvec    *v,
+                 pevsl_Parvec    *y,
                  pevsl_Parvec    *w) {
 
   double tt = pEVSL_Wtime();
@@ -536,16 +536,16 @@ int pEVSL_ChebAv(pevsl_Data      *pevsl,
   pEVSL_ParvecScal(y, s);
   /*-------------------- degree loop. k IS the degree */
   for (k=1; k<=m; k++) {
-    /*-------------------- y = mu[k]*Vk + y */    
-    t = k == 1 ? t1 : t2; 
-    /*-------------------- */    
+    /*-------------------- y = mu[k]*Vk + y */
+    t = k == 1 ? t1 : t2;
+    /*-------------------- */
     s = mu[k];
     if (pevsl->ifGenEv) {
-      /*-------------------- Vkp1 = A*B\Vk - cc*Vk */    
+      /*-------------------- Vkp1 = A*B\Vk - cc*Vk */
       pEVSL_SolveB(pevsl, vk, w2);
       pEVSL_MatvecA(pevsl, w2, vkp1);
     } else {
-      /*-------------------- Vkp1 = A*Vk - cc*Vk */    
+      /*-------------------- Vkp1 = A*Vk - cc*Vk */
       pEVSL_MatvecA(pevsl, vk, vkp1);
     }
 
@@ -557,9 +557,9 @@ int pEVSL_ChebAv(pevsl_Data      *pevsl,
       pEVSL_ParvecAxpy(-1.0, vkm1, vkp1);
     }
     pEVSL_ParvecAxpy(s, vkp1, y);
-    
+
     pevsl->stats->t_sth += pEVSL_Wtime() - ts;
-    
+
     /*-------------------- next: rotate vectors via pointer exchange */
     tmp = vkm1;
     vkm1 = vk;

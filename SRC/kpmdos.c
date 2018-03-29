@@ -11,13 +11,13 @@
  * states  in  the  chebyshev   basis.   It  also  returns  the
  * estimated number of eigenvalues in the interval given by intv.
  * @param[in] pevsl pEVSL data struct
- * @param[in] Mdeg     degree of polynomial to be used. 
+ * @param[in] Mdeg     degree of polynomial to be used.
  * @param[in] damping  type of damping to be used [0=none,1=jackson,2=sigma]
  * @param[in] nvec     number of random vectors to use for sampling
  * @param[in] intv   an array of length 4  \n
- *                 [intv[0] intv[1]] is the interval of desired eigenvalues 
+ *                 [intv[0] intv[1]] is the interval of desired eigenvalues
  *                 that must be cut (sliced) into n_int  sub-intervals \n
- *                 [intv[2],intv[3]] is the global interval of eigenvalues 
+ *                 [intv[2],intv[3]] is the global interval of eigenvalues
  *                 it must contain all eigenvalues of A \n
  * @param[in] ngroups : number of groups
  * @param[in] groupid : rank of this group
@@ -26,7 +26,7 @@
  *             each group, there is a pEVSL instance. In this case, provide a
  *             MPI_Comm of the group-leaders (with group rank 0). Results will
  *             computed collectively.
- *             Otherwise, set 
+ *             Otherwise, set
  *             ngroups = 1, groupid = 0, and gl_comm := MPI_COMM_NULL
  * @param[out] mu   array of Chebyshev coefficients [of size Mdeg+1]
  * @param[out] ecnt estimated num of eigenvalues in the interval of interest
@@ -35,7 +35,7 @@
 
 int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *intv,
                  int ngroups, int groupid, MPI_Comm gl_comm, double *mu, double *ecnt) {
-  
+
   double tm = pEVSL_Wtime();
 
   const int ifGenEv = pevsl->ifGenEv;
@@ -63,7 +63,7 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
     pEVSL_ParvecCreate(N, n, nfirst, comm, &parvec[4]);
     w = parvec + 4;
   }
-  
+
   double *jac, ctr, wid, scal, t, tcnt, beta1, beta2, aa, bb;
   int k, k1, m, mdegp1, one=1, vec_start, vec_end;
 
@@ -92,7 +92,7 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
   memset(mu, 0, (Mdeg+1)*sizeof(double));
   /*-------------------- tcnt: total count */
   tcnt = 0.0;
-  /*-------------------- if we have more than one groups, 
+  /*-------------------- if we have more than one groups,
    *                     partition nvecs among groups */
   if (ngroups > 1) {
     pEVSL_Part1d(nvec, ngroups, &groupid, &vec_start, &vec_end, 1);
@@ -106,7 +106,7 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
       /* unit 2-norm v */
       pEVSL_ParvecRand(v);
       pEVSL_ParvecNrm2(v, &t);
-      pEVSL_ParvecScal(v, 1.0 / t);  
+      pEVSL_ParvecScal(v, 1.0 / t);
       /*  w = L^{-T}*v */
       pEVSL_SolveLT(pevsl, v, w);
       /* v = B*w */
@@ -117,14 +117,14 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
       /* unit 2-norm */
       pEVSL_ParvecRand(v);
       pEVSL_ParvecNrm2(v, &t);
-      pEVSL_ParvecScal(v, 1.0 / t);  
+      pEVSL_ParvecScal(v, 1.0 / t);
       pEVSL_ParvecCopy(v, vk);
     }
-    
+
     pEVSL_ParvecSetZero(vkm1);
     mu[0] += jac[0];
     //-------------------- for eigCount
-    tcnt -= jac[0]*(beta2-beta1);  
+    tcnt -= jac[0]*(beta2-beta1);
     /*-------------------- Chebyshev (degree) loop */
     for (k=0; k<Mdeg; k++) {
       /*-------------------- Cheb. recurrence */
@@ -152,7 +152,7 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
       t *= 2.0 * jac[k1];
       mu[k1] += t;
       /*-------------------- for eig. counts */
-      tcnt -= t*(sin(k1*beta2)-sin(k1*beta1))/k1;  
+      tcnt -= t*(sin(k1*beta2)-sin(k1*beta1))/k1;
     }
   } /* the end of random vectors loop */
 
@@ -160,7 +160,7 @@ int pEVSL_Kpmdos(pevsl_Data *pevsl, int Mdeg, int damping, int nvec, double *int
   if (ngroups > 1) {
     double *mu_global, tcnt_global;
     PEVSL_MALLOC(mu_global, Mdeg+1, double);
-    /* Sum of all partial results: the group leaders first do an All-reduce. 
+    /* Sum of all partial results: the group leaders first do an All-reduce.
        Then, group leaders will do broadcasts
      */
     if (rank == 0) {

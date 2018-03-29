@@ -11,7 +11,7 @@
  *    Computes the density of states (DOS, or spectral density) using Lanczos
  *    algorithm for the generalized eigenvalue problem.
  *
- *    @param[in] pevsl pEVSL data strcut 
+ *    @param[in] pevsl pEVSL data strcut
  *    @param[in] nvec  number of sample vectors used
  *    @param[in] msteps number of Lanczos steps
  *    @param[in] npts number of sample points used for the DOS curve
@@ -34,7 +34,7 @@
  *    landos.c/LanDos is only for the standard eigenvalue problem.
  *----------------------------------------------------------------------*/
 
-int pEVSL_LanDosG(pevsl_Data *pevsl, int nvec, int msteps, int npts, 
+int pEVSL_LanDosG(pevsl_Data *pevsl, int nvec, int msteps, int npts,
                   double *xdos, double *ydos, double *neig, double* intv,
                   int ngroups, int groupid, MPI_Comm gl_comm) {
 
@@ -46,19 +46,19 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, int nvec, int msteps, int npts,
   int N = pevsl->N;
   int n = pevsl->n;
   int nfirst = pevsl->nfirst;
-  
+
   int rank;
   MPI_Comm_rank(comm, &rank);
-  
+
   const int ifGenEv = pevsl->ifGenEv;
-  
+
   /*-------------------- lanczos vectors updated by rotating pointer*/
   /*-------------------- pointers to Lanczos vectors */
   pevsl_Parvec parvec[6];
   pevsl_Parvec *zold  = &parvec[0];
   pevsl_Parvec *z     = &parvec[1];
   pevsl_Parvec *znew  = &parvec[2];
-  pevsl_Parvec *v     = &parvec[3]; 
+  pevsl_Parvec *v     = &parvec[3];
   pevsl_Parvec *vnew  = &parvec[4];
   pevsl_Parvec *vinit = &parvec[5];
 
@@ -111,13 +111,13 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, int nvec, int msteps, int npts,
   const double tol = 1e-08;
   double width = sigma * sqrt(-2.0 * log(tol));
   linspace(aa, bb, npts, xdos);  // xdos = linspace(lm,lM, npts);
-  
+
   /*-------------------- workspace [double * array] */
   double *warr;
   PEVSL_MALLOC(warr, 3*maxit, double);
 
   int vec_start, vec_end;
-  /*-------------------- if we have more than one groups, 
+  /*-------------------- if we have more than one groups,
    *                     partition nvecs among groups */
   if (ngroups > 1) {
     pEVSL_Part1d(nvec, ngroups, &groupid, &vec_start, &vec_end, 1);
@@ -241,7 +241,7 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, int nvec, int msteps, int npts,
     }
 
     SymmTridEig(pevsl, EvalT, EvecT, maxit, dT, eT);
-    
+
     for (i = 0; i < maxit; i++) {
       /*-------------------- weights for Lanczos quadrature */
       /* Gamma2(i) = elementwise square of top entry of i-th eginvector
@@ -271,7 +271,7 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, int nvec, int msteps, int npts,
   if (ngroups > 1) {
     double *y_global;
     PEVSL_MALLOC(y_global, npts, double);
-    /* Sum of all partial results: the group leaders first do an All-reduce. 
+    /* Sum of all partial results: the group leaders first do an All-reduce.
        Then, group leaders will do broadcasts
      */
     if (rank == 0) {
@@ -289,7 +289,7 @@ int pEVSL_LanDosG(pevsl_Data *pevsl, int nvec, int msteps, int npts,
   /* input: xdos, y, output: y */
   simpson(xdos, y, npts);
   *neig = y[npts - 1] * N;
-  
+
   /*-------------------- free arrays */
   pEVSL_ParvecFree(vinit);
   PEVSL_FREE(ind);

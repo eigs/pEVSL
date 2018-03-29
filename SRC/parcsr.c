@@ -17,7 +17,7 @@
  *                    if NULL, it means col_starts are from the ``default'' 1D partitioning,
  *                    see pEVSL_Part1d in utils.c for details
  * @param[out] A: parallel csr matrix
- * @param[in] comm: MPI communicator, the communicator that this matrix will reside on 
+ * @param[in] comm: MPI communicator, the communicator that this matrix will reside on
  *
  * On return, A will not have any data but only information of sizes and row/col_starts
  * */
@@ -62,7 +62,7 @@ int pEVSL_ParcsrCreate(int nrow, int ncol, int *row_starts, int *col_starts, pev
   return 0;
 }
 
-/*! @brief Construct a parcsr matrix from csr matrices. 
+/*! @brief Construct a parcsr matrix from csr matrices.
  *  Each rank needs to provide its corresponding chunk of rows in a csr matrix
  *  @param[in] Ai: input the CSR matrix
  *  @param[out]  A: output the parallel CSR matrix
@@ -136,7 +136,7 @@ int pEVSL_ParcsrSetup(pevsl_Csr *Ai, pevsl_Parcsr *A) {
       int col = Ai->ja[j];
       double val = Ai->a[j];
       if (col >= c1 && col < c2) {
-        /* adjust to local indices: 
+        /* adjust to local indices:
          * this is easily done by subtracting the starting col, c1 */
         A->diag->ja[k1] = col - c1;
         A->diag->a[k1] = val;
@@ -154,7 +154,7 @@ int pEVSL_ParcsrSetup(pevsl_Csr *Ai, pevsl_Parcsr *A) {
     A->offd->ia[i+1] = k2;
   }
 
-  // build parCSR communication handle: for recv 
+  // build parCSR communication handle: for recv
   int np_recv = 0, *p_recv, *ptr_recv, *proc_offd;
   // temporarily store proc ids of each off-diag column
   PEVSL_MALLOC(proc_offd, ncol_offd, int);
@@ -314,13 +314,13 @@ void pEVSL_ParcsrFree(pevsl_Parcsr *A) {
  *
  * @param[in] A Input matrix
  * @param[in] inx if matrix is 1 based
- * @param[out] coo local matrix in coo format  
+ * @param[out] coo local matrix in coo format
  * @param[out] csr local matrix in csr format
- * @param[in] stype 'L' or 'l', only return the "global" lower triangular portion 
- *        'U' or 'u', only return the "global" upper triangular portion 
- *        others    ,      return the "entire" local matrix 
+ * @param[in] stype 'L' or 'l', only return the "global" lower triangular portion
+ *        'U' or 'u', only return the "global" upper triangular portion
+ *        others    ,      return the "entire" local matrix
  * */
-int pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int idx, pevsl_Coo *coo, 
+int pEVSL_ParcsrGetLocalMat(pevsl_Parcsr *A, int idx, pevsl_Coo *coo,
     pevsl_Csr *csr, char stype) {
   /* upper case letter */
   stype = toupper(stype);
