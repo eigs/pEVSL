@@ -46,7 +46,7 @@ int pEVSL_Start(MPI_Comm comm, pevsl_Data **data) {
 
 /**
  * @brief Finish pEVSL
- * @param[in,out] pevsl pEVSL data struct
+ * @param[in,out] pevsl_data pEVSL data struct
  *
  * */
 int pEVSL_Finish(pevsl_Data *pevsl_data) {

@@ -89,8 +89,8 @@ void pEVSL_SortDouble(int n, double *v, int *ind) {
 
 /**
  * Linearly partitions an interval (linspace in Matlab)
- * @param[in] left end of interval
- * @param[in] right end of interval
+ * @param[in] a left end of interval
+ * @param[in] b right end of interval
  * @param[in] num Number of points
  * @param[out] arr Linearly spaced points
  *
@@ -113,6 +113,7 @@ void pEVSL_LinSpace(double a, double b, int num, double *arr) {
    Input:
    @param[in] len  length of the array
    @param[in] pnum partition number
+   @param[in] job Flag
    @param[in] idx [job=1]:  index of a partition
    @param[in] j1 [job=2]: index of an entry
    Output: range of this partition

@@ -12,6 +12,7 @@
  *  @brief compute all eigenvalues and eigenvectors of a symmetric tridiagonal
  *  matrix
  *  @param[in] n                The  dimension of the symmetric tridiagonal  matrix
+ *  @param[in, out] pevsl pEVSL data struct (time is updated)
  *  @param[in] diag   Define the symmetric tridiagonal  matrix:  the
  *          diagonal elements are diag[0,...,n-1]
  *  @param[in] sdiag Subdiagonal elements
@@ -149,6 +150,7 @@ int SymmTridEigS(pevsl_Data *pevsl,
 
 /**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  *     @brief interface to   LAPACK SYMMETRIC EIGEN-SOLVER
+ *     @param[in, out] pevsl pEVSL data struct (time is updated)
  *     @param[in] n Size of problem
  *     @param[in] A Matrix
  *     @param[in] lda Leading dimension
@@ -198,13 +200,13 @@ void SymEigenSolver(pevsl_Data *pevsl,
 
 /**
  * @brief Classical GS reortho with Daniel, Gragg, Kaufman, Stewart test
- * @param[in] n Number of rows in Q
- * @param[in] k Number of cols in Q
+ * @param[in, out] pevsl pEVSL data struct (time is updated)
+ * @param[in] k Number of vectors
  * @param[in] i_max Number iterations
  * @param[in] Q matrix
- * @param[out] nrmv
- * @param[out] v Output
- * @param[out] w Output
+ * @param[out] nrmv norm of v
+ * @param[in, out] v Input
+ * @param[out] w Work vector
  **/
 void CGS_DGKS(pevsl_Data *pevsl,
               int k, int i_max, pevsl_Parvecs *Q, pevsl_Parvec *v,

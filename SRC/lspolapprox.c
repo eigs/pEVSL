@@ -22,6 +22,7 @@ typedef struct _LSPol_Data {
 } LSPol_Data;
 
 /** ----------------------------------------------------------------------
+ *
  *    @brief
  *    Evalutes ffun at the xi's.
  *    Assumes a transformation of original inetrval [a b] into [-1, 1] so:
@@ -30,10 +31,11 @@ typedef struct _LSPol_Data {
  *    @param[in] c Value to increase xi's by
  *    @param[in] h Value to scale xi's by
  *    @param[in] *xi Points for which to evaluate ffun at
+ *    @param[in] *xi Points for which to evaluate ffun at
  *    @param[in] npts Number of points in xi to evaluate
  *    @param[in] ffun Function to evaluate
- *
  *    @param[out] yi ffun evaluated at xi's
+ *
  *----------------------------------------------------------------------*/
 static inline int apfun(const double c, const double h, const double *const xi,
                         double (*ffun)(double), const int npts, double *yi) {
@@ -233,6 +235,7 @@ void pEVSL_SetupLSPolSqrt(int max_deg, double tol, double lmin, double lmax,
  * @param[in] dd dd member of pol struct
  * @param[in] m m member of pol struct
  * @param[in] v input vector
+ * @param[in] mv matvec function
  *
  * @param[out] y = p(A)v
  *
@@ -287,6 +290,7 @@ static inline int pnav(double *mu, const int m, const double cc, const double dd
 /** @brief
  * Solve function for LSPol_Data
  * @param[in] db Input vector
+ * @param[in, out] data Data to be cast to pol
  * @param[out] dx output vector
  */
 void pEVSL_LSPolSol(double *db, double *dx, void *data) {

@@ -2,7 +2,7 @@
 #define PEVSL_DIRECT_H
 
 /**
- * @file evsl_direct.h
+ * @file pevsl_direct.h
  * @brief Definitions used for direct solver interface
  * 
  * Note that this file is meant to be the header file

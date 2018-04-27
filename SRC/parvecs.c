@@ -7,8 +7,8 @@
 /*!
  * @brief Create a parallel multi-vector struct without allocating memory for data
  * @param[in] nglobal Number of global elements
- * @param[in] nvec number of vecs
- * @param[in] id id
+ * @param[in] nvecs number of vecs
+ * @param[in] ld lading dimension
  * @param[in] nlocal Number local elements
  * @param[in] nfirst Index of first local element
  * @param[in] comm Communicator
@@ -31,7 +31,7 @@ void pEVSL_ParvecsCreateShell(int nglobal, int nvecs, int ld, int nlocal, int nf
  * @brief Create a parallel multi-vector struct
  * @param[in] nglobal Number of global elements
  * @param[in] nvecs Number of vectors
- * @param[in] nvecs id
+ * @param[in] ld leading dimension
  * @param[in] nlocal Number local elements
  * @param[in] nfirst Index of first local element
  * @param[in] comm Communicator
@@ -51,7 +51,7 @@ void pEVSL_ParvecsCreate(int nglobal, int nvecs, int ld, int nlocal, int nfirst,
  * @brief Creates multi-vectors of the same type as an existing vector
  * @param[in] x input vector
  * @param[in] nvecs Number of vectors
- * @param[in] id id
+ * @param[in] ld leading dimension
  * @param[in] y output vectors
  */
 void pEVSL_ParvecsDuplParvec(pevsl_Parvec *x, int nvecs, int ld, pevsl_Parvecs *y) {

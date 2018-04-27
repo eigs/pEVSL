@@ -125,12 +125,16 @@ int ParcsrLaplace(pevsl_Parcsr *A, int nx, int ny, int nz, int *row_col_starts, 
 }
 
 /**-----------------------------------------------------------------------
+ *
  * @brief Exact eigenvalues of Laplacean in interval [a b]
- * @param nx  Number of points in x-direction
- * @param ny  Number of points in y-direction
- * @param nz  Number of points in z-direction
+ * @param[in] nx  Number of points in x-direction
+ * @param[in] ny  Number of points in y-direction
+ * @param[in] nz  Number of points in z-direction
+ * @param[in] a  Left end of interval
+ * @param[in] b  Right end of interval
  * @param[out] m number of eigenvalues found 
  * @param[out] **vo pointer to array of eigenvalues found 
+ *
  *-----------------------------------------------------------------------**/
 int ExactEigLap3(int nx, int ny, int nz, double a, double b, int *m, double **vo) {
   double thetax = 0.5 * PI / (nx + 1.0);

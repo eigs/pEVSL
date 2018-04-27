@@ -25,7 +25,7 @@
 #define ZGESV    zgesv_
 
 /**
- * @file blaslapack.h
+ * @file pevsl_blaslapack.h
  * @brief Defs for blaslapack routines
  */
 

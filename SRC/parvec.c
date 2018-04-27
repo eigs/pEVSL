@@ -190,7 +190,7 @@ void pEVSL_ParvecScal(pevsl_Parvec *x, double t) {
 
 /**
  * @brief Sets all elements of a vector to a scalar
- * @param[in, out] Vector to set to constant
+ * @param[in, out] x Vector to set to constant
  * @param[in] t scalar to set vector to
  *
  */

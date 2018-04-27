@@ -24,7 +24,8 @@ typedef struct _BSolDataDirect {
 
 /** @brief Setup the B-sol by factorization with MUMPS
  *
- * @param B      parcsr matrix B
+ * @param[in] B parcsr matrix B
+ * @param[out] data      Output B-sol struct
  * */
 int SetupBSolDirect(pevsl_Parcsr *B, void **data) {
   int i, nglobal, nlocal, rank, size;

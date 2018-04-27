@@ -26,6 +26,9 @@
  *    plotting the DOS. Must be preallocated before calling LanDos
  *
  *    @param[out] neig  estimated number of eigenvalues
+ *    @param[in] ngroups Number of groups to partition work
+ *    @param[in] groupid Group which this thread is in
+ *    @param[in] gl_comm Global communicator
  *
  *
  *

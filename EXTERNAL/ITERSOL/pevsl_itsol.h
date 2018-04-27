@@ -2,7 +2,7 @@
 #define PEVSL_ITSOL_H
 
 /**
- * @file evsl_itsol.h
+ * @file pevsl_itsol.h
  * @brief Definitions used for iterative solver interface
  * 
  * Note that this file is meant to be the header file

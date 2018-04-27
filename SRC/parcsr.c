@@ -313,7 +313,7 @@ void pEVSL_ParcsrFree(pevsl_Parcsr *A) {
  * Row indices: LOCAL, Col indices: GLOBAL
  *
  * @param[in] A Input matrix
- * @param[in] inx if matrix is 1 based
+ * @param[in] idx if matrix is 1 based
  * @param[out] coo local matrix in coo format
  * @param[out] csr local matrix in csr format
  * @param[in] stype 'L' or 'l', only return the "global" lower triangular portion

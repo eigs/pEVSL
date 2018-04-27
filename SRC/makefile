@@ -12,7 +12,7 @@ OBJS = cheblanNr.o chebpol.o kpmdos.o lantrbnd.o landos.o lspolapprox.o pevsl.o 
        miscla.o parcsr.o parcsrmv.o parvec.o parvecs.o simpson.o spmat.o stats.o \
        spslicer.o utils.o vector.o \
        ../FORTRAN/pevsl_f90.o
-       
+
 LIB = ../libpevsl.a
 
 # Rules

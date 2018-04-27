@@ -6,8 +6,8 @@
  * */
 /**
  * Linearly partitions an interval (linspace in Matlab)
- * @param[in] left end of interval
- * @param[in] right end of interval
+ * @param[in] a left end of interval
+ * @param[in] b right end of interval
  * @param[in] num Number of points
  * @param[out] arr Linearly spaced points
  *
