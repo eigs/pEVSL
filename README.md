@@ -23,53 +23,53 @@ main data structures for parallel computing
    This structure is for parallel vectors. 
 
 FILES:
-  INC: [all header files]
-    pevsl.h               :   functino prototypes and constant definitions
+  * INC: [all header files]
+    * pevsl.h               :   functino prototypes and constant definitions
 
-    pevsl_blaslapack.h    :   BLAS/LAPACK macros
+    * pevsl_blaslapack.h    :   BLAS/LAPACK macros
 
-    pevsl_def.h           :   Macro definitions
+    * pevsl_def.h           :   Macro definitions
 
-    pevsl_int.h           :   internal header with constant definitions and prototypes
+    * pevsl_int.h           :   internal header with constant definitions and prototypes
 
-    pevsl_struct.h        :   pEVSL structs
+    * pevsl_struct.h        :   pEVSL structs
 
-  SRC:	
-    cheblanNr.c	    :  Polynomial Filtered no-restart Lanczos
+  * SRC:	
+    * cheblanNr.c	    :  Polynomial Filtered no-restart Lanczos
 
-    chebpol.c	    :  Computing and applying polynomial filters
+    * chebpol.c	    :  Computing and applying polynomial filters
 
-    kpmdos.c	    :  Compute DOS by KPM methods
+    * kpmdos.c	    :  Compute DOS by KPM methods
 
-    landos.c	    :  Function to use Lanczos method for approximating DOS for the generalized eigenvalue problem
+    * landos.c	    :  Function to use Lanczos method for approximating DOS for the generalized eigenvalue problem
 
-    lantrbnd.c	    :  A more robust algorithm to give bounds of spectrum based on TR Lanczos
+    * lantrbnd.c	    :  A more robust algorithm to give bounds of spectrum based on TR Lanczos
 
-    lspolapprox.c	:  Least squares polynomial approximation to a matrix function
+    * lspolapprox.c	:  Least squares polynomial approximation to a matrix function
 
-    miscla.c	    :  Miscellaneous la functions
+    * miscla.c	    :  Miscellaneous la functions
 
-    parcsr.c	    :  Functinos related to parallel csr structure
+    * parcsr.c	    :  Functinos related to parallel csr structure
 
-    parcsrmv.c	    :  Parallel csr matrix vector products
+    * parcsrmv.c	    :  Parallel csr matrix vector products
 
-    parvec.c	    :  Parallel vector related functions
+    * parvec.c	    :  Parallel vector related functions
 
-    parvecs.c	    :  Parallel multi-vector related functions
+    * parvecs.c	    :  Parallel multi-vector related functions
 
-    pevsl.c	        :  PEVSL interface functions
+    * pevsl.c	        :  PEVSL interface functions
 
-    simpson.c	    :  Simpson integrater
+    * simpson.c	    :  Simpson integrater
 
-    spmat.c	        :  Space matrix operations
+    * spmat.c	        :  Space matrix operations
 
-    spslicer.c	    :  Spectrum slicing
+    * spslicer.c	    :  Spectrum slicing
 
-    stats.c	        :  Used to track various statistics (time taken by various operations)
+    * stats.c	        :  Used to track various statistics (time taken by various operations)
 
-    utils.c	        :  Utility functions
+    * utils.c	        :  Utility functions
 
-    vector.c	    :  Vector related functions 
+    * vector.c	    :  Vector related functions 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 INSTALL:
@@ -90,7 +90,9 @@ INSTALL:
       * Lap                  [Laplacian]
 
 Run:
+```
       mpirun -np 10 ./test.ex -n 400 ./test.ex -nx 20 -ny 20 -nz 20 -nslices 5  -a 0.6 -b 1.2
+
 
       [5 slices, 2 processes for each slice]
 
@@ -143,3 +145,4 @@ Run:
    Total 21.52,  Peak 19.18 
 = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
+      ```
