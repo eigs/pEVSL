@@ -20,3 +20,6 @@ clean:
 	( cd TESTS/Gen_Lap ; make clean)
 	( cd TESTS/MM      ; make clean)
 	( cd TESTS0        ; make clean)
+
+docs:
+	 ( doxygen Documentation/Doxyfile 2> Documentation/Doxygen-Errors.txt )
