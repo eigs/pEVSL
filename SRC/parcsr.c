@@ -269,10 +269,8 @@ int pEVSL_ParcsrSetup(pevsl_Csr *Ai, pevsl_Parcsr *A) {
   A->comm_handle->send_elmts_ptr = ptr_send;
   PEVSL_MALLOC(A->comm_handle->send_buf, nelmts_send, double);
   PEVSL_MALLOC(A->comm_handle->recv_buf, ncol_offd, double);
-  PEVSL_MALLOC(A->comm_handle->send_requests, np_send, MPI_Request);
-  PEVSL_MALLOC(A->comm_handle->recv_requests, np_recv, MPI_Request);
-  PEVSL_MALLOC(A->comm_handle->send_status, np_send, MPI_Status);
-  PEVSL_MALLOC(A->comm_handle->recv_status, np_recv, MPI_Status);
+  PEVSL_MALLOC(A->comm_handle->send_recv_requests, np_send+np_recv, MPI_Request);
+  PEVSL_MALLOC(A->comm_handle->send_recv_status, np_send+np_recv, MPI_Status);
 
   PEVSL_FREE(proc_offd);
   PEVSL_FREE(num_elmts_recv);
@@ -293,10 +291,8 @@ void pEVSL_ParcsrFree(pevsl_Parcsr *A) {
   PEVSL_FREE(A->comm_handle->recv_elmts_ptr);
   PEVSL_FREE(A->comm_handle->send_buf);
   PEVSL_FREE(A->comm_handle->recv_buf);
-  PEVSL_FREE(A->comm_handle->send_requests);
-  PEVSL_FREE(A->comm_handle->recv_requests);
-  PEVSL_FREE(A->comm_handle->send_status);
-  PEVSL_FREE(A->comm_handle->recv_status);
+  PEVSL_FREE(A->comm_handle->send_recv_requests);
+  PEVSL_FREE(A->comm_handle->send_recv_status);
   PEVSL_FREE(A->comm_handle);
   PEVSL_FREE(A->row_starts);
   PEVSL_FREE(A->col_starts);

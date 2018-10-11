@@ -47,10 +47,8 @@ typedef struct _commHandle {
   double *send_buf;
   double *recv_buf;
   
-  MPI_Request *send_requests;
-  MPI_Status  *send_status;
-  MPI_Request *recv_requests;
-  MPI_Status  *recv_status;
+  MPI_Request *send_recv_requests; /**< communication request for MPI_Isend and Irecv */
+  MPI_Status  *send_recv_status;   /**< status for MPI_Waitall */
 } commHandle;
 
 
