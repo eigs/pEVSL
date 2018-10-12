@@ -5,11 +5,6 @@
  * @brief Polynomial Filtered no-restart Lanczos
  */
 
-/**
- * if filter the initial vector
- */
-#define FILTER_VINIT 1
-
 /* -----------------------------------------------------------------------
  *  @brief Chebyshev polynomial filtering Lanczos process [NON-restarted version]
  *
@@ -83,8 +78,7 @@ int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
   /*-------------------- how often to test */
   int cycle = 20;
   /* size of the matrix. N: global size */
-  int N;
-  N = pevsl->N;
+  int N = pevsl->N;
   /* max num of its */
   maxit = PEVSL_MIN(N, maxit);
   /*-------------------- polynomial filter  approximates the delta

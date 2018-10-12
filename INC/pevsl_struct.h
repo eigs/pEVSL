@@ -287,24 +287,23 @@ typedef struct _pevsl_Data {
    *  The users can implement their own Amv, Bmv, Bsol routines with arbitrary partitionings,
    *  and only set N and n but leave nfirst as PEVSL_NOT_DEFINED
    */
-  MPI_Comm      comm;       /**< MPI communicator where this instance of pEVSL lives;
-                                 all parallel matrices and vectors should the SAME MPI_Comm */
-  int           N;          /**< global size of matrix A and B */
-  int           n;          /**< local size of matrix A and B */
-  int           nfirst;     /**< the first local row and column */
-  int           ifGenEv;    /**< if it is a generalized eigenvalue problem */
-  pevsl_Matvec *Amv;        /**< external matvec routine and the associated data for A */
-  pevsl_Matvec *Bmv;        /**< external matvec routine and the associated data for B */
-  pevsl_Bsol   *Bsol;       /**< external function and data for B solve */
-  pevsl_Ltsol  *LTsol;      /**< external function and data for LT solve */
-  pevsl_Stat   *stats;      /**< timing and memory statistics of pEVSL */
+  MPI_Comm       comm;            /**< MPI communicator where this instance of pEVSL lives;
+                                       all parallel matrices and vectors should the SAME MPI_Comm */
+  int            N;               /**< global size of matrix A and B */
+  int            n;               /**< local size of matrix A and B */
+  int            nfirst;          /**< the first local row and column */
+  int            ifGenEv;         /**< if it is a generalized eigenvalue problem */
+  pevsl_Matvec  *Amv;             /**< external matvec routine and the associated data for A */
+  pevsl_Matvec  *Bmv;             /**< external matvec routine and the associated data for B */
+  pevsl_Bsol    *Bsol;            /**< external function and data for B solve */
+  pevsl_Ltsol   *LTsol;           /**< external function and data for LT solve */
+  pevsl_Stat    *stats;           /**< timing and memory statistics of pEVSL */
 
-  int            nev_computed;    /**< Used in Fortran interface:
-                                       hold the points of last computed results */
+  int            nev_computed;    /**< For Fortran interface: hold pointers of last computed results */
   double        *eval_computed;
   pevsl_Parvecs *evec_computed;
  
-  double        sigma_mult; /** multiplier for sigma in LanDOS*/
+  double         sigma_mult;      /** multiplier for sigma in LanDOS*/
 } pevsl_Data;
 
 #endif

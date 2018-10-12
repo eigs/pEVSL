@@ -111,5 +111,9 @@
  */
 #define NGS_MAX 2
 
+/*! apply polynomial filter to Lanczos initial vector
+ */
+#define FILTER_VINIT 1
+
 #endif
 
