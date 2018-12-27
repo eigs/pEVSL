@@ -1,5 +1,5 @@
 /*
-  This file is the internal header file of pESL that contains data structures, 
+  This file is the internal header file of pEVSL that contains data structures, 
   constant definitions, and internal function prototypes 
 */
 

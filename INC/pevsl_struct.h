@@ -113,6 +113,8 @@ typedef struct _pevsl_parvec {
   int n_first;   /**< the index of the first local element in the global vector
                       NOTE: this can be set as PEVSL_NOT_DEFINED */
   double *data;  /**< the data pointer */
+  /* add for imagery parts JS 12/26/18 
+  double *imag; */
 } pevsl_Parvec;
 
 
@@ -302,7 +304,11 @@ typedef struct _pevsl_Data {
   int            nev_computed;    /**< Used in Fortran interface:
                                        hold the points of last computed results */
   double        *eval_computed;
+  /* add for imagery parts JS 12/26/18 */ 
+  double        *eval_imag;
   pevsl_Parvecs *evec_computed;
+  /* add for imagery parts JS 12/26/18 */ 
+  pevsl_Parvecs *evec_imag_computed;
  
   double        sigma_mult; /** multiplier for sigma in LanDOS*/
 } pevsl_Data;
