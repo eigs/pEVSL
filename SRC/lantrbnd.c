@@ -406,3 +406,139 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
 
   return 0;
 }
+
+
+/** JS 12/28/18 for complex Hermitian systerms
+ * @brief Lanczos process for eigenvalue bounds [Thick restart version]
+ *
+ * @param[in] pevsl      pEVSL data struct
+ * @param[in] lanm      Dimension of Krylov subspace [restart dimension]
+ *
+ * @param[in] maxit  max Num of outer Lanczos iterations (restarts) allowed --
+ *         Each restart may or use the full lanm lanczos steps or fewer.
+ *
+ * @param[in] tol       tolerance for convergence
+ * @param[in] vrinit, viinit     initial vector for Lanczos -- [optional]
+ * @param[in] bndtype   Type of bound >1 for kato-temple, otherwise
+ *                      simple
+ *
+ * @param[out] lammin   Lower bound of the spectrum
+ * @param[out] lammax   Upper bound of the spectrum
+ * @param[out] fstats File stream which stats are printed to
+ *
+ * @return Returns 0 on success
+ *
+ **/
+
+int pEVSL_LanZTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
+                       pevsl_Parvec *vrinit, pevsl_Parvec *viinit, int bndtype,
+                       double *lammin, double *lammax, FILE *fstats) {
+
+  double tms = pEVSL_Wtime();
+  const int ifGenEv = pevsl->ifGenEv;
+  double lmin=0.0, lmax=0.0, t, t1, t2;
+  int do_print = 1, rank;
+  /* handle case where fstats is NULL. Then no output. Needed for openMP. */
+  if (fstats == NULL) {
+    do_print = 0;
+  }
+  MPI_Comm comm = pevsl->comm;
+  /*-------------------- MPI rank in comm */
+  MPI_Comm_rank(comm, &rank);
+  /* size of the matrix */
+  int N;
+  N = pevsl->N;
+  /*--------------------- adjust lanm and maxit */
+  lanm = PEVSL_MIN(lanm, N);
+  int lanm1=lanm+1;
+  /*  if use full lanczos, should not do more than n iterations */
+  if (lanm == N) {
+    maxit = PEVSL_MIN(maxit, N);
+  }
+  size_t lanm1_l = lanm1;
+  /*--------------------   some constants frequently used */
+  int i;
+  /*-----------------------------------------------------------------------*
+   * *thick restarted* Lanczos step
+   *-----------------------------------------------------------------------*/
+  if (do_print) {
+    fprintf(fstats, " LanTR for bounds: dim %d, maxits %d\n", lanm, maxit);
+  }
+  /*--------------------- the min number of steps to be performed for
+   *                      each innter loop, must be >= 1 - if not,
+   *                      it means that the Krylov dim is too small */
+  int min_inner_step = 5;
+  /*-------------------- it = number of Lanczos steps */
+  int it = 0;
+  /*-------------------- Lanczos vectors V_m and tridiagonal matrix T_m */
+  /* change for complex vectors  */
+  pevsl_Parvecs *Vr, *Zr;
+  pevsl_Parvecs *Vi, *Zi;
+  double *T;
+  PEVSL_MALLOC(Vr, 1, pevsl_Parvecs);
+  PEVSL_MALLOC(Vi, 1, pevsl_Parvecs);
+  pEVSL_ParvecsDuplParvec(vrinit, lanm1, vrinit->n_local, Vr);
+  pEVSL_ParvecsDuplParvec(viinit, lanm1, viinit->n_local, Vi);
+
+  /*-------------------- for gen eig prob, storage for Z = B * V */
+  if (ifGenEv) {
+    PEVSL_MALLOC(Zr, 1, pevsl_Parvecs);
+    PEVSL_MALLOC(Zi, 1, pevsl_Parvecs);
+    pEVSL_ParvecsDuplParvec(vrinit, lanm1, vrinit->n_local, Zr);
+  } else {
+    Zr = Vr;
+    Zi = Vi;
+  }
+  /*-------------------- T must be zeroed out initially */
+  PEVSL_CALLOC(T, lanm1_l*lanm1_l, double);
+  /*-------------------- trlen = dim. of thick restart set */
+  int trlen = 0;
+  /*-------------------- Ritz values and vectors of p(A) */
+  double *Rval;
+  PEVSL_MALLOC(Rval, lanm, double);
+
+  /*-------------------- Only compute 2 Ritz vectors */
+  pevsl_Parvec Rvec[4], BRvec[4];
+  pEVSL_ParvecDupl(vrinit, &Rvec[0]);
+  pEVSL_ParvecDupl(viinit, &Rvec[1]);
+  pEVSL_ParvecDupl(vrinit, &Rvec[2]);
+  pEVSL_ParvecDupl(viinit, &Rvec[3]);
+
+  if (ifGenEv) {
+    pEVSL_ParvecDupl(vrinit, &BRvec[0]);
+    pEVSL_ParvecDupl(viinit, &BRvec[1]);
+    pEVSL_ParvecDupl(vrinit, &BRvec[2]);
+    pEVSL_ParvecDupl(viinit, &BRvec[3]);
+  }
+
+  /*-------------------- Eigen vectors of T */
+  double *EvecT;
+  PEVSL_MALLOC(EvecT, lanm1_l*lanm1_l, double);
+  /*-------------------- s used by TR (the ``spike'' of 1st block in Tm)*/
+  double s[3];
+  /*-------------------- alloc some work space */
+  double *warr;
+  PEVSL_MALLOC(warr, 3*lanm, double);
+
+  /*-------------------- copy initial vector to V(:,1) */
+  pevsl_Parvec parvec[10];
+  pevsl_Parvec *vr    = &parvec[0];
+  pevsl_Parvec *vi    = &parvec[1];
+  pevsl_Parvec *vrnew = &parvec[2];
+  pevsl_Parvec *vinew = &parvec[3];
+  pevsl_Parvec *zr    = &parvec[4];
+  pevsl_Parvec *zi    = &parvec[5];
+  pevsl_Parvec *zrnew = &parvec[6];
+  pevsl_Parvec *zinew = &parvec[7];
+  pevsl_Parvec *zrold = &parvec[8];
+  pevsl_Parvec *ziold = &parvec[9];
+
+  /* v references the 1st columns of V */
+  pEVSL_ParvecsGetParvecShell(Vr, 0, vr);
+  pEVSL_ParvecsGetParvecShell(Vi, 0, vi);
+  pEVSL_ParvecCopy(vrinit, vr);
+  pEVSL_ParvecCopy(viinit, vi);
+
+
+  return 0;
+}
