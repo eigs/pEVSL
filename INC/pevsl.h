@@ -75,6 +75,14 @@ void pEVSL_ParvecNrm2(pevsl_Parvec *x, double *t);
 void pEVSL_ParvecCopy(pevsl_Parvec *x, pevsl_Parvec *y);
 void pEVSL_ParvecSum(pevsl_Parvec *x, double *t);
 void pEVSL_ParvecScal(pevsl_Parvec *x, double t);
+/*add JS 01/02/19 */
+void pEVSL_ParvecCreateH(pevsl_Parvec *xi, pevsl_Parvec *xiH); 
+void pEVSL_ParvecZNrm2(pevsl_Parvec *xr, pevsl_Parvec *xi, double *t);
+void pEVSL_ParvecZDot(pevsl_Parvec *xr, pevsl_Parvec *xi, pevsl_Parvec *yr, 
+                      pevsl_Parvec *yi, double *tr, double *ti); 
+
+
+
 /* void pEVSL_ParvecAddScalar(pevsl_Parvec *x, double t); */
 void pEVSL_ParvecSetScalar(pevsl_Parvec *x, double t);
 void pEVSL_ParvecSetZero(pevsl_Parvec *x);

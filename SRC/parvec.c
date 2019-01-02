@@ -49,6 +49,20 @@ void pEVSL_ParvecDupl(pevsl_Parvec *x, pevsl_Parvec *y) {
   pEVSL_ParvecCreate(x->n_global, x->n_local, x->n_first, x->comm, y);
 }
 
+/*! JS 01/02/19 create x*H change the imag part xi to -xi
+ * @param[xi] xi Input vector 
+ * @param[xiH] xi^H Output vector 
+ */
+void pEVSL_ParvecCreateH(pevsl_Parvec *xi, pevsl_Parvec *xiH) {
+
+  pEVSL_ParvecDupl(xi, xiH); 
+
+  int i;
+  for (i=0; i<xi->n_local; i++) {
+    xiH->data[i] = - xi->data[i];
+  }
+}
+
 /*!
  * @brief Destroy a Parvec struct
  */
@@ -131,6 +145,7 @@ void pEVSL_ParvecDot(pevsl_Parvec *x, pevsl_Parvec *y, double *t) {
 }
 
 /** JS 12/26/18 
+ * computes x^H * y = tr + ti * i
  * @brief Parallel complex dot product
  * @param[in] xr, xi Input vector
  * @param[in] yr, yi Input vector
@@ -138,7 +153,7 @@ void pEVSL_ParvecDot(pevsl_Parvec *x, pevsl_Parvec *y, double *t) {
  *
  */
 void pEVSL_ParvecZDot(pevsl_Parvec *xr, pevsl_Parvec *xi, pevsl_Parvec *yr, 
-                     pevsl_Parvec *yi, double *tr, double *ti) {
+                      pevsl_Parvec *yi, double *tr, double *ti) {
   PEVSL_CHKERR(xr->n_global != yr->n_global);
   PEVSL_CHKERR(xr->n_local  != yr->n_local);
   PEVSL_CHKERR(xr->n_first  != yr->n_first);
@@ -146,15 +161,20 @@ void pEVSL_ParvecZDot(pevsl_Parvec *xr, pevsl_Parvec *xi, pevsl_Parvec *yr,
   PEVSL_CHKERR(xi->n_local  != yi->n_local);
   PEVSL_CHKERR(xi->n_first  != yi->n_first);
   double tlocal0,tlocal1,t0,t1;
+  /* make x complex conjugate*/
+  pevsl_Parvec *xiH;
+  pEVSL_ParvecCreateH(xi,xiH); 
+
   int one = 1;
-  tlocal0 = DDOT(&(xr->n_local), xr->data, &one, yr->data, &one);
-  tlocal1 = DDOT(&(xi->n_local), xi->data, &one, yi->data, &one);
+  tlocal0 = DDOT(&(xr->n_local),  xr->data, &one, yr->data, &one);
+  tlocal1 = DDOT(&(xi->n_local), xiH->data, &one, yi->data, &one);
   t0 = tlocal0 - tlocal1;
   MPI_Allreduce(&t0, tr, 1, MPI_DOUBLE, MPI_SUM, xr->comm);
-  tlocal0 = DDOT(&(xr->n_local), xr->data, &one, yi->data, &one);
-  tlocal1 = DDOT(&(xi->n_local), xi->data, &one, yr->data, &one);
+  tlocal0 = DDOT(&(xr->n_local),  xr->data, &one, yi->data, &one);
+  tlocal1 = DDOT(&(xi->n_local), xiH->data, &one, yr->data, &one);
   t1 = tlocal0 + tlocal1;
   MPI_Allreduce(&t1, ti, 1, MPI_DOUBLE, MPI_SUM, xr->comm);
+  pEVSL_ParvecFree(xiH);
 }
 
 
@@ -176,18 +196,14 @@ void pEVSL_ParvecNrm2(pevsl_Parvec *x, double *t) {
  * */
 void pEVSL_ParvecZNrm2(pevsl_Parvec *xr, pevsl_Parvec *xi, double *t) {
   double t1, t2;
-  pevsl_Parvec *yt;
+  pevsl_Parvec *xiH;
    
-  pEVSL_ParvecDupl(xi, yt); 
+  pEVSL_ParvecCreateH(xi,xiH); 
 
-  int i;
-  for (i=0; i<xi->n_local; i++) {
-    yt->data[i] = - xi->data[i];
-  }
-  
-
-  pEVSL_ParvecZDot(xr, xi, xr, yt, &t1, &t2);
+  pEVSL_ParvecZDot(xr, xi, xr, xiH, &t1, &t2);
   *t = sqrt(t1);
+
+  pEVSL_ParvecFree(xiH);
 }
 
 

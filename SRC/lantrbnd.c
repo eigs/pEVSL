@@ -436,7 +436,7 @@ int pEVSL_LanZTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
 
   double tms = pEVSL_Wtime();
   const int ifGenEv = pevsl->ifGenEv;
-  double lmin=0.0, lmax=0.0, t, t1, t2;
+  double lmin=0.0, lmax=0.0, t, tr, ti, t1, t2;
   int do_print = 1, rank;
   /* handle case where fstats is NULL. Then no output. Needed for openMP. */
   if (fstats == NULL) {
@@ -538,6 +538,42 @@ int pEVSL_LanZTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
   pEVSL_ParvecsGetParvecShell(Vi, 0, vi);
   pEVSL_ParvecCopy(vrinit, vr);
   pEVSL_ParvecCopy(viinit, vi);
+
+  /*-------------------- normalize it */
+  if (ifGenEv) {
+    /* z references the 1st columns of Z */
+    pEVSL_ParvecsGetParvecShell(Zr, 0, zr);
+    pEVSL_ParvecsGetParvecShell(Zi, 0, zi);
+    /* B norm */
+    pEVSL_ZMatvecB(pevsl, vr, vi, zr, zi);
+    pEVSL_ParvecZDot(vr, vi, zr, zi, &tr, &ti);
+    t = 1.0 / sqrt(tr);
+    /* check! ti != 0.0 ? */
+
+    /* z = B*v */
+    pEVSL_ParvecScal(zr, t);
+    pEVSL_ParvecScal(zi, t);
+  } else {
+    /* 2-norm */
+    pEVSL_ParvecZNrm2(vr,vi,&t);
+    t = 1.0 / t;
+  }
+  /* unit B-norm or 2-norm */
+  pEVSL_ParvecScal(vr, t);
+  pEVSL_ParvecScal(vi, t);
+
+  /*-------------------- main (restarted Lan) outer loop */
+  while (it < maxit) {
+    /*-------------------- for ortho test */
+    double wn = 0.0;
+    int nwn = 0;
+    /*  beta */
+    double beta = 0.0;
+    /*  start with V(:,k) */
+    int k = trlen > 0 ? trlen + 1 : 0;
+
+
+  }
 
 
   return 0;

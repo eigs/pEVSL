@@ -142,6 +142,89 @@ static inline void pEVSL_SolveB(pevsl_Data   *pevsl_data,
   pevsl_data->stats->n_svB ++;
 }
 
+/* JS introduce complex version */
+/** 
+ * @brief Perform complex matrix-vector product y = A * x
+ * 
+ * */
+static inline void pEVSL_ZMatvecA(pevsl_Data   *pevsl_data, 
+                 pevsl_Parvec *xr, pevsl_Parvec *xi, 
+                 pevsl_Parvec *yr, pevsl_Parvec *yi) {
+
+  PEVSL_CHKERR(!pevsl_data->ZAmv);
+     
+  PEVSL_CHKERR(pevsl_data->N != xr->n_global);
+  PEVSL_CHKERR(pevsl_data->n != xr->n_local);
+  PEVSL_CHKERR(pevsl_data->nfirst != xr->n_first);
+  PEVSL_CHKERR(pevsl_data->N != yr->n_global);
+  PEVSL_CHKERR(pevsl_data->n != yr->n_local);
+  PEVSL_CHKERR(pevsl_data->nfirst != yr->n_first);
+
+  double tms = pEVSL_Wtime();
+
+  pevsl_data->ZAmv->func(xr->data, xi->data,
+                         yr->data, yi->data, pevsl_data->ZAmv->data);
+  
+  double tme = pEVSL_Wtime();
+  pevsl_data->stats->t_mvA += tme - tms;
+  pevsl_data->stats->n_mvA ++;
+}
+
+/** 
+ * @brief Perform complex matrix-vector product y = B * x
+ * 
+ * */
+static inline void pEVSL_ZMatvecB(pevsl_Data   *pevsl_data,
+                       pevsl_Parvec *xr, pevsl_Parvec *xi, 
+                       pevsl_Parvec *yr, pevsl_Parvec *yi) {
+
+  PEVSL_CHKERR(!pevsl_data->ZBmv);
+  
+  PEVSL_CHKERR(pevsl_data->N != xr->n_global);
+  PEVSL_CHKERR(pevsl_data->n != xr->n_local);
+  PEVSL_CHKERR(pevsl_data->nfirst != xr->n_first);
+  PEVSL_CHKERR(pevsl_data->N != yr->n_global);
+  PEVSL_CHKERR(pevsl_data->n != yr->n_local);
+  PEVSL_CHKERR(pevsl_data->nfirst != yr->n_first);
+
+  double tms = pEVSL_Wtime();
+  
+  pevsl_data->ZBmv->func(xr->data, xi->data,
+                        yr->data, yi->data,pevsl_data->ZBmv->data);
+  
+  double tme = pEVSL_Wtime();
+  pevsl_data->stats->t_mvB += tme - tms;
+  pevsl_data->stats->n_mvB ++;
+}
+
+/**
+* @brief complex y = B \ x
+* This is the solve function for the matrix B in pevsl_Data
+*/
+static inline void pEVSL_ZSolveB(pevsl_Data   *pevsl_data,
+                       pevsl_Parvec *xr, pevsl_Parvec *xi, 
+                       pevsl_Parvec *yr, pevsl_Parvec *yi) {
+
+  PEVSL_CHKERR(!pevsl_data->ZBsol);
+ 
+  PEVSL_CHKERR(pevsl_data->N != xr->n_global);
+  PEVSL_CHKERR(pevsl_data->n != xr->n_local);
+  PEVSL_CHKERR(pevsl_data->nfirst != xr->n_first);
+  PEVSL_CHKERR(pevsl_data->N != yi->n_global);
+  PEVSL_CHKERR(pevsl_data->n != yi->n_local);
+  PEVSL_CHKERR(pevsl_data->nfirst != yi->n_first);
+
+  double tms = pEVSL_Wtime();
+  
+  pevsl_data->ZBsol->func(xr->data, xi->data, yr->data, yi->data, pevsl_data->ZBsol->data);
+  
+  double tme = pEVSL_Wtime();
+  pevsl_data->stats->t_svB += tme - tms;
+  pevsl_data->stats->n_svB ++;
+}
+
+
+
 /**
 * @brief y = LT \ x or y = SQRT(B) \ x
 * This is the solve function for the matrix B in pevsl_Data

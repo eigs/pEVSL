@@ -201,6 +201,8 @@ typedef void (*SVFunc)(pevsl_Parvec *b, pevsl_Parvec *x, void *data);
 */
 typedef void (*SVFunc)(double *b, double *x, void *data);
 
+typedef void (*ZSVFunc)(double *br, double *bi, double *xr, double *xi, void *data);
+
 /**
  * @brief matvec function prototype 
  */
@@ -208,6 +210,8 @@ typedef void (*SVFunc)(double *b, double *x, void *data);
 typedef void (*MVFunc)(pevsl_Parvec *x, pevsl_Parvec *y, void *data);
 */
 typedef void (*MVFunc)(double *x, double *y, void *data);
+
+typedef void (*ZMVFunc)(double *xr, double *xi, double *yr, double *yi, void *data);
 
 /*!
  * @brief user-provided Mat-Vec function and data for y = A * x or y = B * x
@@ -235,6 +239,24 @@ typedef struct _pevsl_LtSol {
   SVFunc func;       /**< function pointer */
   void *data;        /**< data */
 } pevsl_Ltsol;
+
+/*! JS 01/02/2019 add function for complex solve */
+/*!
+ * @brief user-provided Mat-Vec function and data for y = A * x or y = B * x
+ */
+typedef struct _pevsl_ZMatvec {
+  ZMVFunc func;         /**< function pointer */
+  void *data;          /**< data */
+} pevsl_ZMatvec;
+/*!
+ * @brief user-provided function and data for solving complex B x = b
+ */
+typedef struct _pevsl_ZBsol {
+  ZSVFunc func;       /**< function pointer */
+  void *data;        /**< data */
+} pevsl_ZBsol;
+
+
 
 /*!
  * @brief timing and memory statistics of pEVSL
@@ -300,6 +322,13 @@ typedef struct _pevsl_Data {
   pevsl_Bsol   *Bsol;       /**< external function and data for B solve */
   pevsl_Ltsol  *LTsol;      /**< external function and data for LT solve */
   pevsl_Stat   *stats;      /**< timing and memory statistics of pEVSL */
+
+
+  /* JS 01/02/19 add additional functions for complex systems*/
+  pevsl_ZMatvec *ZAmv;  
+  pevsl_ZMatvec *ZBmv; 
+  pevsl_ZBsol   *ZBsol; 
+
 
   int            nev_computed;    /**< Used in Fortran interface:
                                        hold the points of last computed results */
