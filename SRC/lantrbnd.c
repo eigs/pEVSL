@@ -518,8 +518,8 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
   double sr[3], si[3];
   /*-------------------- alloc some work space */
   double *warr, *wari;
-  PEVSL_MALLOC(warr, 3*lanm, double);
-  PEVSL_MALLOC(wari, 3*lanm, double);
+  PEVSL_MALLOC(warr, 5*lanm, double);
+  PEVSL_MALLOC(wari, 5*lanm, double);
 
   /*-------------------- copy initial vector to V(:,1) */
   pevsl_Parvec parvec[10];
@@ -642,7 +642,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
         if (ifGenEv) {
           /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
           CGS_ZDGKS2(pevsl, k, NGS_MAX, Vr, Vi, Zr, Zi,
-              vrnew, vinew, warr, wari);
+                              vrnew, vinew, warr, wari);
           pEVSL_ZMatvecB(pevsl, vrnew, vinew, zrnew, zinew);
           pEVSL_ParvecZDot(vrnew, vinew, zrnew, zinew, &betar, &betai);
           beta = sqrt(betar); 
