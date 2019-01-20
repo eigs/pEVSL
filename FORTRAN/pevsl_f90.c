@@ -81,6 +81,7 @@ void PEVSL_FORT(pevsl_setamv)(uintptr_t *pevslf90, void *func, void *data) {
   pEVSL_SetAMatvec(pevsl, (MVFunc) func, data);
 }
 
+
 /** @brief Fortran interface for pEVSL_SetBMatvec
  * @param[in] pevslf90  pevsl pointer
  * @param[in] func  function pointer
@@ -102,6 +103,46 @@ void PEVSL_FORT(pevsl_setbsol)(uintptr_t *pevslf90, void *func, void *data) {
 
   pEVSL_SetBSol(pevsl, (SVFunc) func, data);
 }
+
+
+/**JS 01/20/19 for complex Hermitian Av
+ * @brief Fortran interface for pEVSL_SetAMatvec
+ * @param[in] pevslf90  pevsl pointer
+ * @param[in] func  function pointer
+ * @param[in] data  associated data
+ */
+void PEVSL_FORT(pevsl_setzamv)(uintptr_t *pevslf90, void *func, void *data) {
+
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+
+  pEVSL_SetZAMatvec(pevsl, (ZMVFunc) func, data);
+}
+
+/** @brief Fortran interface for pEVSL_SetBMatvec
+ * @param[in] pevslf90  pevsl pointer
+ * @param[in] func  function pointer
+ * @param[in] data  associated data
+ */
+void PEVSL_FORT(pevsl_setzbmv)(uintptr_t *pevslf90, void *func, void *data) {
+
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+
+  pEVSL_SetZBMatvec(pevsl, (ZMVFunc) func, data);
+}
+
+/** @brief Fortran interface for SetBsol */
+void PEVSL_FORT(pevsl_setzbsol)(uintptr_t *pevslf90, void *func, void *data) {
+
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+
+  pEVSL_SetZBSol(pevsl, (ZSVFunc) func, data);
+}
+
+
+
 
 /** @brief Fortran interface for SetStdEig */
 void PEVSL_FORT(pevsl_set_stdeig)(uintptr_t *pevslf90) {
@@ -182,6 +223,8 @@ void PEVSL_FORT(pevsl_bsv)(uintptr_t *pevslf90, double *b, double *x) {
 }
 
 
+
+
 /** @brief Fortran interface for evsl_lanbounds
  * @param[in] pevslf90 pEVSL pointer
  * @param[in] mlan Krylov dimension
@@ -210,6 +253,41 @@ void PEVSL_FORT(pevsl_lanbounds)(uintptr_t *pevslf90, int *mlan, int *nsteps, do
 
   pEVSL_ParvecFree(&vinit);
 }
+
+
+/** JS 01/20/19  
+ * @brief Fortran interface for evsl_lanbounds
+ * @param[in] pevslf90 pEVSL pointer
+ * @param[in] mlan Krylov dimension
+ * @param[in] nsteps number of steps
+ * @param[in] tol stopping tol
+ * @param[out] lmin lower bound
+ * @param[out] lmax upper bound
+ * */
+void PEVSL_FORT(pevsl_zlanbounds)(uintptr_t *pevslf90, int *mlan, int *nsteps, double *tol,
+                                 double *lmin, double *lmax) {
+  int N, n, nfirst;
+  pevsl_Parvec vrinit, viinit;
+
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+
+  N = pevsl->N;
+  n = pevsl->n;
+  nfirst = pevsl->nfirst;
+
+  /*------------------- Create parallel vector: random initial guess */
+  pEVSL_ParvecCreate(N, n, nfirst, pevsl->comm, &vrinit);
+  pEVSL_ParvecRand(&vrinit);
+  pEVSL_ParvecCreate(N, n, nfirst, pevsl->comm, &viinit);
+  pEVSL_ParvecRand(&viinit);
+  /*------------------- Lanczos Bounds */
+  pEVSL_ZLanTrbounds(pevsl, *mlan, *nsteps, 1e-8, &vrinit, &viinit, 1, lmin, lmax, NULL);
+
+  pEVSL_ParvecFree(&vrinit);
+  pEVSL_ParvecFree(&viinit);
+}
+
 
 /** @brief Fortran interface for find_pol
  * @param[in] xintv  Interval of interest

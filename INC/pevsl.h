@@ -28,6 +28,10 @@ void pEVSL_SpslicerLan(double* xi, double* yi, int n_int, int npts, double* sli)
 int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol, 
                       pevsl_Parvec *vinit, int bndtype, double *lammin, 
                       double *lammax, FILE *fstats);
+/* add JS 010219 complex lantrbnd */
+int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
+                       pevsl_Parvec *vrinit, pevsl_Parvec *viinit, int bndtype,
+                       double *lammin, double *lammax, FILE *fstats);
 /* lspolapprox.c */
 void pEVSL_SetupLSPolSqrt(int max_deg, double tol, double lmin, double lmax, 
                           pevsl_Parcsr *B, void **vdata);
@@ -49,6 +53,10 @@ int pEVSL_SetLTSol    (pevsl_Data *pevsl_data, SVFunc func, void *data);
 int pEVSL_SetStdEig   (pevsl_Data *pevsl_data);
 int pEVSL_SetGenEig   (pevsl_Data *pevsl_data);
 int pEVSL_SetSigmaMult(pevsl_Data *pevsl_data, double mult);
+/* add JS 01/20/19 complex mat-vec*/
+int pEVSL_SetZAMatvec  (pevsl_Data *pevsl_data, ZMVFunc func, void *data);
+int pEVSL_SetZBMatvec  (pevsl_Data *pevsl_data, ZMVFunc func, void *data);
+int pEVSL_SetZBSol     (pevsl_Data *pevsl_data, ZSVFunc func, void *data);
 
 /* parcsr.c */
 int  pEVSL_ParcsrCreate(int nrow, int ncol, int *row_starts, int *col_starts, 

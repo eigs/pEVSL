@@ -38,6 +38,15 @@ void CGS_DGKS(pevsl_Data *pevsl, int k, int i_max, pevsl_Parvecs *Q, pevsl_Parve
 
 void CGS_DGKS2(pevsl_Data *pevsl, int k, int i_max, pevsl_Parvecs *V, pevsl_Parvecs *Z, pevsl_Parvec *v, double *w);
 
+void CGS_ZDGKS(pevsl_Data *pevsl, int k, int i_max, 
+              pevsl_Parvecs *Qr, pevsl_Parvecs *Qi, 
+              pevsl_Parvec  *vr, pevsl_Parvec  *vi,
+              double *nrmv, double *wr, double *wi);
+
+void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max, 
+         pevsl_Parvecs *Vr, pevsl_Parvecs *Vi, pevsl_Parvecs *Zr, pevsl_Parvecs *Zi, 
+         pevsl_Parvec  *vr, pevsl_Parvec  *vi, double *wr, double *wi);
+
 /* parcsrmv.c */
 void pEVSL_ParcsrMatvec0(double *x, double *y, void *data);
 
