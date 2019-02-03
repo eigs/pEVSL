@@ -461,6 +461,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
   /*-----------------------------------------------------------------------*
    * *thick restarted* Lanczos step
    *-----------------------------------------------------------------------*/
+  
   if (do_print) {
     fprintf(fstats, " LanTR for bounds: dim %d, maxits %d\n", lanm, maxit);
   }
@@ -545,10 +546,13 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
     /* z references the 1st columns of Z */
     pEVSL_ParvecsGetParvecShell(Zr, 0, zr);
     pEVSL_ParvecsGetParvecShell(Zi, 0, zi);
+
+    pEVSL_fprintf0(rank,fstats,"check 0 \n");
     /* B norm */
     pEVSL_ZMatvecB(pevsl, vr, vi, zr, zi);
     pEVSL_ParvecZDot(vr, vi, zr, zi, &tr, &ti);
     t = 1.0 / sqrt(tr);
+    pEVSL_fprintf0(rank,fstats,"check 1 \n");
     /* check! ti != 0.0 ? */
 
     /* z = B*v */
