@@ -265,12 +265,14 @@ void CGS_ZDGKS(pevsl_Data *pevsl, int k, int i_max,
 
   int one = 1; 
   double done = 1.0, dnone = -1.0;
-  w0 = wr + 2*k; 
-  w1 = wi + 2*k;
+  w0 = wr; 
+  w1 = wi;
 
-  pevsl_Parvec *v0, *v1; 
-  pEVSL_ParvecDupl(vr, v0);
-  pEVSL_ParvecDupl(vi, v1);
+  pevsl_Parvec VV[2];
+  pEVSL_ParvecDupl(vr, &VV[0]);
+  pEVSL_ParvecDupl(vi, &VV[1]);
+  pevsl_Parvec *v0 = &VV[0]; 
+  pevsl_Parvec *v1 = &VV[1]; 
   
   pEVSL_ParvecZNrm2(vr, vi, &old_nrm);
 
@@ -352,7 +354,7 @@ void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max,
   pevsl_Parvec *v1 = &VV[1]; 
 
   int one = 1; 
-  double done = 1.0, dnone = -1.0;
+  double done = 1.0, dnone = -1.0, dzero = 0.0;
   w0 = wr + 2*k; 
   w1 = wi + 2*k;
 
@@ -366,10 +368,10 @@ void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max,
 
     pEVSL_ParvecsGemtvWithWspace(1.0, Zr, k, vi, 0.0, wi, wi+k);
     pEVSL_ParvecsGemtvWithWspace(1.0, Zi, k, vr, 0.0, w1, w1+k);
-    /* *wi = - *w0 + *w1; */
+    /* *wi =  *wi - *w1; */
     DAXPY(&k, &dnone, w1, &one, wi, &one);   
 
-    /* v = v - V *w */
+    /* v = v - V^H *w */
     pEVSL_ParvecsGemv(-1.0, Vr, k, wr, 1.0, vr);
     pEVSL_ParvecsGemv(-1.0, Vi, k, wi, 1.0, v0);
     pEVSL_ParvecAxpy(-1.0, v0, vr);

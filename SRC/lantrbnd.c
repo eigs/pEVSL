@@ -523,7 +523,6 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
   PEVSL_MALLOC(warr, 5*lanm, double);
   PEVSL_MALLOC(wari, 5*lanm, double);
 
-  pEVSL_fprintf0(rank,fstats,"check 0 \n");
   /*-------------------- copy initial vector to V(:,1) */
   pevsl_Parvec parvec[10];
   pevsl_Parvec *vr    = &parvec[0];
@@ -542,7 +541,6 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
   pEVSL_ParvecsGetParvecShell(Vi, 0, vi);
   pEVSL_ParvecCopy(vrinit, vr);
   pEVSL_ParvecCopy(viinit, vi);
-  pEVSL_fprintf0(rank,fstats,"check 1 \n");
 
   /*-------------------- normalize it */
   if (ifGenEv) {
@@ -555,7 +553,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
     pEVSL_ParvecZDot(vr, vi, zr, zi, &tr, &ti);
     t = 1.0 / sqrt(tr);
     /* check! ti != 0.0 ? */
-    pEVSL_fprintf0(rank,fstats,"check 2 \n");
+    /*pEVSL_fprintf0(rank,fstats,"%12e \n", ti);*/
 
     /* z = B*v */
     pEVSL_ParvecScal(zr, t);
@@ -739,6 +737,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
         /*-------------------- beta = (vnew, znew)^{1/2} */
         pEVSL_ParvecZDot(vrnew, vinew, zrnew, zinew, &betar, &betai);
         beta = sqrt(betar); 
+        /*pEVSL_fprintf0(rank,fstats,"%d check %12e \n",it, betai);*/
       } else { 
         /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
         /*   beta = norm(w) */
@@ -765,6 +764,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
                            eigenvectors of Tm */
     sr[0] = beta * EvecT[k-1];
     sr[1] = beta * EvecT[(k-1)*lanm1_l+(k-1)];
+    /*pEVSL_fprintf0(rank,fstats,"%d check %12e %12e \n",it, sr[0],sr[1]);*/
     /*---------------------- bounds */
     if (bndtype <= 1) {
       /*-------------------- BOUNDS type 1 (simple) */
