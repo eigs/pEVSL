@@ -486,6 +486,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
     PEVSL_MALLOC(Zr, 1, pevsl_Parvecs);
     PEVSL_MALLOC(Zi, 1, pevsl_Parvecs);
     pEVSL_ParvecsDuplParvec(vrinit, lanm1, vrinit->n_local, Zr);
+    pEVSL_ParvecsDuplParvec(viinit, lanm1, viinit->n_local, Zi);
   } else {
     Zr = Vr;
     Zi = Vi;
@@ -522,6 +523,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
   PEVSL_MALLOC(warr, 5*lanm, double);
   PEVSL_MALLOC(wari, 5*lanm, double);
 
+  pEVSL_fprintf0(rank,fstats,"check 0 \n");
   /*-------------------- copy initial vector to V(:,1) */
   pevsl_Parvec parvec[10];
   pevsl_Parvec *vr    = &parvec[0];
@@ -540,6 +542,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
   pEVSL_ParvecsGetParvecShell(Vi, 0, vi);
   pEVSL_ParvecCopy(vrinit, vr);
   pEVSL_ParvecCopy(viinit, vi);
+  pEVSL_fprintf0(rank,fstats,"check 1 \n");
 
   /*-------------------- normalize it */
   if (ifGenEv) {
@@ -547,13 +550,12 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
     pEVSL_ParvecsGetParvecShell(Zr, 0, zr);
     pEVSL_ParvecsGetParvecShell(Zi, 0, zi);
 
-    pEVSL_fprintf0(rank,fstats,"check 0 \n");
     /* B norm */
     pEVSL_ZMatvecB(pevsl, vr, vi, zr, zi);
     pEVSL_ParvecZDot(vr, vi, zr, zi, &tr, &ti);
     t = 1.0 / sqrt(tr);
-    pEVSL_fprintf0(rank,fstats,"check 1 \n");
     /* check! ti != 0.0 ? */
+    pEVSL_fprintf0(rank,fstats,"check 2 \n");
 
     /* z = B*v */
     pEVSL_ParvecScal(zr, t);

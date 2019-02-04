@@ -345,9 +345,11 @@ void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max,
 
   double tms = pEVSL_Wtime();
   double *w0, *w1;
-  pevsl_Parvec *v0, *v1; 
-  pEVSL_ParvecDupl(vr, v0);
-  pEVSL_ParvecDupl(vi, v1);
+  pevsl_Parvec VV[2];
+  pEVSL_ParvecDupl(vr, &VV[0]);
+  pEVSL_ParvecDupl(vi, &VV[1]);
+  pevsl_Parvec *v0 = &VV[0]; 
+  pevsl_Parvec *v1 = &VV[1]; 
 
   int one = 1; 
   double done = 1.0, dnone = -1.0;
