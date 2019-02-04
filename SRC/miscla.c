@@ -377,10 +377,11 @@ void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max,
 
     pEVSL_ParvecsGemv(-1.0, Vi, k, wr, 1.0, vi);
     pEVSL_ParvecsGemv(-1.0, Vr, k, wi, 1.0, v1);
+
+    pEVSL_ParvecAxpy(-1.0, v0, vr);
+    pEVSL_ParvecAxpy(1.0, v1, vi);
   }
 
-  pEVSL_ParvecAxpy(-1.0, v0, vr);
-  pEVSL_ParvecAxpy(1.0, v1, vi);
 
   double tme = pEVSL_Wtime();
   pevsl->stats->t_reorth += tme - tms;
