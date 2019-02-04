@@ -371,15 +371,15 @@ void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max,
     /* *wi =  *wi - *w1; */
     DAXPY(&k, &dnone, w1, &one, wi, &one);   
 
-    /* v = v - V^H *w */
+    /* v = v - V *w no complex conjugate? */
     pEVSL_ParvecsGemv(-1.0, Vr, k, wr, 1.0, vr);
     pEVSL_ParvecsGemv(-1.0, Vi, k, wi, 1.0, v0);
 
-    pEVSL_ParvecsGemv(-1.0, Vi, k, wr, 1.0, vi);
-    pEVSL_ParvecsGemv(-1.0, Vr, k, wi, 1.0, v1);
+    pEVSL_ParvecsGemv(-1.0, Vr, k, wi, 1.0, vi);
+    pEVSL_ParvecsGemv(-1.0, Vi, k, wr, 1.0, v1);
 
     pEVSL_ParvecAxpy(-1.0, v0, vr);
-    pEVSL_ParvecAxpy(1.0, v1, vi);
+    pEVSL_ParvecAxpy( 1.0, v1, vi);
   }
 
 
