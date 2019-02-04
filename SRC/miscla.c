@@ -354,9 +354,9 @@ void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max,
   pevsl_Parvec *v1 = &VV[1]; 
 
   int one = 1; 
-  double done = 1.0, dnone = -1.0, dzero = 0.0;
-  w0 = wr + 2*k; 
-  w1 = wi + 2*k;
+  double done = 1.0, dnone = -1.0;
+  w0 = wr + i_max*k; 
+  w1 = wi + i_max*k;
 
   int i;
   for (i=0; i<i_max; i++) {
@@ -374,12 +374,13 @@ void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max,
     /* v = v - V^H *w */
     pEVSL_ParvecsGemv(-1.0, Vr, k, wr, 1.0, vr);
     pEVSL_ParvecsGemv(-1.0, Vi, k, wi, 1.0, v0);
-    pEVSL_ParvecAxpy(-1.0, v0, vr);
 
     pEVSL_ParvecsGemv(-1.0, Vi, k, wr, 1.0, vi);
     pEVSL_ParvecsGemv(-1.0, Vr, k, wi, 1.0, v1);
-    pEVSL_ParvecAxpy(1.0, v1, vi);
   }
+
+  pEVSL_ParvecAxpy(-1.0, v0, vr);
+  pEVSL_ParvecAxpy(1.0, v1, vi);
 
   double tme = pEVSL_Wtime();
   pevsl->stats->t_reorth += tme - tms;
