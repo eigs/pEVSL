@@ -364,12 +364,12 @@ void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max,
     pEVSL_ParvecsGemtvWithWspace(1.0, Zr, k, vr, 0.0, wr, wr+k);
     pEVSL_ParvecsGemtvWithWspace(1.0, Zi, k, vi, 0.0, w0, w0+k);
     /* *wr = *w0 + *w1; */ 
-    DAXPY(&k, &done, w0, &one, wr, &one);   
+    /*DAXPY(&k, &done, w0, &one, wr, &one);*/ 
 
     pEVSL_ParvecsGemtvWithWspace(1.0, Zr, k, vi, 0.0, wi, wi+k);
     pEVSL_ParvecsGemtvWithWspace(1.0, Zi, k, vr, 0.0, w1, w1+k);
     /* *wi =  *wi - *w1; */
-    DAXPY(&k, &dnone, w1, &one, wi, &one);   
+    /*DAXPY(&k, &dnone, w1, &one, wi, &one); */ 
 
     /* v = v - V *w no complex conjugate? */
     pEVSL_ParvecsGemv(-1.0, Vr, k, wr, 1.0, vr);
@@ -379,7 +379,7 @@ void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max,
     pEVSL_ParvecsGemv(-1.0, Vi, k, wr, 1.0, v1);
 
     pEVSL_ParvecAxpy(-1.0, v0, vr);
-    pEVSL_ParvecAxpy( 1.0, v1, vi);
+    pEVSL_ParvecAxpy( 1.0, v1, vi); 
   }
 
 

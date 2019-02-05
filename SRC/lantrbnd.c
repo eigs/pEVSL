@@ -251,6 +251,7 @@ int pEVSL_LanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
       /*-------------------- alpha = znew'*v */
       double alpha;
       pEVSL_ParvecDot(v, znew, &alpha);
+      /*pEVSL_fprintf0(rank,fstats,"it %d check alpha %12e \n",it,alpha);*/
       /*-------------------- T(k,k) = alpha */
       T[(k-1)*lanm1_l+(k-1)] = alpha;
       wn += fabs(alpha);
@@ -584,6 +585,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
       pEVSL_fprintf0(rank, stderr, "Krylov dim too small for this problem. Try a larger dim\n");
       exit(1);
     }
+    /*pEVSL_fprintf0(rank,fstats,"trlen %d \n",trlen);*/
 
     /*-------------------- thick restart special step */
     if (trlen > 0) {
@@ -635,6 +637,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
         pEVSL_ParvecZNrm2(vrnew, vinew, &beta);
       }
 
+
       wn += 2.0 * beta;
       nwn += 3*k;
 
@@ -680,6 +683,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
       /*------------------- T(k+1,k) = beta; T(k,k+1) = beta; */
       T[k1*lanm1_l+k] = beta;
       T[k*lanm1_l+k1] = beta;
+
     }
     /*-------------------- Done with TR step. Rest of Lanczos step */
     /*-------------------- regardless of trlen, *(k+1)* is the current
@@ -721,7 +725,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
       double alpha, alphar, alphai;
       pEVSL_ParvecZDot(vr, vi, zrnew, zinew, &alphar, &alphai);
       alpha = alphar;
-      pEVSL_fprintf0(rank,fstats,"it %d check %12e \n",it,alphai);
+      pEVSL_fprintf0(rank,fstats,"it %d check alpha %12e %12e \n",it,alphar,alphai);
       /*-------------------- T(k,k) = alpha */
       T[(k-1)*lanm1_l+(k-1)] = alpha;
       wn += fabs(alpha);
@@ -738,11 +742,11 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
         /*-------------------- beta = (vnew, znew)^{1/2} */
         pEVSL_ParvecZDot(vrnew, vinew, zrnew, zinew, &betar, &betai);
         beta = sqrt(betar); 
-        /*pEVSL_fprintf0(rank,fstats,"%d check %12e \n",it, betai);*/
       } else { 
         /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
         /*   beta = norm(w) */
         CGS_ZDGKS(pevsl, k, NGS_MAX, Vr, Vi, vrnew, vinew, &beta, warr, wari);
+       
       } 
       wn += 2.0 * beta;
       nwn += 3;
@@ -750,6 +754,45 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
       zrold->data = zr->data;
       ziold->data = zi->data;
       /* JS no lucky break down test*/      
+      if (beta*nwn < orthTol*wn) {
+        if (do_print) {
+          pEVSL_fprintf0(rank, fstats, "it %4d: Lucky breakdown, beta = %.15e\n", it, beta);
+        }
+        /* generate a new init vector */
+        pEVSL_ParvecRand(vrnew);
+        pEVSL_ParvecRand(vinew);
+        if (ifGenEv) {
+          /* vnew = vnew - V(:,1:k)*Z(:,1:k)'*vnew */
+          CGS_ZDGKS2(pevsl, k, NGS_MAX, Vr, Vi, Zr, Zi, vrnew, vinew, warr, wari);
+          pEVSL_ZMatvecB(pevsl, vrnew, vinew, zrnew, zinew);
+          pEVSL_ParvecZDot(vrnew, vinew, zrnew, zinew, &betar, &betai);
+          beta = sqrt(betar);
+          double ibeta = 1.0 / beta;
+          pEVSL_ParvecScal(vrnew, ibeta);
+          pEVSL_ParvecScal(vinew, ibeta);
+          pEVSL_ParvecScal(zrnew, ibeta);
+          pEVSL_ParvecScal(zinew, ibeta);
+          beta = 0.0;
+        } else {
+          /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
+          /*   beta = norm(w) */
+          CGS_ZDGKS(pevsl, k, NGS_MAX, Vr, Vi, vrnew, vinew, &beta,  warr, wari);
+          double ibeta = 1.0 / beta;
+          pEVSL_ParvecScal(vrnew, ibeta);
+          pEVSL_ParvecScal(vinew, ibeta);
+          beta = 0.0;
+        }
+      } else {
+        /*---------------------- vnew = vnew / beta */
+        double ibeta = 1.0 / beta;
+        pEVSL_ParvecScal(vrnew, ibeta);
+        pEVSL_ParvecScal(vinew, ibeta);
+        if (ifGenEv) {
+          /*-------------------- znew = znew / beta */
+          pEVSL_ParvecScal(zrnew, ibeta);
+          pEVSL_ParvecScal(zinew, ibeta);
+        }
+      }
 
       /*-------------------- T(k,k+1) = T(k+1,k) = beta */
       T[k*lanm1_l+(k-1)] = beta;
