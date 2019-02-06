@@ -725,7 +725,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
       double alpha, alphar, alphai;
       pEVSL_ParvecZDot(vr, vi, zrnew, zinew, &alphar, &alphai);
       alpha = alphar;
-      pEVSL_fprintf0(rank,fstats,"it %d check alpha %12e %12e \n",it,alphar,alphai);
+      /*pEVSL_fprintf0(rank,fstats,"it %d check alpha %12e %12e \n",it,alphar,alphai);*/
       /*-------------------- T(k,k) = alpha */
       T[(k-1)*lanm1_l+(k-1)] = alpha;
       wn += fabs(alpha);
