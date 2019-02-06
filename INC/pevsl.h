@@ -84,7 +84,6 @@ void pEVSL_ParvecCopy(pevsl_Parvec *x, pevsl_Parvec *y);
 void pEVSL_ParvecSum(pevsl_Parvec *x, double *t);
 void pEVSL_ParvecScal(pevsl_Parvec *x, double t);
 /*add JS 01/02/19 */
-void pEVSL_ParvecCreateH(pevsl_Parvec *xi, pevsl_Parvec *xiH); 
 void pEVSL_ParvecZNrm2(pevsl_Parvec *xr, pevsl_Parvec *xi, double *t);
 void pEVSL_ParvecZDot(pevsl_Parvec *xr, pevsl_Parvec *xi, pevsl_Parvec *yr, 
                       pevsl_Parvec *yi, double *tr, double *ti); 
@@ -156,6 +155,12 @@ void pEVSL_StatsPrint(pevsl_Data *pevsl, FILE *fstats);
 int pEVSL_ChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol, pevsl_Parvec *vinit, 
                     pevsl_Polparams *pol, int *nevOut, double **lamo, pevsl_Parvecs **Wo, 
                     double **reso, FILE *fstats);
+
+/* add JS 020619 for complex Hermitian cases*/
+int pEVSL_ZChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
+                     pevsl_Parvec *vrinit, pevsl_Parvec *viinit, pevsl_Polparams *pol, int *nevOut,
+                     double **lamo, pevsl_Parvecs **Wor, pevsl_Parvecs **Woi, 
+                     double **reso, FILE *fstats);
 
 #endif
 

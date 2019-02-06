@@ -24,6 +24,12 @@
 
 /* chebpol.c */
 int pEVSL_ChebAv(pevsl_Data *pevsl, pevsl_Polparams *pol, pevsl_Parvec *v, pevsl_Parvec *y, pevsl_Parvec *w);
+// JS 020619 
+int pEVSL_ZChebAv(pevsl_Data *pevsl, pevsl_Polparams *pol, 
+                  pevsl_Parvec *vr, pevsl_Parvec *vi, 
+                  pevsl_Parvec *yr, pevsl_Parvec *yi, 
+                  pevsl_Parvec *wr, pevsl_Parvec *wi);
+
 int dampcf(int m, int damping, double *jac);
 int chebxPltd(int m, double *mu, int npts, double *xi, double *yi);
 
@@ -38,6 +44,7 @@ void CGS_DGKS(pevsl_Data *pevsl, int k, int i_max, pevsl_Parvecs *Q, pevsl_Parve
 
 void CGS_DGKS2(pevsl_Data *pevsl, int k, int i_max, pevsl_Parvecs *V, pevsl_Parvecs *Z, pevsl_Parvec *v, double *w);
 
+/* add JS */
 void CGS_ZDGKS(pevsl_Data *pevsl, int k, int i_max, 
               pevsl_Parvecs *Qr, pevsl_Parvecs *Qi, 
               pevsl_Parvec  *vr, pevsl_Parvec  *vi,
