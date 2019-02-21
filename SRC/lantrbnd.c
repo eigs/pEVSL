@@ -554,7 +554,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
     pEVSL_ParvecZDot(vr, vi, zr, zi, &tr, &ti);
     t = 1.0 / sqrt(tr);
     /* check! ti != 0.0 ? */
-    /*pEVSL_fprintf0(rank,fstats,"%12e \n", ti);*/
+    //pEVSL_fprintf0(rank,fstats,"check dot %12e %12e \n", tr, ti);
 
     /* z = B*v */
     pEVSL_ParvecScal(zr, t);
@@ -724,8 +724,8 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
       /*-------------------- alpha = znew'*v */
       double alpha, alphar, alphai;
       pEVSL_ParvecZDot(vr, vi, zrnew, zinew, &alphar, &alphai);
+      //pEVSL_fprintf0(rank,fstats,"it %d check alpha %12e %12e \n",it,alphar,alphai);
       alpha = alphar;
-      /*pEVSL_fprintf0(rank,fstats,"it %d check alpha %12e %12e \n",it,alphar,alphai);*/
       /*-------------------- T(k,k) = alpha */
       T[(k-1)*lanm1_l+(k-1)] = alpha;
       wn += fabs(alpha);
@@ -739,9 +739,12 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
         CGS_ZDGKS2(pevsl, k, NGS_MAX, Zr, Zi, Vr, Vi, zrnew, zinew, warr, wari);
         /* vnew = B \ znew */
         pEVSL_ZSolveB(pevsl, zrnew, zinew, vrnew, vinew);
+        //pEVSL_ParvecZDot(zrnew, zinew, zrnew, zinew, &alphar, &alphai);
+        //pEVSL_fprintf0(rank,fstats,"it %d check vnew  %12e %12e \n",it,alphar,alphai);
         /*-------------------- beta = (vnew, znew)^{1/2} */
         pEVSL_ParvecZDot(vrnew, vinew, zrnew, zinew, &betar, &betai);
         beta = sqrt(betar); 
+        //pEVSL_fprintf0(rank,fstats,"it %d check beta %12e %12e \n",it,betar,betai);
       } else { 
         /*   vnew = vnew - V(:,1:k)*V(:,1:k)'*vnew */
         /*   beta = norm(w) */
@@ -808,7 +811,7 @@ int pEVSL_ZLanTrbounds(pevsl_Data *pevsl, int lanm, int maxit, double tol,
                            eigenvectors of Tm */
     sr[0] = beta * EvecT[k-1];
     sr[1] = beta * EvecT[(k-1)*lanm1_l+(k-1)];
-    /*pEVSL_fprintf0(rank,fstats,"%d check %12e %12e \n",it, sr[0],sr[1]);*/
+    //pEVSL_fprintf0(rank,fstats,"%d check %12e %12e \n",it, sr[0],sr[1]);
     /*---------------------- bounds */
     if (bndtype <= 1) {
       /*-------------------- BOUNDS type 1 (simple) */

@@ -87,7 +87,7 @@ void pEVSL_ParvecScal(pevsl_Parvec *x, double t);
 void pEVSL_ParvecZNrm2(pevsl_Parvec *xr, pevsl_Parvec *xi, double *t);
 void pEVSL_ParvecZDot(pevsl_Parvec *xr, pevsl_Parvec *xi, pevsl_Parvec *yr, 
                       pevsl_Parvec *yi, double *tr, double *ti); 
-
+void pEVSL_ParvecRand_split(pevsl_Parvec *x); 
 
 
 /* void pEVSL_ParvecAddScalar(pevsl_Parvec *x, double t); */

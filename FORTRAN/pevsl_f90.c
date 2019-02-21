@@ -464,6 +464,43 @@ void PEVSL_FORT(pevsl_copy_result)(uintptr_t *pevslf90, double *val, double *vec
   PEVSL_FREE(pevsl->evec_computed);
 }
 
+
+/* added JS 020619 for complex Hermitian 
+ * @brief copy the computed eigenvalues and vectors
+ * @warning after this call the internal saved results will be freed
+ * @param[in, out] pevslf90 Data to be cast to pevsl_Data
+ * @param[in] ld leading dimension of vec [ld >= pevsl.n]
+ * @param[out] val Eigenvalue output
+ * @param[out] vecr, veci Eigenvector output
+ */
+void PEVSL_FORT(pevsl_copy_zresult)(uintptr_t *pevslf90, double *val, double *vecr, double *veci, int *ld) {
+
+  int i;
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+  /* copy eigenvalues */
+  memcpy(val, pevsl->eval_computed, pevsl->nev_computed*sizeof(double));
+
+  /* copy eigenvectors */
+  for (i=0; i<pevsl->nev_computed; i++) {
+    double *destr = vecr + i * (*ld);
+    double *srcr  = pevsl->evec_computed->data + i * pevsl->evec_computed->ld;
+    memcpy(destr, srcr, pevsl->n*sizeof(double));
+    double *desti = veci + i * (*ld);
+    double *srci  = pevsl->evec_imag_computed->data + i*pevsl->evec_imag_computed->ld;
+    memcpy(desti, srci, pevsl->n*sizeof(double));
+  }
+
+  /* reset pointers */
+  pevsl->nev_computed = 0;
+  PEVSL_FREE(pevsl->eval_computed);
+  pEVSL_ParvecsFree(pevsl->evec_computed);
+  PEVSL_FREE(pevsl->evec_computed);
+
+  pEVSL_ParvecsFree(pevsl->evec_imag_computed);
+  PEVSL_FREE(pevsl->evec_imag_computed);
+}
+
 void PEVSL_FORT(pevsl_setup_chebiter)(double *lmin, double *lmax, int *deg,
                                       uintptr_t *parcsrf90, uintptr_t *chebf90) {
   /* cast pointer of the matrix */
