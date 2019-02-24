@@ -279,9 +279,9 @@ void PEVSL_FORT(pevsl_zlanbounds)(uintptr_t *pevslf90, int *mlan, int *nsteps, d
 
   /*------------------- Create parallel vector: random initial guess */
   pEVSL_ParvecCreate(N, n, nfirst, pevsl->comm, &vrinit);
-  pEVSL_ParvecRand(&vrinit);
+  pEVSL_ParvecRand_split(&vrinit);
   pEVSL_ParvecCreate(N, n, nfirst, pevsl->comm, &viinit);
-  pEVSL_ParvecRand(&viinit);
+  pEVSL_ParvecRand_split(&viinit);
   /*------------------- Lanczos Bounds */
   pEVSL_ZLanTrbounds(pevsl, *mlan, *nsteps, 1e-8, &vrinit, &viinit, 1, lmin, lmax, stdout);
 
