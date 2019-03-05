@@ -265,12 +265,9 @@ void CGS_ZDGKS(pevsl_Data *pevsl, int k, int i_max,
 
   int one = 1; 
   double done = 1.0, dnone = -1.0;
-  w0 = wr + 2*k; 
-  w1 = wi + 2*k;
+  w0 = wr; 
+  w1 = wi;
 
-  pevsl_Parvec *v0, *v1; 
-  pEVSL_ParvecDupl(vr, v0);
-  pEVSL_ParvecDupl(vi, v1);
   
   pEVSL_ParvecZNrm2(vr, vi, &old_nrm);
 
@@ -284,12 +281,10 @@ void CGS_ZDGKS(pevsl_Data *pevsl, int k, int i_max,
     DAXPY(&k, &dnone, w1, &one, wi, &one);   
     
     pEVSL_ParvecsGemv(-1.0, Qr, k, wr, 1.0, vr);
-    pEVSL_ParvecsGemv(-1.0, Qi, k, wi, 1.0, v0);
-    pEVSL_ParvecAxpy(-1.0, v0, vr);
+    pEVSL_ParvecsGemv( 1.0, Qi, k, wi, 1.0, vr);
 
     pEVSL_ParvecsGemv(-1.0, Qi, k, wr, 1.0, vi);
-    pEVSL_ParvecsGemv(-1.0, Qr, k, wi, 1.0, v1);
-    pEVSL_ParvecAxpy(1.0, v1, vi);
+    pEVSL_ParvecsGemv(-1.0, Qr, k, wi, 1.0, vi);
 
     pEVSL_ParvecZNrm2(vr, vi, &new_nrm);
     if (new_nrm > eta * old_nrm) {
@@ -305,8 +300,6 @@ void CGS_ZDGKS(pevsl_Data *pevsl, int k, int i_max,
   double tme = pEVSL_Wtime();
   pevsl->stats->t_reorth += tme - tms;
   
-  pEVSL_ParvecFree(v0);
-  pEVSL_ParvecFree(v1);
 }
 
 
@@ -345,14 +338,11 @@ void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max,
 
   double tms = pEVSL_Wtime();
   double *w0, *w1;
-  pevsl_Parvec *v0, *v1; 
-  pEVSL_ParvecDupl(vr, v0);
-  pEVSL_ParvecDupl(vi, v1);
 
   int one = 1; 
   double done = 1.0, dnone = -1.0;
-  w0 = wr + 2*k; 
-  w1 = wi + 2*k;
+  w0 = wr + i_max*k; 
+  w1 = wi + i_max*k;
 
   int i;
   for (i=0; i<i_max; i++) {
@@ -360,28 +350,26 @@ void CGS_ZDGKS2(pevsl_Data *pevsl, int k, int i_max,
     pEVSL_ParvecsGemtvWithWspace(1.0, Zr, k, vr, 0.0, wr, wr+k);
     pEVSL_ParvecsGemtvWithWspace(1.0, Zi, k, vi, 0.0, w0, w0+k);
     /* *wr = *w0 + *w1; */ 
-    DAXPY(&k, &done, w0, &one, wr, &one);   
+    DAXPY(&k, &done, w0, &one, wr, &one); 
 
     pEVSL_ParvecsGemtvWithWspace(1.0, Zr, k, vi, 0.0, wi, wi+k);
     pEVSL_ParvecsGemtvWithWspace(1.0, Zi, k, vr, 0.0, w1, w1+k);
-    /* *wi = - *w0 + *w1; */
-    DAXPY(&k, &dnone, w1, &one, wi, &one);   
+    /* *wi =  *wi - *w1; */
+    DAXPY(&k, &dnone, w1, &one, wi, &one);  
 
-    /* v = v - V *w */
+    /* v = v - V *w no complex conjugate? */
     pEVSL_ParvecsGemv(-1.0, Vr, k, wr, 1.0, vr);
-    pEVSL_ParvecsGemv(-1.0, Vi, k, wi, 1.0, v0);
-    pEVSL_ParvecAxpy(-1.0, v0, vr);
+    pEVSL_ParvecsGemv( 1.0, Vi, k, wi, 1.0, vr);
 
+    pEVSL_ParvecsGemv(-1.0, Vr, k, wi, 1.0, vi);
     pEVSL_ParvecsGemv(-1.0, Vi, k, wr, 1.0, vi);
-    pEVSL_ParvecsGemv(-1.0, Vr, k, wi, 1.0, v1);
-    pEVSL_ParvecAxpy(1.0, v1, vi);
+
   }
+
 
   double tme = pEVSL_Wtime();
   pevsl->stats->t_reorth += tme - tms;
   
-  pEVSL_ParvecFree(v0);
-  pEVSL_ParvecFree(v1);
 
 }
 

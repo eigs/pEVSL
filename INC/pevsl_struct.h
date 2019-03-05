@@ -333,8 +333,6 @@ typedef struct _pevsl_Data {
   int            nev_computed;    /**< Used in Fortran interface:
                                        hold the points of last computed results */
   double        *eval_computed;
-  /* add for imagery parts JS 12/26/18 */ 
-  double        *eval_imag;
   pevsl_Parvecs *evec_computed;
   /* add for imagery parts JS 12/26/18 */ 
   pevsl_Parvecs *evec_imag_computed;

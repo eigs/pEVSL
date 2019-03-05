@@ -85,6 +85,20 @@ void pEVSL_ParvecRand(pevsl_Parvec *x) {
   }
 }
 
+/* JS to split vector initialization
+ * @brief generate a random parallel vector, each element in [-1,1]
+ * @param[in,out] x Vector
+ */
+void pEVSL_ParvecRand_split(pevsl_Parvec *x) {
+  int i;
+  double t = ((double) RAND_MAX) / 2.0;
+  for (i=0; i<x->n_local/2; i++) {
+    double z = (rand() - t) / t;
+    x->data[i] = z;
+    x->data[x->n_local/2+i] = z;
+  }
+}
+
 /*!
  * @brief generate a random parallel vector
  * @warning This is generated in such a way that it is the same as the

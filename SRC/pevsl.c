@@ -204,9 +204,10 @@ int pEVSL_SetBSol(pevsl_Data *pevsl_data, SVFunc func, void *data) {
  * */
 int pEVSL_SetZAMatvec(pevsl_Data *pevsl_data, ZMVFunc func, void *data) {
 
-  if (!pevsl_data->ZAmv) {
+  /*if (!pevsl_data->ZAmv) {
     PEVSL_CALLOC(pevsl_data->ZAmv, 1, pevsl_ZMatvec);
-  }
+  }*/
+  PEVSL_CALLOC(pevsl_data->ZAmv, 1, pevsl_ZMatvec);
   pevsl_data->ZAmv->func = func;
   pevsl_data->ZAmv->data = data;
 
@@ -223,9 +224,10 @@ int pEVSL_SetZAMatvec(pevsl_Data *pevsl_data, ZMVFunc func, void *data) {
  * */
 int pEVSL_SetZBMatvec(pevsl_Data *pevsl_data, ZMVFunc func, void *data) {
 
-  if (!pevsl_data->ZBmv) {
+  /*if (!pevsl_data->ZBmv) {
     PEVSL_CALLOC(pevsl_data->ZBmv, 1, pevsl_ZMatvec);
-  }
+  }*/
+  PEVSL_CALLOC(pevsl_data->ZBmv, 1, pevsl_ZMatvec);
   pevsl_data->ZBmv->func = func;
   pevsl_data->ZBmv->data = data;
 
@@ -241,9 +243,10 @@ int pEVSL_SetZBMatvec(pevsl_Data *pevsl_data, ZMVFunc func, void *data) {
  * */
 int pEVSL_SetZBSol(pevsl_Data *pevsl_data, ZSVFunc func, void *data) {
 
-  if (!pevsl_data->ZBsol) {
+  /*if (!pevsl_data->ZBsol) {
     PEVSL_CALLOC(pevsl_data->ZBsol, 1, pevsl_ZBsol);
-  }
+  }*/
+  PEVSL_CALLOC(pevsl_data->ZBsol, 1, pevsl_ZBsol);
   pevsl_data->ZBsol->func = func;
   pevsl_data->ZBsol->data = data;
 
