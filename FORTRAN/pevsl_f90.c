@@ -423,6 +423,40 @@ void PEVSL_FORT(pevsl_zcheblannr)(uintptr_t *pevslf90, double *xintv, int *max_i
 }
 
 
+/** JS 051919 for Lanczos vectors 
+ * @brief Fortran interface for ChebLanNr
+ *  the results will be saved in the internal variables
+ */
+void PEVSL_FORT(pevsl_lanvectors)(uintptr_t *pevslf90, double *xintv, int *max_its, double *tol,
+                                  uintptr_t *polf90) {
+  int N, n, nfirst, nev2, ierr;
+  pevsl_Parvecs *Y;
+  FILE *fstats = stdout;
+  pevsl_Parvec vinit;
+
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+
+  N = pevsl->N;
+  n = pevsl->n;
+  nfirst = pevsl->nfirst;
+  /*-------------------- zero out stats */
+  pEVSL_StatsReset(pevsl);
+  /*------------------- Create parallel vector: random initial guess */
+  pEVSL_ParvecCreate(N, n, nfirst, pevsl->comm, &vinit);
+  pEVSL_ParvecRand(&vinit);
+  /* cast pointer of pol*/
+  pevsl_Polparams *pol = (pevsl_Polparams *) (*polf90);
+  /* lanvectors.c */
+  ierr = pEVSL_lanvectors(pevsl, xintv, *max_its, *tol, &vinit, pol, &nev2, &Y, fstats);
+
+  if (ierr) {
+    printf("lanvectors error %d\n", ierr);
+  }
+  /* save pointers to the global variables */
+  pevsl->nev_computed = nev2;
+  pevsl->evec_computed = Y;
+}
 
 
 /** @brief Get the number of last computed eigenvalues

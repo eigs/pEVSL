@@ -1,5 +1,5 @@
 /*
-  This file contains function prototypes and constant definitions for EVSL
+  This file contains function prototypes and constant definitions for pEVSL
 */
 
 #ifndef PEVSL_H
@@ -161,6 +161,12 @@ int pEVSL_ZChebLanNr(pevsl_Data *pevsl, double *intv, int maxit, double tol,
                      pevsl_Parvec *vrinit, pevsl_Parvec *viinit, pevsl_Polparams *pol, int *nevOut,
                      double **lamo, pevsl_Parvecs **Wor, pevsl_Parvecs **Woi, 
                      double **reso, FILE *fstats);
+
+/* add JS 051919 for lanczos vectors */
+/* lanvectors.c */
+int pEVSL_Lanvectors(pevsl_Data *pevsl, double *intv, int maxit, double tol,
+                     pevsl_Parvec *vinit, pevsl_Polparams *pol, int *nevOut,
+                     pevsl_Parvecs **Wo, FILE *fstats); 
 
 #endif
 
