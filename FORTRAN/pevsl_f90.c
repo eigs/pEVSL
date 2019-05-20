@@ -456,6 +456,7 @@ void PEVSL_FORT(pevsl_lanvectors)(uintptr_t *pevslf90, double *xintv, int *max_i
   /* save pointers to the global variables */
   pevsl->nev_computed = nev2;
   pevsl->evec_computed = Y;
+  //printf("lanvectors done %d\n", ierr);
 }
 
 

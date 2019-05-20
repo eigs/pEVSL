@@ -337,16 +337,20 @@ int pEVSL_Lanvectors(pevsl_Data *pevsl, double *intv, int maxit, double tol,
 
   tm1 = pEVSL_Wtime() - tt;
 
+  //pEVSL_fprintf0(rank, fstats, "k = %d; check 0 \n", k);
   /*-------------------- Done.  output : */
   *nevOut = kdim;
   *Wo = V;
+ 
+  //pEVSL_fprintf0(rank, fstats, "k = %d; check 1 \n", k);
+  
   /*-------------------- free arrays */
   //pEVSL_ParvecsFree(V);
   //PEVSL_FREE(V);
   PEVSL_FREE(dT);
   PEVSL_FREE(eT);
   PEVSL_FREE(EvalT);
-  PEVSL_FREE(EvecT);
+  //PEVSL_FREE(EvecT);
   for (i=0; i<wk_size; i++) {
     pEVSL_ParvecFree(&wk[i]);
   }
@@ -360,6 +364,7 @@ int pEVSL_Lanvectors(pevsl_Data *pevsl, double *intv, int maxit, double tol,
   }
   PEVSL_FREE(warr);
 
+  //pEVSL_fprintf0(rank, fstats, "k = %d; check 2 \n", k);
   /*-------------------- record stats */
   tall = pEVSL_Wtime() - tall;
 
