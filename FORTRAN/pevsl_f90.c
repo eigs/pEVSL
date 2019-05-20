@@ -448,7 +448,7 @@ void PEVSL_FORT(pevsl_lanvectors)(uintptr_t *pevslf90, double *xintv, int *max_i
   /* cast pointer of pol*/
   pevsl_Polparams *pol = (pevsl_Polparams *) (*polf90);
   /* lanvectors.c */
-  ierr = pEVSL_lanvectors(pevsl, xintv, *max_its, *tol, &vinit, pol, &nev2, &Y, fstats);
+  ierr = pEVSL_Lanvectors(pevsl, xintv, *max_its, *tol, &vinit, pol, &nev2, &Y, fstats);
 
   if (ierr) {
     printf("lanvectors error %d\n", ierr);
