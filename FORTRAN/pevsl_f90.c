@@ -500,6 +500,33 @@ void PEVSL_FORT(pevsl_copy_result)(uintptr_t *pevslf90, double *val, double *vec
 }
 
 
+/** @brief copy the computed eigenvalues and vectors
+ * @warning after this call the internal saved results will be freed
+ * @param[in, out] pevslf90 Data to be cast to pevsl_Data
+ * @param[in] ld leading dimension of vec [ld >= pevsl.n]
+ * @param[out] vec Lanczos vectors output
+ */
+void PEVSL_FORT(pevsl_copy_vectors)(uintptr_t *pevslf90, double *vec, int *ld) {
+  int i;
+  /* cast pointer */
+  pevsl_Data *pevsl = (pevsl_Data *) (*pevslf90);
+
+
+  /* copy eigenvectors */
+  for (i=0; i<pevsl->nev_computed; i++) {
+    double *dest = vec + i * (*ld);
+    double *src = pevsl->evec_computed->data + i * pevsl->evec_computed->ld;
+    memcpy(dest, src, pevsl->n*sizeof(double));
+  }
+
+  /* reset pointers */
+  pevsl->nev_computed = 0;
+  pEVSL_ParvecsFree(pevsl->evec_computed);
+  PEVSL_FREE(pevsl->evec_computed);
+}
+
+
+
 /* added JS 020619 for complex Hermitian 
  * @brief copy the computed eigenvalues and vectors
  * @warning after this call the internal saved results will be freed
